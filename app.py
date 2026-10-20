@@ -80,12 +80,10 @@ def create_pdf_report(
       buffer, pagesize=A4, rightMargin=35, leftMargin=35, topMargin=35, bottomMargin=35
   )
 
-  # Načtení fontu Arial pro podporu české diakritiky
   try:
     pdfmetrics.registerFont(TTFont("Arial", "Arial.ttf"))
     font_name = "Arial"
   except:
-    # Pokud soubor Arial.ttf chybí, použije se Helvetica (bude mít rozbité znaky, ale nespadne to)
     font_name = "Helvetica"
 
   styles = getSampleStyleSheet()
@@ -340,6 +338,213 @@ def create_pdf_report(
   return buffer
 
 
+def show_evaluation_form(conn):
+  try:
+    components_df = pd.read_sql(
+        "SELECT id, part_number, name FROM components", conn
+    )
+  except Exception as err:
+    components_df = pd.DataFrame()
+    st.error(f"Chyba při načítání dílů: {err}")
+
+  if not components_df.empty:
+    col1, col2 = st.columns(2)
+    with col1:
+      selected_comp_idx = st.selectbox(
+          "Výběr dílu",
+          options=components_df.index,
+          format_func=lambda x: (
+              f"{components_df.loc[x, 'part_number']} -"
+              f" {components_df.loc[x, 'name']}"
+          ),
+      )
+      c_id = components_df.loc[selected_comp_idx, "id"]
+      c_pn = components_df.loc[selected_comp_idx, "part_number"]
+      c_nm = components_df.loc[selected_comp_idx, "name"]
+      comp_name = f"{c_pn} ({c_nm})"
+
+    with col2:
+      standards_df = pd.read_sql(
+          "SELECT DISTINCT id, norm_name FROM customer_standards WHERE"
+          f" component_id = '{c_id}'",
+          conn,
+      )
+      if not standards_df.empty:
+        selected_std_idx = st.selectbox(
+            "Zákaznický limit / norma",
+            options=standards_df.index,
+            format_func=lambda x: standards_df.loc[x, "norm_name"],
+        )
+        std_id = standards_df.loc[selected_std_idx, "id"]
+        std_name = standards_df.loc[selected_std_idx, "norm_name"]
+      else:
+        st.warning("Pro tento díl není definován limit.")
+        std_id, std_name = None, "Neznámá norma"
+
+    st.markdown("---")
+
+    with st.form("inspection_form"):
+      col_a, col_b = st.columns(2)
+      with col_a:
+        insp_name = st.text_input("Jméno technika", value="Jan Novák")
+        filt_no = st.text_input("Číslo filtru")
+      with col_b:
+        filt_lot = st.text_input("Šarže filtru")
+        ref_unit = st.selectbox(
+            "Referenční jednotka (A=plocha, V=objem, N=kus)", ["A", "V", "N"]
+        )
+
+      vda_classes = ["B", "C", "D", "E", "F", "G", "H", "I", "J", "K"]
+      entered_levels = {}
+      class_cols = st.columns(len(vda_classes))
+      for i, s_class in enumerate(vda_classes):
+        entered_levels[s_class] = class_cols[i].text_input(
+            s_class, value="", placeholder="-", key=f"cls_{s_class}"
+        )
+
+      col_q1, col_q2, col_q3 = st.columns(3)
+      with col_q1:
+        fibers_count = st.number_input(
+            "Vlákna (Fibers)", min_value=0, value=0, step=1
+        )
+      with col_q2:
+        metallic_ref_count = st.number_input(
+            "Kovové lesklé částice", min_value=0, value=0, step=1
+        )
+      with col_q3:
+        metallic_nonref_count = st.number_input(
+            "Kovové nelesklé částice", min_value=0, value=0, step=1
+        )
+
+      note = st.text_area("Poznámka k měření")
+      sub_btn = st.form_submit_button(
+          "Vyhodnotit a uložit do databáze", type="primary"
+      )
+
+    if sub_btn:
+      if not filt_no or not std_id:
+        st.error("Vyplňte číslo filtru a vyberte normu.")
+      else:
+        ccc_parts, valid_levels = [], {}
+        for s_class, a_level_str in entered_levels.items():
+          a_level_str = a_level_str.strip()
+          if a_level_str and a_level_str != "-":
+            val_int = int(a_level_str)
+            ccc_parts.append(f"{s_class} {a_level_str}")
+            valid_levels[s_class] = val_int
+
+        if not ccc_parts:
+          st.error("Vyplňte hodnotu alespoň pro jednu třídu.")
+        else:
+          generated_ccc_string = f"CCC {ref_unit}({' / '.join(ccc_parts)})"
+          limits_df = pd.read_sql(
+              "SELECT size_class, max_allowed_level FROM customer_standards"
+              f" WHERE id = '{std_id}'",
+              conn,
+          )
+
+          failed, report = False, []
+          for s_class, actual_val in valid_levels.items():
+            lim_row = limits_df[limits_df["size_class"] == s_class]
+            max_alw = (
+                int(lim_row.iloc[0]["max_allowed_level"])
+                if not lim_row.empty
+                else 0
+            )
+            status = (
+                "NOK" if not lim_row.empty and actual_val > max_alw else "OK"
+            )
+            if status == "NOK":
+              failed = True
+            report.append({
+                "Velikostní třída": s_class,
+                "Povolený limit": str(max_alw),
+                "Naměřená úroveň": actual_val,
+                "Stav": status,
+            })
+
+          report_df = pd.DataFrame(report)
+          eval_res = "NOT_MET" if failed else "MET"
+
+          cur = conn.cursor()
+          cur.execute(
+              "INSERT INTO inspections (component_id, standard_id,"
+              " inspector_name, filter_number, filter_lot_number,"
+              " entered_ccc_string, evaluation_result, note) VALUES (%s,"
+              " %s, %s, %s, %s, %s, %s, %s) RETURNING id;",
+              (
+                  c_id,
+                  std_id,
+                  insp_name,
+                  filt_no,
+                  filt_lot,
+                  generated_ccc_string,
+                  eval_res,
+                  note,
+              ),
+          )
+          ins_id = cur.fetchone()[0]
+          for s_class, a_level in valid_levels.items():
+            cur.execute(
+                "INSERT INTO inspection_details (inspection_id, size_class,"
+                " cleanliness_level) VALUES (%s, %s, %s);",
+                (ins_id, s_class, a_level),
+            )
+          conn.commit()
+          cur.close()
+
+          st.subheader("Výsledek vyhodnocení")
+          st.info(f"**CCC kód:** {generated_ccc_string}")
+          st.dataframe(report_df, use_container_width=True)
+
+          pdf_data = create_pdf_report(
+              comp_name,
+              std_name,
+              filt_no,
+              filt_lot,
+              insp_name,
+              ref_unit,
+              generated_ccc_string,
+              report_df,
+              failed,
+              note,
+              fibers_count,
+              metallic_ref_count,
+              metallic_nonref_count,
+          )
+          btn_col1, btn_col2 = st.columns(2)
+          with btn_col1:
+            st.download_button(
+                "Stáhnout protokol (PDF)",
+                pdf_data,
+                file_name=f"protokol_{filt_no}.pdf",
+                mime="application/pdf",
+            )
+          with btn_col2:
+            if st.button("Nové vyhodnocení"):
+              st.rerun()
+
+
+def show_history(conn):
+  st.subheader("Historie provedených měření")
+  try:
+    history_df = pd.read_sql(
+        'SELECT i.inspection_date AS "Datum", c.part_number AS "Číslo'
+        ' dílu", i.filter_number AS "Filtr", i.entered_ccc_string AS "CCC'
+        ' kód", i.evaluation_result AS "Výsledek" FROM inspections i JOIN'
+        " components c ON i.component_id = c.id ORDER BY i.inspection_date"
+        " DESC;",
+        conn,
+    )
+    if not history_df.empty:
+      st.dataframe(history_df, use_container_width=True, hide_index=True)
+    else:
+      st.info("Zatím nejsou uložena žádná měření.")
+  except Exception as err:
+    st.error(f"Chyba načítání historie: {err}")
+
+
+# HLAVNÍ BĚH APLIKACE
 conn = get_db_connection()
 if conn:
   st.title("Systém vyhodnocení čistoty (VDA 19.1)")
@@ -353,207 +558,8 @@ if conn:
   st.markdown("---")
 
   if menu_choice == "Vyhodnocení měření":
-    try:
-      components_df = pd.read_sql(
-          "SELECT id, part_number, name FROM components", conn
-      )
-    except Exception as err:
-      components_df = pd.DataFrame()
-      st.error(f"Chyba: {err}")
-
-    if not components_df.empty:
-      col1, col2 = st.columns(2)
-      with col1:
-        selected_comp_idx = st.selectbox(
-            "Výběr dílu",
-            options=components_df.index,
-            format_func=lambda x: (
-                f"{components_df.loc[x, 'part_number']} -"
-                f" {components_df.loc[x, 'name']}"
-            ),
-        )
-        c_id = components_df.loc[selected_comp_idx, "id"]
-        c_pn = components_df.loc[selected_comp_idx, "part_number"]
-        c_nm = components_df.loc[selected_comp_idx, "name"]
-        comp_name = f"{c_pn} ({c_nm})"
-
-      with col2:
-        standards_df = pd.read_sql(
-            "SELECT DISTINCT id, norm_name FROM customer_standards WHERE"
-            f" component_id = '{c_id}'",
-            conn,
-        )
-        if not standards_df.empty:
-          selected_std_idx = st.selectbox(
-              "Zákaznický limit / norma",
-              options=standards_df.index,
-              format_func=lambda x: standards_df.loc[x, "norm_name"],
-          )
-          std_id = standards_df.loc[selected_std_idx, "id"]
-          std_name = standards_df.loc[selected_std_idx, "norm_name"]
-        else:
-          st.warning("Pro tento díl není definován limit.")
-          std_id, std_name = None, "Neznámá norma"
-
-      st.markdown("---")
-
-      with st.form("inspection_form"):
-        col_a, col_b = st.columns(2)
-        with col_a:
-          insp_name = st.text_input("Jméno technika", value="Jan Novák")
-          filt_no = st.text_input("Číslo filtru")
-        with col_b:
-          filt_lot = st.text_input("Šarže filtru")
-          ref_unit = st.selectbox(
-              "Referenční jednotka (A=plocha, V=objem, N=kus)", ["A", "V", "N"]
-          )
-
-        vda_classes = ["B", "C", "D", "E", "F", "G", "H", "I", "J", "K"]
-        entered_levels = {}
-        class_cols = st.columns(len(vda_classes))
-        for i, s_class in enumerate(vda_classes):
-          entered_levels[s_class] = class_cols[i].text_input(
-              s_class, value="", placeholder="-", key=f"cls_{s_class}"
-          )
-
-        col_q1, col_q2, col_q3 = st.columns(3)
-        with col_q1:
-          fibers_count = st.number_input(
-              "Vlákna (Fibers)", min_value=0, value=0, step=1
-          )
-        with col_q2:
-          metallic_ref_count = st.number_input(
-              "Kovové lesklé částice", min_value=0, value=0, step=1
-          )
-        with col_q3:
-          metallic_nonref_count = st.number_input(
-              "Kovové nelesklé částice", min_value=0, value=0, step=1
-          )
-
-        note = st.text_area("Poznámka k měření")
-        sub_btn = st.form_submit_button(
-            "Vyhodnotit a uložit do databáze", type="primary"
-        )
-
-      if sub_btn:
-        if not filt_no or not std_id:
-          st.error("Vyplňte číslo filtru a vyberte normu.")
-        else:
-          ccc_parts, valid_levels = [], {}
-          for s_class, a_level_str in entered_levels.items():
-            a_level_str = a_level_str.strip()
-            if a_level_str and a_level_str != "-":
-              val_int = int(a_level_str)
-              ccc_parts.append(f"{s_class} {a_level_str}")
-              valid_levels[s_class] = val_int
-
-          if not ccc_parts:
-            st.error("Vyplňte hodnotu alespoň pro jednu třídu.")
-          else:
-            generated_ccc_string = f"CCC {ref_unit}({' / '.join(ccc_parts)})"
-            limits_df = pd.read_sql(
-                "SELECT size_class, max_allowed_level FROM customer_standards"
-                f" WHERE id = '{std_id}'",
-                conn,
-            )
-
-            failed, report = False, []
-            for s_class, actual_val in valid_levels.items():
-              lim_row = limits_df[limits_df["size_class"] == s_class]
-              max_alw = (
-                  int(lim_row.iloc[0]["max_allowed_level"])
-                  if not lim_row.empty
-                  else 0
-              )
-              status = (
-                  "NOK" if not lim_row.empty and actual_val > max_alw else "OK"
-              )
-              if status == "NOK":
-                failed = True
-              report.append({
-                  "Velikostní třída": s_class,
-                  "Povolený limit": str(max_alw),
-                  "Naměřená úroveň": actual_val,
-                  "Stav": status,
-              })
-
-            report_df = pd.DataFrame(report)
-            eval_res = "NOT_MET" if failed else "MET"
-
-            cur = conn.cursor()
-            cur.execute(
-                "INSERT INTO inspections (component_id, standard_id,"
-                " inspector_name, filter_number, filter_lot_number,"
-                " entered_ccc_string, evaluation_result, note) VALUES (%s,"
-                " %s, %s, %s, %s, %s, %s, %s) RETURNING id;",
-                (
-                    c_id,
-                    std_id,
-                    insp_name,
-                    filt_no,
-                    filt_lot,
-                    generated_ccc_string,
-                    eval_res,
-                    note,
-                ),
-            )
-            ins_id = cur.fetchone()[0]
-            for s_class, a_level in valid_levels.items():
-              cur.execute(
-                  "INSERT INTO inspection_details (inspection_id, size_class,"
-                  " cleanliness_level) VALUES (%s, %s, %s);",
-                  (ins_id, s_class, a_level),
-              )
-            conn.commit()
-            cur.close()
-
-            st.subheader("Výsledek vyhodnocení")
-            st.info(f"**CCC kód:** {generated_ccc_string}")
-            st.dataframe(report_df, use_container_width=True)
-
-            pdf_data = create_pdf_report(
-                comp_name,
-                std_name,
-                filt_no,
-                filt_lot,
-                insp_name,
-                ref_unit,
-                generated_ccc_string,
-                report_df,
-                failed,
-                note,
-                fibers_count,
-                metallic_ref_count,
-                metallic_nonref_count,
-            )
-            btn_col1, btn_col2 = st.columns(2)
-            with btn_col1:
-              st.download_button(
-                  "Stáhnout protokol (PDF)",
-                  pdf_data,
-                  file_name=f"protokol_{filt_no}.pdf",
-                  mime="application/pdf",
-              )
-            with btn_col2:
-              if st.button("Nové vyhodnocení"):
-                st.rerun()
-
+    show_evaluation_form(conn)
   elif menu_choice == "Přehled historie měření":
-    st.subheader("Historie provedených měření")
-    try:
-      history_df = pd.read_sql(
-          'SELECT i.inspection_date AS "Datum", c.part_number AS "Číslo'
-          ' dílu", i.filter_number AS "Filtr", i.entered_ccc_string AS "CCC'
-          ' kód", i.evaluation_result AS "Výsledek" FROM inspections i JOIN'
-          " components c ON i.component_id = c.id ORDER BY i.inspection_date"
-          " DESC;",
-          conn,
-      )
-      if not history_df.empty:
-          st.dataframe(history_df, use_container_width=True, hide_index=True)
-      else:
-          st.info("Zatím nejsou uložena žádná měření.")
-    except Exception as err:
-      st.error(f"Chyba načítání historie: {err}")
+    show_history(conn)
 
   conn.close()
