@@ -42,10 +42,10 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# Správný pooler a uživatel "postgres"
+# Finální správné nastavení pro Supabase Pooler
 DB_HOST = "aws-0-eu-central-1.pooler.supabase.com"
 DB_NAME = "postgres"
-DB_USER = "postgres"
+DB_USER = "postgres.ywyicopmesmwtkjewbfk"
 DB_PORT = "6543"
 
 st.sidebar.header("Připojení k databázi")
