@@ -45,8 +45,16 @@ st.markdown(
 
 def get_db_connection():
   try:
-    uri = "postgresql://postgres.ywyicopmesmwtkjewbfk:X-rb42&e4$uJ%rJ@aws-0-eu-central-1.pooler.supabase.com:6543/postgres"
-    conn = psycopg2.connect(uri, sslmode="require", connect_timeout=10)
+    # Připojení přes oddělené parametry bezpečně zvládá i speciální znaky v hesle
+    conn = psycopg2.connect(
+        host="aws-0-eu-central-1.pooler.supabase.com",
+        database="postgres",
+        user="postgres.ywyicopmesmwtkjewbfk",
+        password="X-rb42&e4$uJ%rJ",
+        port="6543",
+        sslmode="require",
+        connect_timeout=10,
+    )
     return conn
   except Exception as e:
     st.error(f"Chyba připojení k databázi: {e}")
@@ -333,7 +341,6 @@ def create_pdf_report(
 
 conn = get_db_connection()
 if conn:
-  st.sidebar.success("Připojeno k Supabase")
   st.title("Systém vyhodnocení čistoty (VDA 19.1)")
 
   menu_choice = st.radio(
@@ -545,4 +552,4 @@ if conn:
     except Exception as err:
       st.error(f"Chyba: {err}")
 
-  conn.close()
+    conn.close()
