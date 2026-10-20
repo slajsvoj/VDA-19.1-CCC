@@ -42,8 +42,8 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# Správná adresa končící na .com a pooler port 6543
-DB_HOST = "db.ywyicopmesmwtkjewbfk.supabase.com"
+# Správná adresa končící na .co a pooler port 6543
+DB_HOST = "db.ywyicopmesmwtkjewbfk.supabase.co"
 DB_NAME = "postgres"
 DB_USER = "postgres"
 DB_PORT = "6543"
