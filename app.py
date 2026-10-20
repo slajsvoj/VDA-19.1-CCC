@@ -42,21 +42,27 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
+# Zadání hesla v levém panelu
+st.sidebar.header("Připojení k databázi")
+DB_PASSWORD = st.sidebar.text_input("Heslo k databázi", type="password")
+
 
 def get_db_connection():
+  if not DB_PASSWORD:
+    return None
   try:
     conn = psycopg2.connect(
         host="aws-0-eu-west-1.pooler.supabase.com",
         database="postgres",
         user="postgres.ywyicopmesmwtkjewbfk",
-        password="X-rb42&e4$uJ%rJ",
+        password=DB_PASSWORD,
         port="6543",
         sslmode="require",
         connect_timeout=10,
     )
     return conn
   except Exception as e:
-    st.error(f"Chyba připojení k databázi: {e}")
+    st.sidebar.error(f"Chyba připojení k databázi: {e}")
     return None
 
 
@@ -233,24 +239,10 @@ def create_pdf_report(
   table_data = [[
       Paragraph("<b>Velikostni trida</b>", cell_header),
       Paragraph("<b>Rozsah velikosti</b>", cell_header),
-      Paragraph("<b>Max. povolena uroveň</b>", cell_header)
-      .text.replace("úroveň", "uroven"),
-      Paragraph("<b>Namerena uroveň</b>", cell_header)
-      .text.replace("úroveň", "uroven"),
+      Paragraph("<b>Max. povolena uroven</b>", cell_header),
+      Paragraph("<b>Namerena uroven</b>", cell_header),
       Paragraph("<b>Stav</b>", cell_header),
   ]]
-
-  # Opravené hlavičky tabulky zcela bez diakritiky
-  table_data = [[
-      Paragraph("<b>Velikostni trida</b>", cell_header),
-      Paragraph("<b>Rozsah velikosti</b>", cell_header),
-      Paragraph("<b>Max. povolena uroveb</b>", cell_header),
-      Paragraph("<b>Namerena uroveb</b>", cell_header),
-      Paragraph("<b>Stav</b>", cell_header),
-  ]]
-  # Oprava textu na čistou bezdiakritikovou podobu
-  table_data[0][2] = Paragraph("<b>Max. povolena uroveň</b>".replace("ú", "u").replace("ě", "e"), cell_header)
-  table_data[0][3] = Paragraph("<b>Namerena uroveň</b>".replace("ě", "e").replace("ú", "u"), cell_header)
 
   size_ranges = {
       "B": "5 um – 15 um",
@@ -488,7 +480,7 @@ def show_evaluation_form(conn):
                   insp_name,
                   filt_no,
                   filt_lot,
-                  generated_ccc_string,
+                    generated_ccc_string,
                   eval_res,
                   note,
               ),
@@ -554,22 +546,26 @@ def show_history(conn):
     st.error(f"Chyba načítání historie: {err}")
 
 
-# HLAVNÍ BĚH APLIKACE
-conn = get_db_connection()
-if conn:
-  st.title("Systém vyhodnocení čistoty (VDA 19.1)")
+# HLAVNÍ BĚH APLIKACE (vyžaduje vyplnění hesla v sidebaru)
+if DB_PASSWORD:
+  conn = get_db_connection()
+  if conn:
+    st.sidebar.success("Připojeno k Supabase")
+    st.title("Systém vyhodnocení čistoty (VDA 19.1)")
 
-  menu_choice = st.radio(
-      "Navigace",
-      ["Vyhodnocení měření", "Přehled historie měření"],
-      horizontal=True,
-      label_visibility="collapsed",
-  )
-  st.markdown("---")
+    menu_choice = st.radio(
+        "Navigace",
+        ["Vyhodnocení měření", "Přehled historie měření"],
+        horizontal=True,
+        label_visibility="collapsed",
+    )
+    st.markdown("---")
 
-  if menu_choice == "Vyhodnocení měření":
-    show_evaluation_form(conn)
-  elif menu_choice == "Přehled historie měření":
-    show_history(conn)
+    if menu_choice == "Vyhodnocení měření":
+      show_evaluation_form(conn)
+    elif menu_choice == "Přehled historie měření":
+      show_history(conn)
 
-  conn.close()
+    conn.close()
+else:
+  st.info("Zadejte heslo k databázi v levém panelu.")
