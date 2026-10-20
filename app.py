@@ -45,17 +45,22 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# Supabase Connection Pooler (port 6543)
-DB_HOST = "db.ywyicopmesmwtkjewbfk.supabase.co"
-DB_NAME = "postgres"
-DB_USER = "postgres"
-DB_PORT = "6543"
-
-st.sidebar.header("Připojení k databázi")
+# Sidebar pro nastavení připojení k databázi
+st.sidebar.header("Nastavení databáze")
+DB_HOST = st.sidebar.text_input(
+    "Database Host", value="db.ywyicopmesmwtkjewbfk.supabase.co"
+)
+DB_PORT = st.sidebar.text_input(
+    "Database Port", value="5432"
+)  # Případně 6543 pro pooler
+DB_NAME = st.sidebar.text_input("Database Name", value="postgres")
+DB_USER = st.sidebar.text_input("Database User", value="postgres")
 DB_PASSWORD = st.sidebar.text_input("Heslo k databázi", type="password")
 
 
 def get_db_connection():
+  if not DB_PASSWORD:
+    return None
   try:
     conn = psycopg2.connect(
         host=DB_HOST,
@@ -84,8 +89,8 @@ def get_db_connection():
       return conn
     except Exception as inner_e:
       st.sidebar.error(
-          "Chyba připojení k Supabase přes port 6543. Zkontroluj heslo nebo"
-          f" síťové připojení. Detail: {e}"
+          f"Chyba připojení k Supabase ({DB_PORT}): {e}. Zkontroluj hostitele a"
+          " heslo."
       )
       return None
 
@@ -433,7 +438,7 @@ def create_pdf_report(
 if DB_PASSWORD:
   conn = get_db_connection()
   if conn:
-    st.sidebar.success("Připojeno k Supabase (Pooler)")
+    st.sidebar.success(f"Připojeno k Supabase ({DB_PORT})")
     st.title("Systém vyhodnocení čistoty (VDA 19.1)")
 
     menu_choice = st.radio(
