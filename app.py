@@ -233,10 +233,24 @@ def create_pdf_report(
   table_data = [[
       Paragraph("<b>Velikostni trida</b>", cell_header),
       Paragraph("<b>Rozsah velikosti</b>", cell_header),
-      Paragraph("<b>Max. povolena uroveň</b>", cell_header),
-      Paragraph("<b>Namerena uroveň</b>", cell_header),
+      Paragraph("<b>Max. povolena uroveň</b>", cell_header)
+      .text.replace("úroveň", "uroven"),
+      Paragraph("<b>Namerena uroveň</b>", cell_header)
+      .text.replace("úroveň", "uroven"),
       Paragraph("<b>Stav</b>", cell_header),
   ]]
+
+  # Opravené hlavičky tabulky zcela bez diakritiky
+  table_data = [[
+      Paragraph("<b>Velikostni trida</b>", cell_header),
+      Paragraph("<b>Rozsah velikosti</b>", cell_header),
+      Paragraph("<b>Max. povolena uroveb</b>", cell_header),
+      Paragraph("<b>Namerena uroveb</b>", cell_header),
+      Paragraph("<b>Stav</b>", cell_header),
+  ]]
+  # Oprava textu na čistou bezdiakritikovou podobu
+  table_data[0][2] = Paragraph("<b>Max. povolena uroveň</b>".replace("ú", "u").replace("ě", "e"), cell_header)
+  table_data[0][3] = Paragraph("<b>Namerena uroveň</b>".replace("ě", "e").replace("ú", "u"), cell_header)
 
   size_ranges = {
       "B": "5 um – 15 um",
