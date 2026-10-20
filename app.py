@@ -45,9 +45,9 @@ st.markdown(
 
 def get_db_connection():
   try:
-    # Připojení přes oddělené parametry bezpečně zvládá i speciální znaky v hesle
+    # OPRAVENO: aws-0-eu-west-1 místo aws-0-eu-central-1
     conn = psycopg2.connect(
-        host="aws-0-eu-central-1.pooler.supabase.com",
+        host="aws-0-eu-west-1.pooler.supabase.com",
         database="postgres",
         user="postgres.ywyicopmesmwtkjewbfk",
         password="X-rb42&e4$uJ%rJ",
@@ -552,4 +552,4 @@ if conn:
     except Exception as err:
       st.error(f"Chyba: {err}")
 
-    conn.close()
+  conn.close()
