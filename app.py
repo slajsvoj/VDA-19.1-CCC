@@ -45,11 +45,11 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# Přímé nastavení pro Supabase Direct connection
+# Supabase Connection Pooler (port 6543)
 DB_HOST = "db.ywyicopmesmwtkjewbfk.supabase.co"
 DB_NAME = "postgres"
 DB_USER = "postgres"
-DB_PORT = "5432"
+DB_PORT = "6543"
 
 st.sidebar.header("Připojení k databázi")
 DB_PASSWORD = st.sidebar.text_input("Heslo k databázi", type="password")
@@ -84,8 +84,8 @@ def get_db_connection():
       return conn
     except Exception as inner_e:
       st.sidebar.error(
-          "Chyba připojení k Supabase. Zkontroluj internetové připojení"
-          " (příp. firewall/port 5432)."
+          "Chyba připojení k Supabase přes port 6543. Zkontroluj heslo nebo"
+          f" síťové připojení. Detail: {e}"
       )
       return None
 
@@ -178,7 +178,6 @@ def create_pdf_report(
 
   elements = []
 
-  # Hlavička dokumentu
   elements.append(
       Paragraph("LABORATORNÍ PROTOKOL TECHNICKÉ ČISTOTY", title_style)
   )
@@ -186,7 +185,6 @@ def create_pdf_report(
       Paragraph("Vyhodnocení dle normy VDA 19.1 / ISO 16232", subtitle_style)
   )
 
-  # Metadata tabulka
   current_date = datetime.date.today().strftime("%d.%m.%Y")
   meta_data = [
       [
@@ -232,7 +230,6 @@ def create_pdf_report(
   elements.append(meta_table)
   elements.append(Spacer(1, 10))
 
-  # CCC kód ve zvláštním rámečku s popiskem
   ccc_table = Table(
       [[Paragraph(f"<b>CCC kód:</b> &nbsp;&nbsp; {ccc_string}", ccc_style)]],
       colWidths=[540],
@@ -250,7 +247,6 @@ def create_pdf_report(
   elements.append(ccc_table)
   elements.append(Spacer(1, 12))
 
-  # Celkový výsledek (Banner)
   if failed:
     res_text = "CELKOVÝ VÝSLEDEK: NEVYHOVUJE (NOT MET)"
     res_color = colors.HexColor("#fee2e2")
@@ -286,7 +282,6 @@ def create_pdf_report(
   elements.append(res_table)
   elements.append(Spacer(1, 14))
 
-  # Hlavní tabulka výsledků velikostních tříd
   table_data = [[
       Paragraph("<b>Velikostní třída</b>", cell_header),
       Paragraph("<b>Rozsah velikosti</b>", cell_header),
@@ -351,7 +346,6 @@ def create_pdf_report(
   elements.append(t)
   elements.append(Spacer(1, 12))
 
-  # Kvalitativní rozbor částic
   qual_data = [
       [
           Paragraph("<b>Kvalitativní charakteristika částic (VDA 19.1)</b>", cell_header),
@@ -413,7 +407,6 @@ def create_pdf_report(
 
   elements.append(Spacer(1, 20))
 
-  # Jméno tvůrce v rámečku
   sig_data = [[
       Paragraph(
           f"<b>Protokol vytvořil (technik):</b> {inspector_name}", cell_style
@@ -440,7 +433,7 @@ def create_pdf_report(
 if DB_PASSWORD:
   conn = get_db_connection()
   if conn:
-    st.sidebar.success("Připojeno k Supabase")
+    st.sidebar.success("Připojeno k Supabase (Pooler)")
     st.title("Systém vyhodnocení čistoty (VDA 19.1)")
 
     menu_choice = st.radio(
@@ -499,7 +492,6 @@ if DB_PASSWORD:
 
           st.markdown("---")
 
-          # === ZAČÁTEK FORMULÁŘE ===
           with st.form("inspection_form"):
             st.markdown("**1. Obecné údaje o měření**")
             col_a, col_b = st.columns(2)
@@ -542,204 +534,4 @@ if DB_PASSWORD:
             vda_classes = ["B", "C", "D", "E", "F", "G", "H", "I", "J", "K"]
             entered_levels = {}
 
-            class_cols = st.columns(len(vda_classes))
-            for i, s_class in enumerate(vda_classes):
-              val = class_cols[i].text_input(
-                  s_class, value="", placeholder="-", key=f"cls_{s_class}"
-              )
-              entered_levels[s_class] = val
-
-            st.markdown("---")
-            st.markdown("**3. Kvalitativní analýza částic (VDA 19.1)**")
-            st.caption(
-                "Zadejte zjištěné počty pro jednotlivé druhy částic na filtru."
-            )
-
-            col_q1, col_q2, col_q3 = st.columns(3)
-            with col_q1:
-              fibers_count = st.number_input(
-                  "Vlákna (Fibers)", min_value=0, value=0, step=1
-              )
-            with col_q2:
-              metallic_ref_count = st.number_input(
-                  "Kovové lesklé částice", min_value=0, value=0, step=1
-              )
-            with col_q3:
-              metallic_nonref_count = st.number_input(
-                  "Kovové nelesklé částice", min_value=0, value=0, step=1
-              )
-
-            st.markdown("---")
-            note = st.text_area("Poznámka k měření")
-
-            sub_btn = st.form_submit_button(
-                "Vyhodnotit a uložit do databáze", type="primary"
-            )
-          # === KONEC FORMULÁŘE ===
-
-          if sub_btn:
-            if not filt_no:
-              st.error("Vyplňte prosím číslo filtru.")
-            elif not std_id:
-              st.error("Nelze vyhodnotit - chybí přiřazená norma.")
-            else:
-              ccc_parts = []
-              valid_levels = {}
-
-              for s_class, a_level_str in entered_levels.items():
-                a_level_str = a_level_str.strip()
-                if a_level_str and a_level_str != "-":
-                  try:
-                    val_int = int(a_level_str)
-                    ccc_parts.append(f"{s_class} {a_level_str}")
-                    valid_levels[s_class] = val_int
-                  except ValueError:
-                    st.error(
-                        f"Neplatná hodnota '{a_level_str}' ve třídě {s_class}."
-                        " Zadejte celé číslo."
-                    )
-                    st.stop()
-
-              if not ccc_parts:
-                st.error(
-                    "Musíte vyplnit hodnotu alespoň pro jednu velikostní třídu."
-                )
-              else:
-                joined_parts = " / ".join(ccc_parts)
-                generated_ccc_string = f"CCC {ref_unit}({joined_parts})"
-
-                lim_q = (
-                    "SELECT size_class, max_allowed_level FROM"
-                    f" customer_standards WHERE id = '{std_id}'"
-                )
-                limits_df = pd.read_sql(lim_q, conn)
-
-                failed = False
-                report = []
-
-                for s_class, actual_val in valid_levels.items():
-                  lim_row = limits_df[limits_df["size_class"] == s_class]
-
-                  if not lim_row.empty:
-                    max_alw = int(lim_row.iloc[0]["max_allowed_level"])
-                    status = "OK"
-                    if actual_val > max_alw:
-                      status = "NOK"
-                      failed = True
-
-                    report.append({
-                        "Velikostní třída": s_class,
-                        "Povolený limit": str(max_alw),
-                        "Naměřená úroveň": actual_val,
-                        "Stav": status,
-                    })
-                  else:
-                    report.append({
-                        "Velikostní třída": s_class,
-                        "Povolený limit": "-",
-                        "Naměřená úroveň": actual_val,
-                        "Stav": "N/A (Není limit)",
-                    })
-
-                report_df = pd.DataFrame(report)
-                eval_res = "NOT_MET" if failed else "MET"
-
-                cur = conn.cursor()
-                ins_q = (
-                    "INSERT INTO inspections (component_id, standard_id,"
-                    " inspector_name, filter_number, filter_lot_number,"
-                    " entered_ccc_string, evaluation_result, note) VALUES (%s,"
-                    " %s, %s, %s, %s, %s, %s, %s) RETURNING id;"
-                )
-
-                cur.execute(
-                    ins_q,
-                    (
-                        c_id,
-                        std_id,
-                        insp_name,
-                        filt_no,
-                        filt_lot,
-                        generated_ccc_string,
-                        eval_res,
-                        note,
-                    ),
-                )
-                ins_id = cur.fetchone()[0]
-
-                for s_class, a_level in valid_levels.items():
-                  det_q = (
-                      "INSERT INTO inspection_details (inspection_id,"
-                      " size_class, cleanliness_level) VALUES (%s, %s, %s);"
-                  )
-                  cur.execute(det_q, (ins_id, s_class, a_level))
-
-                conn.commit()
-                cur.close()
-
-                st.markdown("---")
-                st.subheader("Výsledek vyhodnocení")
-                st.info(f"**CCC kód:** {generated_ccc_string}")
-
-                if failed:
-                  st.error("NEVYHOVUJE - Limity čistoty byly překročeny!")
-                else:
-                  st.success("SPLNĚNO - Všechny kontrolované třídy jsou v limitu.")
-
-                st.dataframe(report_df, use_container_width=True)
-
-                pdf_data = create_pdf_report(
-                    comp_name,
-                    std_name,
-                    filt_no,
-                    filt_lot,
-                    insp_name,
-                    ref_unit,
-                    generated_ccc_string,
-                    report_df,
-                    failed,
-                    note,
-                    fibers_count,
-                    metallic_ref_count,
-                    metallic_nonref_count,
-                )
-
-                # Umístění tlačítek vedle sebe (Stáhnout PDF a Červené Nové vyhodnocení)
-                btn_col1, btn_col2 = st.columns(2)
-                with btn_col1:
-                  st.download_button(
-                      label="Stáhnout protokol (PDF)",
-                      data=pdf_data,
-                      file_name=f"protokol_cistoty_{filt_no}.pdf",
-                      mime="application/pdf",
-                  )
-                with btn_col2:
-                  if st.button("Nové vyhodnocení"):
-                    st.rerun()
-
-      except Exception as err:
-        st.error(f"Chyba zpracování: {err}")
-
-    elif menu_choice == "Přehled historie měření":
-      st.subheader("Historie provedených měření")
-
-      try:
-        hist_q = (
-            'SELECT i.inspection_date AS "Datum", c.part_number AS "Číslo'
-            ' dílu", i.filter_number AS "Filtr", i.entered_ccc_string AS "CCC'
-            ' kód", i.evaluation_result AS "Výsledek" FROM inspections i JOIN'
-            " components c ON i.component_id = c.id ORDER BY i.inspection_date"
-            " DESC;"
-        )
-        history_df = pd.read_sql(hist_q, conn)
-
-        if not history_df.empty:
-          st.dataframe(history_df, use_container_width=True, hide_index=True)
-        else:
-          st.info("Zatím nejsou uložena žádná měření.")
-      except Exception as err:
-        st.error(f"Chyba načítání historie: {err}")
-
-    conn.close()
-else:
-  st.info("Zadejte heslo k databázi v levém panelu.")
+            class_cols = st.columns
