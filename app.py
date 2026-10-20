@@ -42,10 +42,10 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# Správná adresa Supabase pooleru
+# Správný pooler a uživatel "postgres"
 DB_HOST = "aws-0-eu-central-1.pooler.supabase.com"
 DB_NAME = "postgres"
-DB_USER = "postgres.ywyicopmesmwtkjewbfk"
+DB_USER = "postgres"
 DB_PORT = "6543"
 
 st.sidebar.header("Připojení k databázi")
@@ -536,9 +536,9 @@ if DB_PASSWORD:
                   report_df,
                   failed,
                   note,
-                    fibers_count,
-                    metallic_ref_count,
-                    metallic_nonref_count,
+                  fibers_count,
+                  metallic_ref_count,
+                  metallic_nonref_count,
               )
               btn_col1, btn_col2 = st.columns(2)
               with btn_col1:
