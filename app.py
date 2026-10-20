@@ -80,11 +80,15 @@ def create_pdf_report(
       buffer, pagesize=A4, rightMargin=35, leftMargin=35, topMargin=35, bottomMargin=35
   )
 
-  try:
-    pdfmetrics.registerFont(TTFont("Arial", "Arial.ttf"))
-    font_name = "Arial"
-  except:
-    font_name = "Helvetica"
+  # Robustní načtení fontu (zkusí velká i malá písmena)
+  font_name = "Helvetica"
+  for font_filename in ["Arial.ttf", "arial.ttf"]:
+    try:
+      pdfmetrics.registerFont(TTFont("Arial", font_filename))
+      font_name = "Arial"
+      break
+    except:
+      continue
 
   styles = getSampleStyleSheet()
 
