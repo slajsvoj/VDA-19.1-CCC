@@ -45,7 +45,6 @@ st.markdown(
 
 def get_db_connection():
   try:
-    # OPRAVENO: aws-0-eu-west-1 místo aws-0-eu-central-1
     conn = psycopg2.connect(
         host="aws-0-eu-west-1.pooler.supabase.com",
         database="postgres",
@@ -81,10 +80,12 @@ def create_pdf_report(
       buffer, pagesize=A4, rightMargin=35, leftMargin=35, topMargin=35, bottomMargin=35
   )
 
+  # Načtení fontu Arial pro podporu české diakritiky
   try:
-    pdfmetrics.registerFont(TTFont("Arial", "/Library/Fonts/Arial.ttf"))
+    pdfmetrics.registerFont(TTFont("Arial", "Arial.ttf"))
     font_name = "Arial"
   except:
+    # Pokud soubor Arial.ttf chybí, použije se Helvetica (bude mít rozbité znaky, ale nespadne to)
     font_name = "Helvetica"
 
   styles = getSampleStyleSheet()
@@ -538,7 +539,7 @@ if conn:
                 st.rerun()
 
   elif menu_choice == "Přehled historie měření":
-    st.subheader("Historie měření")
+    st.subheader("Historie provedených měření")
     try:
       history_df = pd.read_sql(
           'SELECT i.inspection_date AS "Datum", c.part_number AS "Číslo'
@@ -548,8 +549,11 @@ if conn:
           " DESC;",
           conn,
       )
-      st.dataframe(history_df, use_container_width=True, hide_index=True)
+      if not history_df.empty:
+          st.dataframe(history_df, use_container_width=True, hide_index=True)
+      else:
+          st.info("Zatím nejsou uložena žádná měření.")
     except Exception as err:
-      st.error(f"Chyba: {err}")
+      st.error(f"Chyba načítání historie: {err}")
 
   conn.close()
