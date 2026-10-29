@@ -415,22 +415,26 @@ def show_standards_management(conn):
                     format_func=lambda x: f"{components_df[components_df['id'] == x]['part_number'].values[0]} - {components_df[components_df['id'] == x]['name'].values[0]}"
                 )
             with col2:
-                norm_name = st.text_input("Název podnikové/zákaznické normy (např. VDA 19.1 - Přísná)", placeholder="Zadejte název...")
+                norm_name = st.text_input("Název podnikové/zákaznické normy (např. testovacifirmaA)", value="testovacifirmaA")
 
             st.markdown("**Gravimetrický limit pro hmotnost zbytků**")
-            gravimetry_limit_input = st.number_input("Max. povolená zbytková hmotnost (mg)", min_value=0.0, value=0.0, step=0.1, help="Pokud se gravimetrie nesleduje, nechte 0.")
+            gravimetry_limit_input = st.number_input("Max. povolená zbytková hmotnost (mg)", min_value=0.0, value=0.50, step=0.1)
 
             st.markdown("**Maximální povolené limity frakcí z normy (kódové úrovně 0-24)**")
+            default_test_limits = {"B": "15", "C": "12", "D": "10", "E": "8", "F": "5", "G": "3", "H": "2", "I": "1", "J": "0", "K": "0", "L": "0", "M": "0", "N": "0"}
+            
             limit_inputs = {}
             cols_r1 = st.columns(7)
             for i in range(7):
-                limit_inputs[vda_classes[i]] = cols_r1[i].text_input(vda_classes[i], key=f"add_{vda_classes[i]}")
+                cls = vda_classes[i]
+                limit_inputs[cls] = cols_r1[i].text_input(cls, value=default_test_limits.get(cls, ""), key=f"add_{cls}")
             
             cols_r2 = st.columns(6)
             for i in range(7, 13):
-                limit_inputs[vda_classes[i]] = cols_r2[i - 7].text_input(vda_classes[i], key=f"add_{vda_classes[i]}")
+                cls = vda_classes[i]
+                limit_inputs[cls] = cols_r2[i - 7].text_input(cls, value=default_test_limits.get(cls, ""), key=f"add_{cls}")
 
-            std_note = st.text_area("Poznámka k normě")
+            std_note = st.text_area("Poznámka k normě", value="Testovací norma A s výchozími limity")
             submit_new_std = st.form_submit_button("Vytvořit a uložit normu", type="primary")
 
             if submit_new_std:
@@ -580,10 +584,12 @@ def show_evaluation_form(conn):
                 except:
                     pass
             else:
-                st.warning("Pro tento díl není definována norma v DB.")
-                std_id, std_name, gravimetry_limit_db = None, "Neznámá norma", None
+                st.warning("Pro tento díl není definována norma v DB, použijí se výchozí testovací limity.")
+                std_id, std_name, gravimetry_limit_db = None, "testovacifirmaA (výchozí)", 0.50
 
         db_limits_dict = {}
+        fallback_test_limits = {"B": 15, "C": 12, "D": 10, "E": 8, "F": 5, "G": 3, "H": 2, "I": 1, "J": 0, "K": 0, "L": 0, "M": 0, "N": 0}
+        
         if std_id:
             try:
                 lim_fetch = pd.read_sql(f"SELECT size_class, max_allowed_level FROM customer_standards WHERE id = '{std_id}'", conn)
@@ -591,6 +597,10 @@ def show_evaluation_form(conn):
                     db_limits_dict[row['size_class']] = int(row['max_allowed_level'])
             except:
                 pass
+        
+        # Pokud v DB nic není, použijeme fallback testovací limity
+        if not db_limits_dict:
+            db_limits_dict = fallback_test_limits
 
         st.markdown("---")
 
@@ -705,7 +715,7 @@ def show_evaluation_form(conn):
 
             st.markdown("---")
 
-            # --- SEKCE 5: Kvalitativní charakteristiky (Změněno na number_input pro přímé vepsání čísla) ---
+            # --- SEKCE 5: Kvalitativní charakteristiky ---
             st.markdown(f"**{t['sec_qual']}**")
             col_q1, col_q2, col_q3 = st.columns(3)
             with col_q1:
@@ -758,8 +768,8 @@ def show_evaluation_form(conn):
             sub_btn = st.form_submit_button(t["submit_eval"], type="primary")
 
         if sub_btn:
-            if not filt_no or not std_id:
-                st.error("Vyplňte číslo filtru a vyberte normu.")
+            if not filt_no:
+                st.error("Vyplňte číslo filtru.")
             else:
                 gating_errors = []
                 if blank_value_pct > 10.0:
@@ -787,10 +797,6 @@ def show_evaluation_form(conn):
                                 valid_levels[s_class] = val_int
 
                     generated_ccc_string = f"CCC {ref_unit_char}({' / '.join(ccc_parts)})" if valid_levels else "CCC neuveden"
-                    
-                    limits_df = pd.DataFrame()
-                    if enable_opt and std_id:
-                        limits_df = pd.read_sql(f"SELECT size_class, max_allowed_level FROM customer_standards WHERE id = '{std_id}'", conn)
 
                     failed, report = False, []
                     warning_triggered = False
@@ -802,15 +808,14 @@ def show_evaluation_form(conn):
                     if enable_opt:
                         for s_class in vda_classes:
                             actual_val = valid_levels.get(s_class, 0)
-                            lim_row = limits_df[limits_df["size_class"] == s_class] if not limits_df.empty else pd.DataFrame()
-                            max_alw = int(lim_row.iloc[0]["max_allowed_level"]) if not lim_row.empty else 0
+                            max_alw = int(db_limits_dict.get(s_class, 0))
                             
                             if profile_type == ProfileType.VDA_19_1:
-                                status = "NOK" if not lim_row.empty and actual_val > max_alw else "OK"
+                                status = "NOK" if actual_val > max_alw else "OK"
                                 if status == "NOK":
                                     failed = True
                                 else:
-                                    if not lim_row.empty and actual_val >= max_alw * 0.8:
+                                    if max_alw > 0 and actual_val >= max_alw * 0.8:
                                         status = "VAROVÁNÍ"
                                         warning_triggered = True
                                     else:
@@ -849,7 +854,7 @@ def show_evaluation_form(conn):
                     cur = conn.cursor()
                     cur.execute(
                         "INSERT INTO inspections (component_id, standard_id, inspector_name, filter_number, filter_lot_number, entered_ccc_string, evaluation_result, note) VALUES (%s, %s, %s, %s, %s, %s, %s, %s) RETURNING id;",
-                        (c_id, std_id, insp_name, filt_no, filt_lot, generated_ccc_string, conformity_text, note),
+                        (c_id, std_id if std_id else None, insp_name, filt_no, filt_lot, generated_ccc_string, conformity_text, note),
                     )
                     ins_id = cur.fetchone()[0]
                     if enable_opt:
