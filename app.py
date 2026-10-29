@@ -635,7 +635,8 @@ def show_evaluation_form(conn):
         with col_opt3:
             enable_opt = st.checkbox("4. Optická analýza", value=True, key="chk_p4")
         with col_opt4:
-            enable_adv = st.checkbox("6. Pokročilé metriky", value=False, key="chk_p6")
+            # ZMĚNA: Blok 6 (pokročilé metriky) je nyní automaticky zaškrtnutý
+            enable_adv = st.checkbox("6. Pokročilé metriky", value=True, key="chk_p6")
 
         st.markdown("---")
 
