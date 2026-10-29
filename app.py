@@ -689,7 +689,6 @@ def show_evaluation_form(conn):
 
             st.markdown("---")
 
-            # --- ZMĚNA ZDE: SEKCE 4 - OPTICKÁ ANALÝZA PŘESNĚ POD SEBOU ---
             st.markdown(f"**{t['sec_opt']}**")
             vda_classes = ["B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N"]
             size_ranges_desc = {
@@ -724,7 +723,6 @@ def show_evaluation_form(conn):
 
             st.markdown("---")
 
-            # --- SEKCE 5: Kvalitativní charakteristiky ---
             st.markdown(f"**{t['sec_qual']}**")
             col_q1, col_q2, col_q3 = st.columns(3)
             with col_q1:
@@ -737,7 +735,6 @@ def show_evaluation_form(conn):
                 metallic_nonref_count = st.number_input(t["met_nonref"], min_value=0, value=0, step=1)
                 filter_occupancy_pct = st.number_input(t["filt_occ"], min_value=0.0, value=3.0, step=0.5)
 
-            # --- SEKCE 6: Pokročilé vyhodnotitelné parametry ---
             st.markdown("---")
             st.markdown(f"**{t['sec_adv']}**")
             
