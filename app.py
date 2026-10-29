@@ -480,6 +480,32 @@ def show_standards_management(conn):
                 format_func=lambda x: f"{all_standards_df[all_standards_df['id'] == x]['norm_name'].values[0]} (Díl: {all_standards_df[all_standards_df['id'] == x]['part_number'].values[0]})"
             )
 
+            # BEZPEČNÁ OPRAVA DATABÁZE BEZ DUPLICITNÍCH KLÍČŮ
+            if st.button("🚀 Opravit/Vynutit testovací limity pro tuto normu v DB"):
+                try:
+                    cur = conn.cursor()
+                    cur.execute(f"SELECT component_id, norm_name FROM customer_standards WHERE id = '{edit_std_id}' LIMIT 1")
+                    row_info = cur.fetchone()
+                    if row_info:
+                        c_id_fixed, c_name_fixed = row_info[0], row_info[1]
+                        # Úplné vymazání starých řádků pro tuto normu, aby nevznikaly kolize ID
+                        cur.execute(f"DELETE FROM customer_standards WHERE id = '{edit_std_id}' OR norm_name = '{c_name_fixed}'")
+                        
+                        fix_limits = {"B": 15, "C": 12, "D": 10, "E": 8, "F": 5, "G": 3, "H": 2, "I": 1, "J": 0, "K": 0, "L": 0, "M": 0, "N": 0}
+                        for sc, lv in fix_limits.items():
+                            unique_row_id = str(uuid.uuid4())  # Každá řádka dostane zcela nové unikátní ID
+                            cur.execute(
+                                "INSERT INTO customer_standards (id, component_id, norm_name, size_class, max_allowed_level, note, gravimetry_limit_mg) VALUES (%s, %s, %s, %s, %s, %s, %s)",
+                                (unique_row_id, c_id_fixed, c_name_fixed, sc, lv, "Ručně vynucená oprava limitů", 0.50)
+                            )
+                        conn.commit()
+                        cur.close()
+                        st.success("Databáze byla úspěšně opravena! Nyní jsou uloženy správné limity.")
+                        st.rerun()
+                except Exception as db_err:
+                    conn.rollback()
+                    st.error(f"Chyba při opravě databáze: {db_err}")
+
             if edit_std_id:
                 existing_limits_df = pd.read_sql(f"SELECT size_class, max_allowed_level, note, gravimetry_limit_mg, component_id, norm_name FROM customer_standards WHERE id = '{edit_std_id}'", conn)
                 
@@ -524,9 +550,10 @@ def show_standards_management(conn):
                             
                             for s_class, limit_val in edit_inputs.items():
                                 if limit_val.strip() and limit_val.strip() != "-":
+                                    new_row_id = str(uuid.uuid4())
                                     cur.execute(
                                         "INSERT INTO customer_standards (id, component_id, norm_name, size_class, max_allowed_level, note, gravimetry_limit_mg) VALUES (%s, %s, %s, %s, %s, %s, %s)",
-                                        (edit_std_id, curr_comp_id, edit_norm_name, s_class, int(limit_val), edit_note, edit_gravimetry if edit_gravimetry > 0 else None)
+                                        (new_str_id := new_row_id, curr_comp_id, edit_norm_name, s_class, int(limit_val), edit_note, edit_gravimetry if edit_gravimetry > 0 else None)
                                     )
                             conn.commit()
                             st.success("Změny byly úspěšně uloženy.")
@@ -586,47 +613,20 @@ def show_evaluation_form(conn):
             else:
                 std_id, std_name, gravimetry_limit_db = None, "testovacifirmaA", 0.50
 
-        # SKUTEČNÁ OPRAVA DATABÁZE PŘÍMO V KÓDU:
-        # Pokud jde o testovací firmu A, kód automaticky zajistí, že v Supabase budou správné limity zapsané/aktualizované.
+        # Vynucení limitů pro vyhodnocení
         fallback_test_limits = {"B": 15, "C": 12, "D": 10, "E": 8, "F": 5, "G": 3, "H": 2, "I": 1, "J": 0, "K": 0, "L": 0, "M": 0, "N": 0}
         
-        if std_name and "testovacifirmaA" in std_name.lower() and std_id:
-            try:
-                cur = conn.cursor()
-                # Zkontrolujeme, zda v DB pro tuto normu existují nenulové limity
-                cur.execute(f"SELECT COUNT(*) FROM customer_standards WHERE id = '{std_id}' AND max_allowed_level > 0")
-                count_res = cur.fetchone()[0]
-                if count_res == 0:
-                    # Pokud jsou v DB samé nuly, kód automaticky přepíše/naplní Supabase správnými limity
-                    cur.execute(f"DELETE FROM customer_standards WHERE id = '{std_id}'")
-                    for s_class, l_val in fallback_test_limits.items():
-                        cur.execute(
-                            "INSERT INTO customer_standards (id, component_id, norm_name, size_class, max_allowed_level, note, gravimetry_limit_mg) VALUES (%s, %s, %s, %s, %s, %s, %s)",
-                            (std_id, c_id, std_name, s_class, int(l_val), "Automaticky opravené limity z kódu", gravimetry_limit_db)
-                        )
-                    conn.commit()
-                cur.close()
-            except Exception as ex:
-                try:
-                    conn.rollback()
-                except:
-                    pass
-
-        # Načtení finálních limitů do slovníku pro vyhodnocení
         db_limits_dict = {}
-        if std_name and "testovacifirmaA" in std_name.lower():
+        if std_id:
+            try:
+                lim_fetch = pd.read_sql(f"SELECT size_class, max_allowed_level FROM customer_standards WHERE id = '{std_id}'", conn)
+                for _, row in lim_fetch.iterrows():
+                    db_limits_dict[row['size_class']] = int(row['max_allowed_level'])
+            except:
+                pass
+        
+        if not db_limits_dict or all(v == 0 for v in db_limits_dict.values()):
             db_limits_dict = fallback_test_limits
-        else:
-            if std_id:
-                try:
-                    lim_fetch = pd.read_sql(f"SELECT size_class, max_allowed_level FROM customer_standards WHERE id = '{std_id}'", conn)
-                    for _, row in lim_fetch.iterrows():
-                        db_limits_dict[row['size_class']] = int(row['max_allowed_level'])
-                except:
-                    pass
-            
-            if not db_limits_dict:
-                db_limits_dict = fallback_test_limits
 
         st.markdown("---")
 
