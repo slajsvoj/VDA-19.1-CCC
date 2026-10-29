@@ -94,7 +94,7 @@ translations = {
         "l_max_desc": "Maximální délka největší detekované částice.",
         "aspect_ratio": "Prahová hodnota poměru stran (b/L)",
         "aspect_ratio_desc": "Poměr šířky a délky pro detekci třísek.",
-        "metallic_ratio": "Podíl kovových vs. nekovových částic",
+        "metallic_ratio": "Podíl kovových částic [%]",
         "cleanliness_class": "Kód čistoty (ISO 16232 / CCC kód)",
         "specific_surface": "Plošná hustota kontaminace [mg/m²]",
         "recovery_rate": "Účinnost extrakce (Deklinační faktor / Recovery %)",
@@ -151,7 +151,7 @@ translations = {
         "l_max_desc": "Maximum length of the largest detected particle.",
         "aspect_ratio": "Aspect Ratio Threshold (b/L)",
         "aspect_ratio_desc": "Width-to-length ratio.",
-        "metallic_ratio": "Metallic vs. Non-Metallic Particle Ratio",
+        "metallic_ratio": "Metallic Particles Share [%]",
         "cleanliness_class": "Cleanliness Class (ISO 16232 / CCC Code)",
         "specific_surface": "Specific Surface Contamination [mg/m²]",
         "recovery_rate": "Extraction Efficiency / Decline Factor (Recovery %)",
@@ -724,20 +724,20 @@ def show_evaluation_form(conn):
                 metallic_nonref_count = st.number_input(t["met_nonref"], min_value=0, value=0, step=1)
                 filter_occupancy_pct = st.number_input(t["filt_occ"], min_value=0.0, value=3.0)
 
-            # --- SEKCE 6: Pokročilé vyhodnotitelné parametry ---
+            # --- SEKCE 6: Pokročilé vyhodnotitelné parametry (PŘEDĚLANO NA ČÍSELNÁ OKNA) ---
             st.markdown("---")
             st.markdown(f"**{t['sec_adv']}**")
             
             l_max_val, aspect_ratio_val, metallic_percentage, recovery_rate_val, specific_surface_val, cleanliness_class_code = 0.0, 0.1, 0.0, 92.5, 0.0, ""
             col_ad1, col_ad2, col_ad3 = st.columns(3)
             with col_ad1:
-                l_max_val = st.number_input(t["l_max"], min_value=0.0, value=450.0, help=t["l_max_desc"], disabled=not enable_adv)
+                l_max_val = st.number_input(t["l_max"], min_value=0.0, value=450.0, step=10.0, help=t["l_max_desc"], disabled=not enable_adv)
                 aspect_ratio_val = st.number_input(t["aspect_ratio"], min_value=0.0, max_value=1.0, value=0.1, step=0.01, help=t["aspect_ratio_desc"], disabled=not enable_adv)
             with col_ad2:
-                metallic_percentage = st.slider("Podíl kovových částic [%]", min_value=0.0, max_value=100.0, value=2.5, disabled=not enable_adv)
-                recovery_rate_val = st.slider(t["recovery_rate"], min_value=0.0, max_value=100.0, value=92.5, disabled=not enable_adv)
+                metallic_percentage = st.number_input(t["metallic_ratio"], min_value=0.0, max_value=100.0, value=2.5, step=0.1, disabled=not enable_adv)
+                recovery_rate_val = st.number_input(t["recovery_rate"], min_value=0.0, max_value=100.0, value=92.5, step=0.5, disabled=not enable_adv)
             with col_ad3:
-                specific_surface_val = st.number_input(t["specific_surface"], min_value=0.0, value=round(residual_mass / (wetted_area / 10000.0) if wetted_area > 0 else 0.0, 2), disabled=not enable_adv)
+                specific_surface_val = st.number_input(t["specific_surface"], min_value=0.0, value=round(residual_mass / (wetted_area / 10000.0) if wetted_area > 0 else 0.0, 2), step=0.1, disabled=not enable_adv)
                 cleanliness_class_code = st.text_input(t["cleanliness_class"], value="CCC Code: E / 12 / 3", disabled=not enable_adv)
 
             st.markdown("---")
