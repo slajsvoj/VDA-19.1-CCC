@@ -459,8 +459,10 @@ def show_standards_management(conn):
             col_o1, col_o2, col_o3 = st.columns(3)
             with col_o1:
                 add_fibers = st.text_input("Max. počet vláken (Fibers)", value="")
+                add_bl = st.text_input("Limitní poměr b/L", value="")
             with col_o2:
                 add_metallic = st.text_input("Max. kovových částic (Metallic)", value="")
+                add_surface = st.text_input("Max. plošná hustota [mg/m²]", value="")
             with col_o3:
                 add_lmax = st.text_input("Max. rozměr částice L_max [µm]", value="")
 
@@ -493,13 +495,15 @@ def show_standards_management(conn):
                         if add_fibers.strip(): all_limits_to_save["FIBERS"] = add_fibers
                         if add_metallic.strip(): all_limits_to_save["METALLIC"] = add_metallic
                         if add_lmax.strip(): all_limits_to_save["L_MAX"] = add_lmax
+                        if add_bl.strip(): all_limits_to_save["B_L_RATIO"] = add_bl
+                        if add_surface.strip(): all_limits_to_save["SPEC_SURFACE"] = add_surface
 
                         for s_class, limit_val in all_limits_to_save.items():
                             if limit_val.strip() and limit_val.strip() != "-":
                                 new_row_id = str(uuid.uuid4())
                                 cur.execute(
                                     "INSERT INTO customer_standards (id, component_id, norm_name, size_class, max_allowed_level, note, gravimetry_limit_mg) VALUES (%s, %s, %s, %s, %s, %s, %s)",
-                                    (new_row_id, selected_comp_id, norm_name, s_class, int(limit_val), std_note, gravimetry_limit_input if gravimetry_limit_input > 0 else None)
+                                    (new_row_id, selected_comp_id, norm_name, s_class, float(limit_val), std_note, gravimetry_limit_input if gravimetry_limit_input > 0 else None)
                                 )
                                 inserted_any = True
                                 
@@ -540,7 +544,8 @@ def show_standards_management(conn):
 
                 current_class_limits = {}
                 for _, row in existing_limits_df.iterrows():
-                    current_class_limits[row['size_class']] = str(int(row['max_allowed_level']))
+                    val = row['max_allowed_level']
+                    current_class_limits[row['size_class']] = str(int(val)) if val.is_integer() else str(val)
 
                 st.markdown(f"**Upravit parametry normy**")
                 with st.form("edit_standard_form"):
@@ -553,8 +558,10 @@ def show_standards_management(conn):
                     col_e_o1, col_e_o2, col_e_o3 = st.columns(3)
                     with col_e_o1:
                         edit_fibers = st.text_input("Max. počet vláken (Fibers)", value=current_class_limits.get("FIBERS", ""))
+                        edit_bl = st.text_input("Limitní poměr b/L", value=current_class_limits.get("B_L_RATIO", ""))
                     with col_e_o2:
                         edit_metallic = st.text_input("Max. kovových částic (Metallic)", value=current_class_limits.get("METALLIC", ""))
+                        edit_surface = st.text_input("Max. plošná hustota [mg/m²]", value=current_class_limits.get("SPEC_SURFACE", ""))
                     with col_e_o3:
                         edit_lmax = st.text_input("Max. rozměr částice L_max [µm]", value=current_class_limits.get("L_MAX", ""))
 
@@ -587,13 +594,15 @@ def show_standards_management(conn):
                             if edit_fibers.strip(): all_edit_limits["FIBERS"] = edit_fibers
                             if edit_metallic.strip(): all_edit_limits["METALLIC"] = edit_metallic
                             if edit_lmax.strip(): all_edit_limits["L_MAX"] = edit_lmax
+                            if edit_bl.strip(): all_edit_limits["B_L_RATIO"] = edit_bl
+                            if edit_surface.strip(): all_edit_limits["SPEC_SURFACE"] = edit_surface
 
                             for s_class, limit_val in all_edit_limits.items():
                                 if limit_val.strip() and limit_val.strip() != "-":
                                     new_row_id = str(uuid.uuid4())
                                     cur.execute(
                                         "INSERT INTO customer_standards (id, component_id, norm_name, size_class, max_allowed_level, note, gravimetry_limit_mg) VALUES (%s, %s, %s, %s, %s, %s, %s)",
-                                        (new_row_id, curr_comp_id, edit_norm_name, s_class, int(limit_val), edit_note, edit_gravimetry if edit_gravimetry > 0 else None)
+                                        (new_row_id, curr_comp_id, edit_norm_name, s_class, float(limit_val), edit_note, edit_gravimetry if edit_gravimetry > 0 else None)
                                     )
                             conn.commit()
                             st.success("Změny byly úspěšně uloženy.")
@@ -658,13 +667,19 @@ def show_evaluation_form(conn):
             try:
                 lim_fetch = pd.read_sql(f"SELECT size_class, max_allowed_level FROM customer_standards WHERE id = '{std_id}' OR norm_name = '{std_name}'", conn)
                 for _, row in lim_fetch.iterrows():
-                    db_limits_dict[str(row['size_class']).strip()] = int(row['max_allowed_level'])
+                    val = row['max_allowed_level']
+                    if str(row['size_class']).strip() in ["FIBERS", "METALLIC", "L_MAX", "B_L_RATIO", "SPEC_SURFACE"]:
+                        db_limits_dict[str(row['size_class']).strip()] = float(val)
+                    else:
+                        db_limits_dict[str(row['size_class']).strip()] = int(val)
             except Exception as e:
                 pass
 
         limit_fibers = db_limits_dict.get('FIBERS', None)
         limit_metallic = db_limits_dict.get('METALLIC', None)
         limit_lmax = db_limits_dict.get('L_MAX', None)
+        limit_bl = db_limits_dict.get('B_L_RATIO', None)
+        limit_surface = db_limits_dict.get('SPEC_SURFACE', None)
 
         fallback_test_limits = {"B": 15, "C": 12, "D": 10, "E": 8, "F": 5, "G": 3, "H": 2, "I": 1, "J": 0, "K": 0, "L": 0, "M": 0, "N": 0}
         for k, v in fallback_test_limits.items():
@@ -790,12 +805,12 @@ def show_evaluation_form(conn):
             col_ad1, col_ad2, col_ad3 = st.columns(3)
             with col_ad1:
                 l_max_val = st.number_input(t["l_max"], min_value=0.0, value=450.0, step=10.0, disabled=not enable_adv, help=f"Limit z normy: {limit_lmax} µm" if limit_lmax is not None else None)
-                aspect_ratio_val = st.number_input(t["aspect_ratio"], min_value=0.0, max_value=1.0, value=0.1, step=0.01, disabled=not enable_adv)
+                aspect_ratio_val = st.number_input(t["aspect_ratio"], min_value=0.0, max_value=10.0, value=0.1, step=0.01, disabled=not enable_adv, help=f"Limit z normy: {limit_bl}" if limit_bl is not None else None)
             with col_ad2:
                 metallic_percentage = st.number_input(t["metallic_ratio"], min_value=0.0, max_value=100.0, value=2.5, step=0.1, disabled=not enable_adv)
                 recovery_rate_val = st.number_input(t["recovery_rate"], min_value=0.0, max_value=100.0, value=92.5, step=0.5, disabled=not enable_adv)
             with col_ad3:
-                specific_surface_val = st.number_input(t["specific_surface"], min_value=0.0, value=round(residual_mass / (wetted_area / 10000.0) if wetted_area > 0 else 0.0, 2), step=0.1, disabled=not enable_adv)
+                specific_surface_val = st.number_input(t["specific_surface"], min_value=0.0, value=round(residual_mass / (wetted_area / 10000.0) if wetted_area > 0 else 0.0, 2), step=0.1, disabled=not enable_adv, help=f"Limit z normy: {limit_surface} mg/m²" if limit_surface is not None else None)
                 cleanliness_class_code = st.text_input("CCC Code string", value="CCC A(B 00/C 12/D15/E3/G34)", disabled=not enable_adv)
 
             st.markdown("---")
@@ -859,7 +874,6 @@ def show_evaluation_form(conn):
                         failed = True
                         st.error(f"Gravimetrie překročena: Naměřená zbytková hmotnost {residual_mass:.4f} mg (Limit normy: {gravimetry_limit_db} mg)")
 
-                    # Kontrola nově přidaných limitů
                     if limit_fibers is not None and fibers_count > limit_fibers:
                         failed = True
                         st.error(f"Překročen limit pro Vlákna: naměřeno {fibers_count} (Limit normy: {limit_fibers})")
@@ -868,9 +882,18 @@ def show_evaluation_form(conn):
                         failed = True
                         st.error(f"Překročen limit pro Kovové částice: naměřeno {metallic_ref_count} (Limit normy: {limit_metallic})")
                         
-                    if limit_lmax is not None and enable_adv and l_max_val > limit_lmax:
-                        failed = True
-                        st.error(f"Překročen limit pro L_max: naměřeno {l_max_val} µm (Limit normy: {limit_lmax} µm)")
+                    if enable_adv:
+                        if limit_lmax is not None and l_max_val > limit_lmax:
+                            failed = True
+                            st.error(f"Překročen limit pro L_max: naměřeno {l_max_val} µm (Limit normy: {limit_lmax} µm)")
+                        
+                        if limit_bl is not None and aspect_ratio_val > limit_bl:
+                            failed = True
+                            st.error(f"Překročen limit pro poměr b/L: naměřeno {aspect_ratio_val} (Limit normy: {limit_bl})")
+                            
+                        if limit_surface is not None and specific_surface_val > limit_surface:
+                            failed = True
+                            st.error(f"Překročen limit pro plošnou hustotu kontaminace: naměřeno {specific_surface_val} mg/m² (Limit normy: {limit_surface} mg/m²)")
 
                     if enable_opt:
                         for s_class in vda_classes:
