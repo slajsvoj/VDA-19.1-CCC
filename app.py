@@ -46,7 +46,6 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# --- JAZYKOVÉ SLOVNÍKY (VDA 19.1 & Advanced Parameters) ---
 translations = {
     "cs": {
         "title": "Systém vyhodnocení čistoty (VDA 19.1)",
@@ -584,7 +583,6 @@ def show_evaluation_form(conn):
                 st.warning("Pro tento díl není definován limit v DB.")
                 std_id, std_name, gravimetry_limit_db = None, "Neznámá norma", None
 
-        # Načtení limitů normy pro okamžitou živou validaci
         db_limits_dict = {}
         if std_id:
             try:
@@ -615,7 +613,7 @@ def show_evaluation_form(conn):
 
             st.markdown("---")
             
-            # --- SEKCE 2: Parametry dílu a extrakce (S PŘEPÍNAČEM AKTIVACE) ---
+            # --- SEKCE 2: Parametry dílu a extrakce ---
             enable_part_ext = st.checkbox(t["sec_part"], value=True)
             wetted_area, extraction_method, wetted_volume, extraction_medium, filter_material, filter_pore_size = 1000.0, "Tlakový oplach", 0.0, "Testovací benzín", "PET", 5.0
             
@@ -637,7 +635,7 @@ def show_evaluation_form(conn):
 
             st.markdown("---")
 
-            # --- SEKCE 3: Gravimetrická analýza (S PŘEPÍNAČEM AKTIVACE) ---
+            # --- SEKCE 3: Gravimetrická analýza ---
             enable_grav = st.checkbox(t["sec_grav"], value=True)
             residual_mass = 0.0
             if gravimetry_limit_db and enable_grav:
@@ -654,7 +652,7 @@ def show_evaluation_form(conn):
 
             st.markdown("---")
 
-            # --- SEKCE 4: Optická analýza (S PŘEPÍNAČEM AKTIVACE A ŽIVÝM BAREVNÝM VÝSTUPEM) ---
+            # --- SEKCE 4: Optická analýza (s živou zpětnou vazbou) ---
             enable_opt = st.checkbox(t["sec_opt"], value=True)
             vda_classes = ["B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N"]
             entered_levels = {}
@@ -664,7 +662,6 @@ def show_evaluation_form(conn):
                 s_class = vda_classes[i]
                 limit_val = db_limits_dict.get(s_class, None)
                 
-                # Zjištění hodnoty pro okamžitou barevnou indikaci
                 raw_input = cols_row1[i].text_input(s_class, value="", placeholder="-", key=f"cls_{s_class}", disabled=not enable_opt)
                 entered_levels[s_class] = raw_input
                 
@@ -700,7 +697,7 @@ def show_evaluation_form(conn):
 
             st.markdown("---")
 
-            # --- SEKCE 5: Kvalitativní charakteristiky (S PŘEPÍNAČEM AKTIVACE) ---
+            # --- SEKCE 5: Kvalitativní charakteristiky ---
             enable_qual = st.checkbox(t["sec_qual"], value=True)
             col_q1, col_q2, col_q3 = st.columns(3)
             with col_q1:
@@ -713,7 +710,7 @@ def show_evaluation_form(conn):
                 metallic_nonref_count = st.number_input(t["met_nonref"], min_value=0, value=0, step=1, disabled=not enable_qual)
                 filter_occupancy_pct = st.number_input(t["filt_occ"], min_value=0.0, value=3.0, disabled=not enable_qual)
 
-            # --- SEKCE 6: Pokročilé vyhodnotitelné parametry (S PŘEPÍNAČEM AKTIVACE) ---
+            # --- SEKCE 6: Pokročilé vyhodnotitelné parametry ---
             st.markdown("---")
             enable_adv = st.checkbox(t["sec_adv"], value=False)
             
