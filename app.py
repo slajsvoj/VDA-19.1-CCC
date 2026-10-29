@@ -415,7 +415,7 @@ def show_standards_management(conn):
                     format_func=lambda x: f"{components_df[components_df['id'] == x]['part_number'].values[0]} - {components_df[components_df['id'] == x]['name'].values[0]}"
                 )
             with col2:
-                norm_name = st.text_input("Název podnikové/zákaznické normy (např. testovacifirmaA)", value="testovacifirmaA")
+                norm_name = st.text_input("Název podnikové/zákaznické normy", value="testovacifirmaA")
 
             st.markdown("**Gravimetrický limit pro hmotnost zbytků**")
             gravimetry_limit_input = st.number_input("Max. povolená zbytková hmotnost (mg)", min_value=0.0, value=0.50, step=0.1)
@@ -576,7 +576,7 @@ def show_evaluation_form(conn):
                 std_id = standards_df.loc[selected_std_idx, "id"]
                 std_name = standards_df.loc[selected_std_idx, "norm_name"]
                 
-                gravimetry_limit_db = None
+                gravimetry_limit_db = 0.50
                 try:
                     grav_df = pd.read_sql(f"SELECT gravimetry_limit_mg FROM customer_standards WHERE id = '{std_id}' LIMIT 1", conn)
                     if not grav_df.empty and pd.notna(grav_df.iloc[0]['gravimetry_limit_mg']):
@@ -584,23 +584,25 @@ def show_evaluation_form(conn):
                 except:
                     pass
             else:
-                st.warning("Pro tento díl není definována norma v DB, použijí se výchozí testovací limity.")
-                std_id, std_name, gravimetry_limit_db = None, "testovacifirmaA (výchozí)", 0.50
+                std_id, std_name, gravimetry_limit_db = None, "testovacifirmaA", 0.50
 
         db_limits_dict = {}
+        # Garance výchozích limitů pro testovací normu A, aby tam nikdy nebyly nuly
         fallback_test_limits = {"B": 15, "C": 12, "D": 10, "E": 8, "F": 5, "G": 3, "H": 2, "I": 1, "J": 0, "K": 0, "L": 0, "M": 0, "N": 0}
         
-        if std_id:
-            try:
-                lim_fetch = pd.read_sql(f"SELECT size_class, max_allowed_level FROM customer_standards WHERE id = '{std_id}'", conn)
-                for _, row in lim_fetch.iterrows():
-                    db_limits_dict[row['size_class']] = int(row['max_allowed_level'])
-            except:
-                pass
-        
-        # Pokud v DB nic není, použijeme fallback testovací limity
-        if not db_limits_dict:
+        if std_name and "testovacifirmaA" in std_name.lower():
             db_limits_dict = fallback_test_limits
+        else:
+            if std_id:
+                try:
+                    lim_fetch = pd.read_sql(f"SELECT size_class, max_allowed_level FROM customer_standards WHERE id = '{std_id}'", conn)
+                    for _, row in lim_fetch.iterrows():
+                        db_limits_dict[row['size_class']] = int(row['max_allowed_level'])
+                except:
+                    pass
+            
+            if not db_limits_dict:
+                db_limits_dict = fallback_test_limits
 
         st.markdown("---")
 
