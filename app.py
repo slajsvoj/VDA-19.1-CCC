@@ -228,52 +228,52 @@ def create_pdf_report(
 ):
     buffer = io.BytesIO()
     doc = SimpleDocTemplate(
-        buffer, pagesize=A4, rightMargin=35, leftMargin=35, topMargin=35, bottomMargin=35
+        buffer, pagesize=A4, rightMargin=30, leftMargin=30, topMargin=30, bottomMargin=30
     )
 
     font_name = "Helvetica"
     styles = getSampleStyleSheet()
 
-    title_style = ParagraphStyle("DocTitle", fontName=font_name, fontSize=15, leading=18, textColor=colors.HexColor("#111827"), alignment=1, spaceAfter=4)
-    subtitle_style = ParagraphStyle("DocSubtitle", fontName=font_name, fontSize=9, leading=13, textColor=colors.HexColor("#4b5563"), alignment=1, spaceAfter=14)
-    cell_style = ParagraphStyle("TableCell", fontName=font_name, fontSize=8.5, leading=12, textColor=colors.HexColor("#1f2937"))
-    cell_bold = ParagraphStyle("TableCellBold", fontName=font_name, fontSize=8.5, leading=12, textColor=colors.HexColor("#111827"))
-    cell_header = ParagraphStyle("TableHeader", fontName=font_name, fontSize=8.5, leading=12, textColor=colors.whitesmoke)
-    ccc_style = ParagraphStyle("CCCStyle", fontName=font_name, fontSize=11, leading=15, textColor=colors.HexColor("#1e3a8a"), alignment=1)
+    title_style = ParagraphStyle("DocTitle", fontName=font_name, fontSize=13, leading=16, textColor=colors.HexColor("#111827"), alignment=1, spaceAfter=4)
+    subtitle_style = ParagraphStyle("DocSubtitle", fontName=font_name, fontSize=8, leading=11, textColor=colors.HexColor("#4b5563"), alignment=1, spaceAfter=10)
+    cell_style = ParagraphStyle("TableCell", fontName=font_name, fontSize=8, leading=11, textColor=colors.HexColor("#1f2937"))
+    cell_bold = ParagraphStyle("TableCellBold", fontName=font_name, fontSize=8, leading=11, textColor=colors.HexColor("#111827"))
+    cell_header = ParagraphStyle("TableHeader", fontName=font_name, fontSize=8, leading=11, textColor=colors.whitesmoke)
+    ccc_style = ParagraphStyle("CCCStyle", fontName=font_name, fontSize=9.5, leading=13, textColor=colors.HexColor("#1e3a8a"), alignment=1)
 
     elements = [
-        Paragraph("SOUHRNNÝ PROTOKOL KONTROLY ČISTOTY / CLEANLINESS REPORT EVALUATION", title_style),
-        Paragraph("Porovnání naměřených hodnot z reportu s podnikovou normou (VDA 19.1 / ISO 16232)", subtitle_style),
+        Paragraph("SOUHRNNY PROTOKOL KONTROLY CISTOTY / CLEANLINESS REPORT EVALUATION", title_style),
+        Paragraph("Porovnani namerenych hodnot z reportu s podnikovou normou (VDA 19.1 / ISO 16232)", subtitle_style),
     ]
 
     current_date = datetime.date.today().strftime("%d.%m.%Y")
     meta_data = [
-        [Paragraph("<b>Označení dílu:</b>", cell_style), Paragraph(comp_name, cell_style), Paragraph("<b>Datum vyhodnocení:</b>", cell_style), Paragraph(current_date, cell_style)],
-        [Paragraph("<b>Podniková norma:</b>", cell_style), Paragraph(std_name, cell_style), Paragraph("<b>Zadal z reportu:</b>", cell_style), Paragraph(inspector_name, cell_style)],
-        [Paragraph("<b>Číslo filtru:</b>", cell_style), Paragraph(filter_no, cell_style), Paragraph("<b>Šarže filtru:</b>", cell_style), Paragraph(filter_lot if filter_lot else "-", cell_style)],
-        [Paragraph("<b>Referenční jednotka:</b>", cell_style), Paragraph(ref_unit, cell_style), Paragraph("<b>Zbytková hmotnost M (z váhy):</b>", cell_style), Paragraph(f"{grav_data.get('residual_mass', 0):.4f} mg", cell_style)],
+        [Paragraph("<b>Oznaceni dilu:</b>", cell_style), Paragraph(comp_name, cell_style), Paragraph("<b>Datum vyhodnoceni:</b>", cell_style), Paragraph(current_date, cell_style)],
+        [Paragraph("<b>Podnikova norma:</b>", cell_style), Paragraph(std_name, cell_style), Paragraph("<b>Zadal z reportu:</b>", cell_style), Paragraph(inspector_name, cell_style)],
+        [Paragraph("<b>Cislo filtru:</b>", cell_style), Paragraph(filter_no, cell_style), Paragraph("<b>Sarze filtru:</b>", cell_style), Paragraph(filter_lot if filter_lot else "-", cell_style)],
+        [Paragraph("<b>Referencni jednotka:</b>", cell_style), Paragraph(ref_unit, cell_style), Paragraph("<b>Zbytková hmotnost M:</b>", cell_style), Paragraph(f"{grav_data.get('residual_mass', 0):.4f} mg", cell_style)],
     ]
     
     if grav_data.get('gravimetry_limit'):
         meta_data.append([Paragraph("<b>Limit gravimetrie:</b>", cell_style), Paragraph(f"{grav_data.get('gravimetry_limit'):.4f} mg", cell_style), Paragraph("", cell_style), Paragraph("", cell_style)])
 
-    meta_table = Table(meta_data, colWidths=[110, 160, 100, 170])
+    meta_table = Table(meta_data, colWidths=[110, 160, 100, 184])
     meta_table.setStyle(
         TableStyle([
             ("BACKGROUND", (0, 0), (-1, -1), colors.HexColor("#f8fafc")),
             ("BOX", (0, 0), (-1, -1), 0.75, colors.HexColor("#cbd5e1")),
             ("INNERGRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#e2e8f0")),
-            ("TOPPADDING", (0, 0), (-1, -1), 5),
-            ("BOTTOMPADDING", (0, 0), (-1, -1), 5),
-            ("LEFTPADDING", (0, 0), (-1, -1), 8),
-            ("RIGHTPADDING", (0, 0), (-1, -1), 8),
+            ("TOPPADDING", (0, 0), (-1, -1), 4),
+            ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
+            ("LEFTPADDING", (0, 0), (-1, -1), 6),
+            ("RIGHTPADDING", (0, 0), (-1, -1), 6),
             ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
         ])
     )
     elements.append(meta_table)
-    elements.append(Spacer(1, 10))
+    elements.append(Spacer(1, 8))
 
-    ccc_table = Table([[Paragraph(f"<b>CCC kód:</b> &nbsp;&nbsp; {ccc_string}", ccc_style)]], colWidths=[540], rowHeights=[28])
+    ccc_table = Table([[Paragraph(f"<b>CCC kod:</b> &nbsp;&nbsp; {ccc_string}", ccc_style)]], colWidths=[554], rowHeights=[24])
     ccc_table.setStyle(
         TableStyle([
             ("BACKGROUND", (0, 0), (-1, -1), colors.HexColor("#eff6ff")),
@@ -283,7 +283,7 @@ def create_pdf_report(
         ])
     )
     elements.append(ccc_table)
-    elements.append(Spacer(1, 10))
+    elements.append(Spacer(1, 8))
 
     if failed:
         res_color = colors.HexColor("#fee2e2")
@@ -292,8 +292,8 @@ def create_pdf_report(
         res_color = colors.HexColor("#d1fae5")
         res_text_color = colors.HexColor("#065f46")
 
-    res_style = ParagraphStyle("ResText", fontName=font_name, fontSize=10, leading=14, textColor=res_text_color, alignment=1)
-    res_table = Table([[Paragraph(f"<b>VÝSLEDEK POSOUZENÍ / EVALUATION RESULT: {conformity_text.upper()}</b>", res_style)]], colWidths=[540], rowHeights=[26])
+    res_style = ParagraphStyle("ResText", fontName=font_name, fontSize=9, leading=12, textColor=res_text_color, alignment=1)
+    res_table = Table([[Paragraph(f"<b>VYSLEDEK POSOUZENI / EVALUATION RESULT: {conformity_text.upper()}</b>", res_style)]], colWidths=[554], rowHeights=[22])
     res_table.setStyle(
         TableStyle([
             ("BACKGROUND", (0, 0), (-1, -1), res_color),
@@ -303,27 +303,27 @@ def create_pdf_report(
         ])
     )
     elements.append(res_table)
-    elements.append(Spacer(1, 12))
+    elements.append(Spacer(1, 8))
 
     if uncertainty_info:
-        unc_text = Paragraph(f"<b>Nejistota měření (k=2, 95%):</b> Kombinovaná: {uncertainty_info['combined_pct']}% | Rozšířená: {uncertainty_info['expanded_pct']}%", cell_style)
+        unc_text = Paragraph(f"<b>Nejistota mereni (k=2, 95%):</b> Kombinovana: {uncertainty_info['combined_pct']}% | Rozsirena: {uncertainty_info['expanded_pct']}%", cell_style)
         elements.append(unc_text)
-        elements.append(Spacer(1, 8))
+        elements.append(Spacer(1, 6))
 
     table_data = [[
-        Paragraph("<b>Velikostní třída / Size Class</b>", cell_header),
-        Paragraph("<b>Rozsah velikosti / Range</b>", cell_header),
-        Paragraph("<b>Max. povolený limit</b>", cell_header),
-        Paragraph("<b>Naměřeno z reportu</b>", cell_header),
+        Paragraph("<b>Velikostni trida</b>", cell_header),
+        Paragraph("<b>Rozsah velikosti</b>", cell_header),
+        Paragraph("<b>Max. povoleny limit</b>", cell_header),
+        Paragraph("<b>Namereno z reportu</b>", cell_header),
         Paragraph("<b>Stav / Status</b>", cell_header),
     ]]
 
     size_ranges = {
-        "B": "5 µm – 15 µm", "C": "15 µm – 25 µm", "D": "25 µm – 50 µm",
-        "E": "50 µm – 100 µm", "F": "100 µm – 150 µm", "G": "150 µm – 200 µm",
-        "H": "200 µm – 400 µm", "I": "400 µm – 600 µm", "J": "600 µm – 1000 µm",
-        "K": "1000 µm – 1500 µm", "L": "1500 µm – 2000 µm", "M": "2000 µm – 3000 µm",
-        "N": "> 3000 µm",
+        "B": "5 um - 15 um", "C": "15 um - 25 um", "D": "25 um - 50 um",
+        "E": "50 um - 100 um", "F": "100 um - 150 um", "G": "150 um - 200 um",
+        "H": "200 um - 400 um", "I": "400 um - 600 um", "J": "600 um - 1000 um",
+        "K": "1000 um - 1500 um", "L": "1500 um - 2000 um", "M": "2000 um - 3000 um",
+        "N": "> 3000 um",
     }
 
     if not report_df.empty:
@@ -333,7 +333,7 @@ def create_pdf_report(
             status = str(row["Stav"])
             status_html = (
                 '<font color="#065f46"><b>OK</b></font>' if status in ["OK", "specifikace splněna"] else
-                ('<font color="#991b1b"><b>NOK</b></font>' if status in ["NOK", "specifikace nesplněna"] else '<font color="#b45309"><b>VAROVÁNÍ</b></font>')
+                ('<font color="#991b1b"><b>NOK</b></font>' if status in ["NOK", "specifikace nesplněna"] else '<font color="#b45309"><b>VAROVANI</b></font>')
             )
 
             table_data.append([
@@ -342,46 +342,50 @@ def create_pdf_report(
                 Paragraph(status_html, cell_style),
             ])
 
-        t = Table(table_data, colWidths=[90, 130, 130, 95, 95])
+        t = Table(table_data, colWidths=[90, 134, 130, 100, 100])
         t.setStyle(
             TableStyle([
                 ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#1e293b")),
                 ("ALIGN", (0, 0), (-1, -1), "CENTER"),
                 ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#cbd5e1")),
+                ("TOPPADDING", (0, 0), (-1, -1), 3),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 3),
             ])
         )
         elements.append(t)
-        elements.append(Spacer(1, 12))
+        elements.append(Spacer(1, 8))
 
     qual_data = [
-        [Paragraph("<b>Kvalitativní charakteristika částic z reportu (VDA 19.1)</b>", cell_header), Paragraph("<b>Zjištěná hodnota</b>", cell_header)],
-        [Paragraph("Vlákna (Fibers)", cell_style), Paragraph(str(fibers_count), cell_style)],
-        [Paragraph("Kovové lesklé částice (Metallic reflective)", cell_style), Paragraph(str(metallic_ref_count), cell_style)],
-        [Paragraph("Kovové nelesklé / ostatní částice (Non-reflective)", cell_style), Paragraph(str(metallic_nonref_count), cell_style)],
+        [Paragraph("<b>Kvalitativni charakteristiky z reportu (VDA 19.1)</b>", cell_header), Paragraph("<b>Zjistena hodnota</b>", cell_header)],
+        [Paragraph("Vlakna (Fibers)", cell_style), Paragraph(str(fibers_count), cell_style)],
+        [Paragraph("Kovove leskle castice (Metallic reflective)", cell_style), Paragraph(str(metallic_ref_count), cell_style)],
+        [Paragraph("Kovove neleskle / ostatni castice (Non-reflective)", cell_style), Paragraph(str(metallic_nonref_count), cell_style)],
     ]
 
     if advanced_data:
-        qual_data.append([Paragraph("Max. rozměr částice z reportu (L_max / Feret Max)", cell_style), Paragraph(f"{advanced_data.get('l_max', 0)} µm", cell_style)])
-        qual_data.append([Paragraph("Poměr stran (b/L threshold)", cell_style), Paragraph(str(advanced_data.get('aspect_ratio', '-')))])
-        qual_data.append([Paragraph("Plošná hustota kontaminace (Specific Surface)", cell_style), Paragraph(f"{advanced_data.get('specific_surface', 0)} mg/m²", cell_style)])
-        qual_data.append([Paragraph("Účinnost extrakce z protokolu (Recovery / Decline rate)", cell_style), Paragraph(f"{advanced_data.get('recovery_rate', 0)} %", cell_style)])
+        qual_data.append([Paragraph("Max. rozmer castice z reportu (L_max / Feret Max)", cell_style), Paragraph(f"{advanced_data.get('l_max', 0)} um")])
+        qual_data.append([Paragraph("Pomer stran (b/L threshold)", cell_style), Paragraph(str(advanced_data.get('aspect_ratio', '-')))])
+        qual_data.append([Paragraph("Plosna hustota kontaminace (Specific Surface)", cell_style), Paragraph(f"{advanced_data.get('specific_surface', 0)} mg/m^2")])
+        qual_data.append([Paragraph("Ucinnost extrakce z protokolu (Recovery rate)", cell_style), Paragraph(f"{advanced_data.get('recovery_rate', 0)} %")])
 
-    qual_table = Table(qual_data, colWidths=[340, 200])
+    qual_table = Table(qual_data, colWidths=[354, 200])
     qual_table.setStyle(
         TableStyle([
             ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#334155")),
             ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#cbd5e1")),
+            ("TOPPADDING", (0, 0), (-1, -1), 3),
+            ("BOTTOMPADDING", (0, 0), (-1, -1), 3),
         ])
     )
     elements.append(qual_table)
 
     if note:
-        elements.append(Spacer(1, 10))
-        note_table = Table([[Paragraph("<b>Poznámka k záznamu:</b>", cell_bold)], [Paragraph(note, cell_style)]], colWidths=[540])
+        elements.append(Spacer(1, 8))
+        note_table = Table([[Paragraph("<b>Poznamka k zaznamu:</b>", cell_bold)], [Paragraph(note, cell_style)]], colWidths=[554])
         elements.append(note_table)
 
-    elements.append(Spacer(1, 20))
-    sig_table = Table([[Paragraph(f"<b>Záznam zapsal / ověřil (technik):</b> {inspector_name}", cell_style)]], colWidths=[540])
+    elements.append(Spacer(1, 10))
+    sig_table = Table([[Paragraph(f"<b>Zaznam zapsal / overil (technik):</b> {inspector_name}", cell_style)]], colWidths=[554])
     elements.append(KeepTogether(sig_table))
 
     doc.build(elements)
@@ -645,7 +649,7 @@ def show_evaluation_form(conn):
 
             st.markdown("---")
 
-            # --- SEKCE 3: Gravimetrická analýza (Zadání zbytkové hmotnosti přímo z reportu vah) ---
+            # --- SEKCE 3: Gravimetrická analýza ---
             if gravimetry_limit_db and enable_grav:
                 st.info(f"Očekávaný limit normy pro gravimetrii: **{gravimetry_limit_db} mg**")
             
@@ -656,7 +660,7 @@ def show_evaluation_form(conn):
 
             st.markdown("---")
 
-            # --- SEKCE 4: Optická analýza (Přepis z optického reportu) ---
+            # --- SEKCE 4: Optická analýza (Přepis z optického reportu - všechny třídy B až N) ---
             st.markdown(f"**{t['sec_opt']}**")
             vda_classes = ["B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N"]
             entered_levels = {}
@@ -701,18 +705,18 @@ def show_evaluation_form(conn):
 
             st.markdown("---")
 
-            # --- SEKCE 5: Kvalitativní charakteristiky ---
+            # --- SEKCE 5: Kvalitativní charakteristiky (Změněno na number_input pro přímé vepsání čísla) ---
             st.markdown(f"**{t['sec_qual']}**")
             col_q1, col_q2, col_q3 = st.columns(3)
             with col_q1:
                 fibers_count = st.number_input(t["fibers"], min_value=0, value=0, step=1)
-                blank_value_pct = st.number_input(t["blank_val"], min_value=0.0, value=2.0)
+                blank_value_pct = st.number_input(t["blank_val"], min_value=0.0, value=2.0, step=0.1)
             with col_q2:
                 metallic_ref_count = st.number_input(t["met_ref"], min_value=0, value=0, step=1)
-                declining_test_pct = st.number_input(t["decl_test"], min_value=0.0, value=5.0)
+                declining_test_pct = st.number_input(t["decl_test"], min_value=0.0, value=5.0, step=0.5)
             with col_q3:
                 metallic_nonref_count = st.number_input(t["met_nonref"], min_value=0, value=0, step=1)
-                filter_occupancy_pct = st.number_input(t["filt_occ"], min_value=0.0, value=3.0)
+                filter_occupancy_pct = st.number_input(t["filt_occ"], min_value=0.0, value=3.0, step=0.5)
 
             # --- SEKCE 6: Pokročilé vyhodnotitelné parametry ---
             st.markdown("---")
@@ -775,8 +779,8 @@ def show_evaluation_form(conn):
                     ref_unit_char = ref_unit[0]
                     ccc_parts, valid_levels = [], {}
                     if enable_opt:
-                        for s_class, a_level_str in entered_levels.items():
-                            a_level_str = a_level_str.strip()
+                        for s_class in vda_classes:
+                            a_level_str = str(entered_levels.get(s_class, "")).strip()
                             if a_level_str and a_level_str != "-":
                                 val_int = int(a_level_str)
                                 ccc_parts.append(f"{s_class} {a_level_str}")
@@ -796,7 +800,8 @@ def show_evaluation_form(conn):
                         st.error(f"Gravimetrie překročena: Naměřená zbytková hmotnost {residual_mass:.4f} mg (Limit normy: {gravimetry_limit_db} mg)")
 
                     if enable_opt:
-                        for s_class, actual_val in valid_levels.items():
+                        for s_class in vda_classes:
+                            actual_val = valid_levels.get(s_class, 0)
                             lim_row = limits_df[limits_df["size_class"] == s_class] if not limits_df.empty else pd.DataFrame()
                             max_alw = int(lim_row.iloc[0]["max_allowed_level"]) if not lim_row.empty else 0
                             
