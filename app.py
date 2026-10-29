@@ -652,7 +652,7 @@ def show_evaluation_form(conn):
 
             st.markdown("---")
 
-            # --- SEKCE 4: Optická analýza (s živou zpětnou vazbou) ---
+            # --- SEKCE 4: Optická analýza ---
             enable_opt = st.checkbox(t["sec_opt"], value=True)
             vda_classes = ["B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N"]
             entered_levels = {}
