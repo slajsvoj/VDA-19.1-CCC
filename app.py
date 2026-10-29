@@ -308,7 +308,7 @@ def create_pdf_report(
         elements.append(unc_text)
         elements.append(Spacer(1, 6))
 
-    # --- DEDIKOVANÁ SEKCE 3: GRAVIMETRICKÁ ANALÝZA ---
+    # --- SEKCE 3: GRAVIMETRICKÁ ANALÝZA ---
     res_mass_val = grav_data.get('residual_mass', 0.0) if grav_data else 0.0
     grav_limit_val = grav_data.get('gravimetry_limit', 0.50) if grav_data else 0.50
     grav_status = "NOK" if res_mass_val > grav_limit_val else "OK"
@@ -689,50 +689,42 @@ def show_evaluation_form(conn):
 
             st.markdown("---")
 
+            # --- ZMĚNA ZDE: SEKCE 4 - OPTICKÁ ANALÝZA PŘESNĚ POD SEBOU ---
             st.markdown(f"**{t['sec_opt']}**")
             vda_classes = ["B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N"]
+            size_ranges_desc = {
+                "B": "5 µm - 15 µm", "C": "15 µm - 25 µm", "D": "25 µm - 50 µm",
+                "E": "50 µm - 100 µm", "F": "100 µm - 150 µm", "G": "150 µm - 200 µm",
+                "H": "200 µm - 400 µm", "I": "400 µm - 600 µm", "J": "600 µm - 1000 µm",
+                "K": "1000 µm - 1500 µm", "L": "1500 µm - 2000 µm", "M": "2000 µm - 3000 µm",
+                "N": "> 3000 µm",
+            }
             entered_levels = {}
 
-            cols_row1 = st.columns(7)
-            for i in range(7):
-                s_class = vda_classes[i]
-                limit_val = db_limits_dict.get(s_class, None)
-                
-                raw_input = cols_row1[i].text_input(s_class, value="", placeholder="-", key=f"cls_{s_class}", disabled=not enable_opt)
-                entered_levels[s_class] = raw_input
-                
-                if enable_opt and raw_input.strip() and raw_input.strip() != "-":
-                    try:
-                        val_num = int(raw_input.strip())
-                        if limit_val is not None:
-                            if val_num > limit_val:
-                                cols_row1[i].markdown(f"<p style='color:red; font-size:11px; margin:0;'>Limit překročen! (Max: {limit_val})</p>", unsafe_allow_html=True)
-                            else:
-                                cols_row1[i].markdown(f"<p style='color:green; font-size:11px; margin:0;'>V toleranci (Max: {limit_val})</p>", unsafe_allow_html=True)
-                    except ValueError:
-                        pass
-
-            cols_row2 = st.columns(6)
-            for i in range(7, 13):
-                s_class = vda_classes[i]
-                limit_val = db_limits_dict.get(s_class, None)
-                
-                raw_input = cols_row2[i - 7].text_input(s_class, value="", placeholder="-", key=f"cls_{s_class}", disabled=not enable_opt)
-                entered_levels[s_class] = raw_input
+            for s_class in vda_classes:
+                limit_val = db_limits_dict.get(s_class, 0)
+                col_c1, col_c2, col_c3 = st.columns([1, 3, 3])
+                with col_c1:
+                    st.markdown(f"**Třída {s_class}**")
+                with col_c2:
+                    st.caption(f"Rozsah: {size_ranges_desc.get(s_class, '')} | Limit: {limit_val}")
+                with col_c3:
+                    raw_input = st.text_input(f"Úroveň {s_class}", value="", placeholder="-", key=f"cls_{s_class}", label_visibility="collapsed", disabled=not enable_opt)
+                    entered_levels[s_class] = raw_input
                 
                 if enable_opt and raw_input.strip() and raw_input.strip() != "-":
                     try:
                         val_num = int(raw_input.strip())
-                        if limit_val is not None:
-                            if val_num > limit_val:
-                                cols_row2[i - 7].markdown(f"<p style='color:red; font-size:11px; margin:0;'>Limit překročen! (Max: {limit_val})</p>", unsafe_allow_html=True)
-                            else:
-                                cols_row2[i - 7].markdown(f"<p style='color:green; font-size:11px; margin:0;'>V toleranci (Max: {limit_val})</p>", unsafe_allow_html=True)
+                        if val_num > limit_val:
+                            st.markdown(f"<p style='color:red; font-size:11px; margin-top:-10px;'>Limit překročen! (Max: {limit_val})</p>", unsafe_allow_html=True)
+                        else:
+                            st.markdown(f"<p style='color:green; font-size:11px; margin-top:-10px;'>V toleranci (Max: {limit_val})</p>", unsafe_allow_html=True)
                     except ValueError:
                         pass
 
             st.markdown("---")
 
+            # --- SEKCE 5: Kvalitativní charakteristiky ---
             st.markdown(f"**{t['sec_qual']}**")
             col_q1, col_q2, col_q3 = st.columns(3)
             with col_q1:
@@ -745,6 +737,7 @@ def show_evaluation_form(conn):
                 metallic_nonref_count = st.number_input(t["met_nonref"], min_value=0, value=0, step=1)
                 filter_occupancy_pct = st.number_input(t["filt_occ"], min_value=0.0, value=3.0, step=0.5)
 
+            # --- SEKCE 6: Pokročilé vyhodnotitelné parametry ---
             st.markdown("---")
             st.markdown(f"**{t['sec_adv']}**")
             
