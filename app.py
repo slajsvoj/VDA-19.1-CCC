@@ -586,13 +586,13 @@ def show_evaluation_form(conn):
             else:
                 std_id, std_name, gravimetry_limit_db = None, "testovacifirmaA", 0.50
 
-        db_limits_dict = {}
-        # Garance výchozích limitů pro testovací normu A, aby tam nikdy nebyly nuly
+        # Vynucení testovacích limitů pro testovacifirmaA, aby ignorovalo prázdné řádky v DB
         fallback_test_limits = {"B": 15, "C": 12, "D": 10, "E": 8, "F": 5, "G": 3, "H": 2, "I": 1, "J": 0, "K": 0, "L": 0, "M": 0, "N": 0}
         
         if std_name and "testovacifirmaA" in std_name.lower():
             db_limits_dict = fallback_test_limits
         else:
+            db_limits_dict = {}
             if std_id:
                 try:
                     lim_fetch = pd.read_sql(f"SELECT size_class, max_allowed_level FROM customer_standards WHERE id = '{std_id}'", conn)
