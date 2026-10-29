@@ -452,10 +452,19 @@ def show_standards_management(conn):
             with col2:
                 norm_name = st.text_input("Název podnikové/zákaznické normy", value="testovacifirmaA")
 
-            st.markdown("**Gravimetrický limit pro hmotnost zbytků**")
+            st.markdown("**1. Gravimetrický limit**")
             gravimetry_limit_input = st.number_input("Max. povolená zbytková hmotnost (mg)", min_value=0.0, value=0.50, step=0.1)
 
-            st.markdown("**Maximální povolené limity frakcí z normy (kódové úrovně 0-24)**")
+            st.markdown("**2. Kvalitativní a pokročilé limity (nepovinné)**")
+            col_o1, col_o2, col_o3 = st.columns(3)
+            with col_o1:
+                add_fibers = st.text_input("Max. počet vláken (Fibers)", value="")
+            with col_o2:
+                add_metallic = st.text_input("Max. kovových částic (Metallic)", value="")
+            with col_o3:
+                add_lmax = st.text_input("Max. rozměr částice L_max [µm]", value="")
+
+            st.markdown("**3. Maximální povolené limity frakcí (CCC 0-24)**")
             default_test_limits = {"B": "15", "C": "12", "D": "10", "E": "8", "F": "5", "G": "3", "H": "2", "I": "1", "J": "0", "K": "0", "L": "0", "M": "0", "N": "0"}
             
             limit_inputs = {}
@@ -479,7 +488,13 @@ def show_standards_management(conn):
                     try:
                         cur = conn.cursor()
                         inserted_any = False
-                        for s_class, limit_val in limit_inputs.items():
+                        
+                        all_limits_to_save = limit_inputs.copy()
+                        if add_fibers.strip(): all_limits_to_save["FIBERS"] = add_fibers
+                        if add_metallic.strip(): all_limits_to_save["METALLIC"] = add_metallic
+                        if add_lmax.strip(): all_limits_to_save["L_MAX"] = add_lmax
+
+                        for s_class, limit_val in all_limits_to_save.items():
                             if limit_val.strip() and limit_val.strip() != "-":
                                 new_row_id = str(uuid.uuid4())
                                 cur.execute(
@@ -492,7 +507,7 @@ def show_standards_management(conn):
                             conn.commit()
                             st.success(f"Norma '{norm_name}' byla úspěšně uložena.")
                         else:
-                            st.warning("Nevyplnili jste žádné limity pro velikostní třídy.")
+                            st.warning("Nevyplnili jste žádné limity.")
                             conn.rollback()
                         cur.close()
                     except Exception as e:
@@ -530,9 +545,20 @@ def show_standards_management(conn):
                 st.markdown(f"**Upravit parametry normy**")
                 with st.form("edit_standard_form"):
                     edit_norm_name = st.text_input("Název normy", value=curr_norm_name)
+                    
+                    st.markdown("**1. Gravimetrický limit**")
                     edit_gravimetry = st.number_input("Max. povolená hmotnost gravimetrie (mg)", min_value=0.0, value=float(curr_grav), step=0.1)
                     
-                    st.markdown("**Limity frakcí (kódové úrovně 0-24)**")
+                    st.markdown("**2. Kvalitativní a pokročilé limity (nepovinné)**")
+                    col_e_o1, col_e_o2, col_e_o3 = st.columns(3)
+                    with col_e_o1:
+                        edit_fibers = st.text_input("Max. počet vláken (Fibers)", value=current_class_limits.get("FIBERS", ""))
+                    with col_e_o2:
+                        edit_metallic = st.text_input("Max. kovových částic (Metallic)", value=current_class_limits.get("METALLIC", ""))
+                    with col_e_o3:
+                        edit_lmax = st.text_input("Max. rozměr částice L_max [µm]", value=current_class_limits.get("L_MAX", ""))
+
+                    st.markdown("**3. Maximální povolené limity frakcí (CCC 0-24)**")
                     edit_inputs = {}
                     cols_e1 = st.columns(7)
                     for i in range(7):
@@ -557,7 +583,12 @@ def show_standards_management(conn):
                             cur = conn.cursor()
                             cur.execute(f"DELETE FROM customer_standards WHERE norm_name = '{curr_norm_name}'")
                             
-                            for s_class, limit_val in edit_inputs.items():
+                            all_edit_limits = edit_inputs.copy()
+                            if edit_fibers.strip(): all_edit_limits["FIBERS"] = edit_fibers
+                            if edit_metallic.strip(): all_edit_limits["METALLIC"] = edit_metallic
+                            if edit_lmax.strip(): all_edit_limits["L_MAX"] = edit_lmax
+
+                            for s_class, limit_val in all_edit_limits.items():
                                 if limit_val.strip() and limit_val.strip() != "-":
                                     new_row_id = str(uuid.uuid4())
                                     cur.execute(
@@ -630,6 +661,10 @@ def show_evaluation_form(conn):
                     db_limits_dict[str(row['size_class']).strip()] = int(row['max_allowed_level'])
             except Exception as e:
                 pass
+
+        limit_fibers = db_limits_dict.get('FIBERS', None)
+        limit_metallic = db_limits_dict.get('METALLIC', None)
+        limit_lmax = db_limits_dict.get('L_MAX', None)
 
         fallback_test_limits = {"B": 15, "C": 12, "D": 10, "E": 8, "F": 5, "G": 3, "H": 2, "I": 1, "J": 0, "K": 0, "L": 0, "M": 0, "N": 0}
         for k, v in fallback_test_limits.items():
@@ -738,10 +773,10 @@ def show_evaluation_form(conn):
             st.subheader(t["sec_qual"])
             col_q1, col_q2, col_q3 = st.columns(3)
             with col_q1:
-                fibers_count = st.number_input(t["fibers"], min_value=0, value=9, step=1)
+                fibers_count = st.number_input(t["fibers"], min_value=0, value=9, step=1, help=f"Limit z normy: {limit_fibers}" if limit_fibers is not None else None)
                 blank_value_pct = st.number_input(t["blank_val"], min_value=0.0, value=2.0, step=0.1)
             with col_q2:
-                metallic_ref_count = st.number_input(t["met_ref"], min_value=0, value=19, step=1)
+                metallic_ref_count = st.number_input(t["met_ref"], min_value=0, value=19, step=1, help=f"Limit z normy: {limit_metallic}" if limit_metallic is not None else None)
                 declining_test_pct = st.number_input(t["decl_test"], min_value=0.0, value=5.0, step=0.5)
             with col_q3:
                 metallic_nonref_count = st.number_input(t["met_nonref"], min_value=0, value=24, step=1)
@@ -754,7 +789,7 @@ def show_evaluation_form(conn):
             l_max_val, aspect_ratio_val, metallic_percentage, recovery_rate_val, specific_surface_val, cleanliness_class_code = 450.0, 0.1, 2.5, 92.5, 0.0, ""
             col_ad1, col_ad2, col_ad3 = st.columns(3)
             with col_ad1:
-                l_max_val = st.number_input(t["l_max"], min_value=0.0, value=450.0, step=10.0, disabled=not enable_adv)
+                l_max_val = st.number_input(t["l_max"], min_value=0.0, value=450.0, step=10.0, disabled=not enable_adv, help=f"Limit z normy: {limit_lmax} µm" if limit_lmax is not None else None)
                 aspect_ratio_val = st.number_input(t["aspect_ratio"], min_value=0.0, max_value=1.0, value=0.1, step=0.01, disabled=not enable_adv)
             with col_ad2:
                 metallic_percentage = st.number_input(t["metallic_ratio"], min_value=0.0, max_value=100.0, value=2.5, step=0.1, disabled=not enable_adv)
@@ -823,6 +858,19 @@ def show_evaluation_form(conn):
                     if enable_grav and gravimetry_limit_db and residual_mass > gravimetry_limit_db:
                         failed = True
                         st.error(f"Gravimetrie překročena: Naměřená zbytková hmotnost {residual_mass:.4f} mg (Limit normy: {gravimetry_limit_db} mg)")
+
+                    # Kontrola nově přidaných limitů
+                    if limit_fibers is not None and fibers_count > limit_fibers:
+                        failed = True
+                        st.error(f"Překročen limit pro Vlákna: naměřeno {fibers_count} (Limit normy: {limit_fibers})")
+                        
+                    if limit_metallic is not None and metallic_ref_count > limit_metallic:
+                        failed = True
+                        st.error(f"Překročen limit pro Kovové částice: naměřeno {metallic_ref_count} (Limit normy: {limit_metallic})")
+                        
+                    if limit_lmax is not None and enable_adv and l_max_val > limit_lmax:
+                        failed = True
+                        st.error(f"Překročen limit pro L_max: naměřeno {l_max_val} µm (Limit normy: {limit_lmax} µm)")
 
                     if enable_opt:
                         for s_class in vda_classes:
