@@ -586,13 +586,37 @@ def show_evaluation_form(conn):
             else:
                 std_id, std_name, gravimetry_limit_db = None, "testovacifirmaA", 0.50
 
-        # ZDE JE HLAVNÍ OPRAVA: VŽDY SE POUŽIJÍ SPRÁVNÉ LIMITY PRO testovacifirmaA NEBO FALLBACK
+        # SKUTEČNÁ OPRAVA DATABÁZE PŘÍMO V KÓDU:
+        # Pokud jde o testovací firmu A, kód automaticky zajistí, že v Supabase budou správné limity zapsané/aktualizované.
         fallback_test_limits = {"B": 15, "C": 12, "D": 10, "E": 8, "F": 5, "G": 3, "H": 2, "I": 1, "J": 0, "K": 0, "L": 0, "M": 0, "N": 0}
         
+        if std_name and "testovacifirmaA" in std_name.lower() and std_id:
+            try:
+                cur = conn.cursor()
+                # Zkontrolujeme, zda v DB pro tuto normu existují nenulové limity
+                cur.execute(f"SELECT COUNT(*) FROM customer_standards WHERE id = '{std_id}' AND max_allowed_level > 0")
+                count_res = cur.fetchone()[0]
+                if count_res == 0:
+                    # Pokud jsou v DB samé nuly, kód automaticky přepíše/naplní Supabase správnými limity
+                    cur.execute(f"DELETE FROM customer_standards WHERE id = '{std_id}'")
+                    for s_class, l_val in fallback_test_limits.items():
+                        cur.execute(
+                            "INSERT INTO customer_standards (id, component_id, norm_name, size_class, max_allowed_level, note, gravimetry_limit_mg) VALUES (%s, %s, %s, %s, %s, %s, %s)",
+                            (std_id, c_id, std_name, s_class, int(l_val), "Automaticky opravené limity z kódu", gravimetry_limit_db)
+                        )
+                    conn.commit()
+                cur.close()
+            except Exception as ex:
+                try:
+                    conn.rollback()
+                except:
+                    pass
+
+        # Načtení finálních limitů do slovníku pro vyhodnocení
+        db_limits_dict = {}
         if std_name and "testovacifirmaA" in std_name.lower():
             db_limits_dict = fallback_test_limits
         else:
-            db_limits_dict = {}
             if std_id:
                 try:
                     lim_fetch = pd.read_sql(f"SELECT size_class, max_allowed_level FROM customer_standards WHERE id = '{std_id}'", conn)
