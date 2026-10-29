@@ -443,13 +443,13 @@ def show_standards_management(conn):
                 else:
                     try:
                         cur = conn.cursor()
-                        new_std_id = str(uuid.uuid4()) 
                         inserted_any = False
                         for s_class, limit_val in limit_inputs.items():
                             if limit_val.strip() and limit_val.strip() != "-":
+                                new_row_id = str(uuid.uuid4())
                                 cur.execute(
                                     "INSERT INTO customer_standards (id, component_id, norm_name, size_class, max_allowed_level, note, gravimetry_limit_mg) VALUES (%s, %s, %s, %s, %s, %s, %s)",
-                                    (new_std_id, selected_comp_id, norm_name, s_class, int(limit_val), std_note, gravimetry_limit_input if gravimetry_limit_input > 0 else None)
+                                    (new_row_id, selected_comp_id, norm_name, s_class, int(limit_val), std_note, gravimetry_limit_input if gravimetry_limit_input > 0 else None)
                                 )
                                 inserted_any = True
                                 
@@ -489,7 +489,7 @@ def show_standards_management(conn):
                     if row_info:
                         c_id_fixed, c_name_fixed = row_info[0], row_info[1]
                         # Úplné vymazání starých řádků pro tuto normu, aby nevznikaly kolize ID
-                        cur.execute(f"DELETE FROM customer_standards WHERE id = '{edit_std_id}' OR norm_name = '{c_name_fixed}'")
+                        cur.execute(f"DELETE FROM customer_standards WHERE norm_name = '{c_name_fixed}'")
                         
                         fix_limits = {"B": 15, "C": 12, "D": 10, "E": 8, "F": 5, "G": 3, "H": 2, "I": 1, "J": 0, "K": 0, "L": 0, "M": 0, "N": 0}
                         for sc, lv in fix_limits.items():
@@ -553,7 +553,7 @@ def show_standards_management(conn):
                                     new_row_id = str(uuid.uuid4())
                                     cur.execute(
                                         "INSERT INTO customer_standards (id, component_id, norm_name, size_class, max_allowed_level, note, gravimetry_limit_mg) VALUES (%s, %s, %s, %s, %s, %s, %s)",
-                                        (new_str_id := new_row_id, curr_comp_id, edit_norm_name, s_class, int(limit_val), edit_note, edit_gravimetry if edit_gravimetry > 0 else None)
+                                        (new_row_id, curr_comp_id, edit_norm_name, s_class, int(limit_val), edit_note, edit_gravimetry if edit_gravimetry > 0 else None)
                                     )
                             conn.commit()
                             st.success("Změny byly úspěšně uloženy.")
