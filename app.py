@@ -48,21 +48,21 @@ st.markdown(
 
 translations = {
     "cs": {
-        "title": "Systém vyhodnocení čistoty (VDA 19.1)",
+        "title": "Systém vyhodnocení čistoty dle reportů (VDA 19.1)",
         "db_header": "Připojení k databázi",
         "db_pass": "Heslo k databázi",
         "db_connected": "Připojeno k Supabase",
         "db_error": "Chyba připojení k databázi:",
-        "nav": ["Vyhodnocení měření", "Správa norem (Limity)", "Přehled historie měření"],
-        "sec_ident": "1. Identifikace a zkušební podmínky",
-        "sec_part": "2. Parametry dílu a extrakce",
-        "sec_grav": "3. Gravimetrická analýza (Zbytková hmotnost)",
-        "sec_opt": "4. Optická analýza – Velikostní třídy částic (B až N)",
-        "sec_qual": "5. Kvalitativní charakteristiky a Validační brány (VDA 19.1)",
-        "sec_adv": "6. Pokročilé vyhodnotitelné parametry (VDA 19.1)",
+        "nav": ["Zápis a vyhodnocení z reportu", "Správa norem (Limity)", "Přehled historie měření"],
+        "sec_ident": "1. Identifikace reportu a zkušební podmínky",
+        "sec_part": "2. Parametry dílu a extrakce (z protokolu)",
+        "sec_grav": "3. Gravimetrická analýza – Zbytková hmotnost M (z protokolu vah)",
+        "sec_opt": "4. Optická analýza – Naměřené třídy z optického reportu (B až N)",
+        "sec_qual": "5. Kvalitativní charakteristiky a Validační brány z reportu",
+        "sec_adv": "6. Pokročilé vyhodnotitelné parametry z reportu (VDA 19.1)",
         "sec_hard": "7. Hard-Stop parametry (Interní norma)",
         "order_no": "Číslo zakázky",
-        "rep_no": "Číslo zprávy / protokolu",
+        "rep_no": "Číslo laboratorní zprávy / protokolu",
         "insp_name": "Jméno technika",
         "insp_type": "Typ zkoušky",
         "filt_no": "Číslo filtru",
@@ -77,9 +77,7 @@ translations = {
         "ext_medium": "Extrakční médium",
         "filt_mat": "Materiál filtru",
         "filt_pore": "Velikost pórů [µm]",
-        "mass_b": "Hmotnost před filtrací M1 [mg]",
-        "mass_a": "Hmotnost po filtraci M2 [mg]",
-        "resid_mass": "Zbytková hmotnost (M = M2 - M1)",
+        "resid_mass": "Zbytková hmotnost M z protokolu vah [mg]",
         "fibers": "Vlákna (Fibers)",
         "blank_val": "Slepá hodnota [% z limitu]",
         "met_ref": "Kovové lesklé částice",
@@ -89,34 +87,34 @@ translations = {
         "pixel_res": "Pixelové rozlišení splněno (min 5-10 px)",
         "inc_unc": "Započítat modul nejistoty měření v protokolu",
         "note": "Poznámka k měření",
-        "submit_eval": "Vyhodnotit a uložit do databáze",
+        "submit_eval": "Porovnat s normou a uložit do databáze",
         "l_max": "Maximální rozměr částice (L_max / Feret Max) [µm]",
-        "l_max_desc": "Maximální délka největší detekované částice.",
+        "l_max_desc": "Maximální délka největší detekované částice z reportu.",
         "aspect_ratio": "Prahová hodnota poměru stran (b/L)",
         "aspect_ratio_desc": "Poměr šířky a délky pro detekci třísek.",
         "metallic_ratio": "Podíl kovových částic [%]",
         "cleanliness_class": "Kód čistoty (ISO 16232 / CCC kód)",
         "specific_surface": "Plošná hustota kontaminace [mg/m²]",
         "recovery_rate": "Účinnost extrakce (Deklinační faktor / Recovery %)",
-        "res_title": "Výsledek vyhodnocení",
-        "download_pdf": "Stáhnout protokol (PDF)",
-        "new_insp": "Nové vyhodnocení",
-        "history_title": "Historie provedených měření",
+        "res_title": "Výsledek porovnání s podnikovou normou",
+        "download_pdf": "Stáhnout souhrnný protokol (PDF)",
+        "new_insp": "Nové zadání z reportu",
+        "history_title": "Historie vyhodnocených měření",
         "standards_title": "Správa zákaznických a podnikových norem",
     },
     "en": {
-        "title": "Technical Cleanliness Analysis System (VDA 19.1)",
+        "title": "Technical Cleanliness Report Evaluation System (VDA 19.1)",
         "db_header": "Database Connection",
         "db_pass": "Database Password",
         "db_connected": "Connected to Supabase",
         "db_error": "Database connection error:",
-        "nav": ["Inspection Evaluation", "Standards & Limits Management", "Inspection History"],
-        "sec_ident": "1. Identification & Inspection Conditions",
-        "sec_part": "2. Component & Extraction Parameters",
-        "sec_grav": "3. Gravimetric Analysis (Residual Mass)",
-        "sec_opt": "4. Optical Analysis – Particle Size Classes (B to N)",
-        "sec_qual": "5. Qualitative Characteristics & Validation Gates (VDA 19.1)",
-        "sec_adv": "6. Advanced Evaluation Parameters (VDA 19.1)",
+        "nav": ["Report Evaluation & Entry", "Standards & Limits Management", "Inspection History"],
+        "sec_ident": "1. Report Identification & Inspection Conditions",
+        "sec_part": "2. Component & Extraction Parameters (from Protocol)",
+        "sec_grav": "3. Gravimetric Analysis – Residual Mass M (from Scale Protocol)",
+        "sec_opt": "4. Optical Analysis – Measured Classes from Optical Report (B to N)",
+        "sec_qual": "5. Qualitative Characteristics & Validation Gates from Report",
+        "sec_adv": "6. Advanced Evaluation Parameters from Report (VDA 19.1)",
         "sec_hard": "7. Hard-Stop Parameters (Internal Standard)",
         "order_no": "Order Number",
         "rep_no": "Report Number",
@@ -134,9 +132,7 @@ translations = {
         "ext_medium": "Extraction Medium",
         "filt_mat": "Filter Material",
         "filt_pore": "Pore Size [µm]",
-        "mass_b": "Mass Before Filtration M1 [mg]",
-        "mass_a": "Mass After Filtration M2 [mg]",
-        "resid_mass": "Residual Mass (M = M2 - M1)",
+        "resid_mass": "Residual Mass M from Scale [mg]",
         "fibers": "Fibers",
         "blank_val": "Blank Value [% of limit]",
         "met_ref": "Metallic Reflective Particles",
@@ -146,18 +142,18 @@ translations = {
         "pixel_res": "Pixel Resolution Satisfied (min 5-10 px)",
         "inc_unc": "Include Measurement Uncertainty Module in Report",
         "note": "Inspection Note",
-        "submit_eval": "Evaluate and Save to Database",
+        "submit_eval": "Compare with Standard & Save to Database",
         "l_max": "Maximum Particle Dimension (L_max / Feret Max) [µm]",
-        "l_max_desc": "Maximum length of the largest detected particle.",
+        "l_max_desc": "Maximum length of the largest detected particle from report.",
         "aspect_ratio": "Aspect Ratio Threshold (b/L)",
         "aspect_ratio_desc": "Width-to-length ratio.",
         "metallic_ratio": "Metallic Particles Share [%]",
         "cleanliness_class": "Cleanliness Class (ISO 16232 / CCC Code)",
         "specific_surface": "Specific Surface Contamination [mg/m²]",
         "recovery_rate": "Extraction Efficiency / Decline Factor (Recovery %)",
-        "res_title": "Evaluation Result",
-        "download_pdf": "Download Report (PDF)",
-        "new_insp": "New Inspection",
+        "res_title": "Evaluation Result vs. Corporate Standard",
+        "download_pdf": "Download Summary Report (PDF)",
+        "new_insp": "New Report Entry",
         "history_title": "Inspection History",
         "standards_title": "Customer & Corporate Standards Management",
     }
@@ -246,16 +242,16 @@ def create_pdf_report(
     ccc_style = ParagraphStyle("CCCStyle", fontName=font_name, fontSize=11, leading=15, textColor=colors.HexColor("#1e3a8a"), alignment=1)
 
     elements = [
-        Paragraph("LABORATORNÍ PROTOKOL TECHNICKÉ ČISTOTY / TECHNICAL CLEANLINESS REPORT", title_style),
-        Paragraph("Vyhodnocení dle normy VDA 19.1 / ISO 16232", subtitle_style),
+        Paragraph("SOUHRNNÝ PROTOKOL KONTROLY ČISTOTY / CLEANLINESS REPORT EVALUATION", title_style),
+        Paragraph("Porovnání naměřených hodnot z reportu s podnikovou normou (VDA 19.1 / ISO 16232)", subtitle_style),
     ]
 
     current_date = datetime.date.today().strftime("%d.%m.%Y")
     meta_data = [
-        [Paragraph("<b>Označení dílu:</b>", cell_style), Paragraph(comp_name, cell_style), Paragraph("<b>Datum měření:</b>", cell_style), Paragraph(current_date, cell_style)],
-        [Paragraph("<b>Zákaznická norma:</b>", cell_style), Paragraph(std_name, cell_style), Paragraph("<b>Jméno technika:</b>", cell_style), Paragraph(inspector_name, cell_style)],
+        [Paragraph("<b>Označení dílu:</b>", cell_style), Paragraph(comp_name, cell_style), Paragraph("<b>Datum vyhodnocení:</b>", cell_style), Paragraph(current_date, cell_style)],
+        [Paragraph("<b>Podniková norma:</b>", cell_style), Paragraph(std_name, cell_style), Paragraph("<b>Zadal z reportu:</b>", cell_style), Paragraph(inspector_name, cell_style)],
         [Paragraph("<b>Číslo filtru:</b>", cell_style), Paragraph(filter_no, cell_style), Paragraph("<b>Šarže filtru:</b>", cell_style), Paragraph(filter_lot if filter_lot else "-", cell_style)],
-        [Paragraph("<b>Referenční jednotka:</b>", cell_style), Paragraph(ref_unit, cell_style), Paragraph("<b>Zbytková hmotnost (M):</b>", cell_style), Paragraph(f"{grav_data.get('residual_mass', 0):.4f} mg", cell_style)],
+        [Paragraph("<b>Referenční jednotka:</b>", cell_style), Paragraph(ref_unit, cell_style), Paragraph("<b>Zbytková hmotnost M (z váhy):</b>", cell_style), Paragraph(f"{grav_data.get('residual_mass', 0):.4f} mg", cell_style)],
     ]
     
     if grav_data.get('gravimetry_limit'):
@@ -317,8 +313,8 @@ def create_pdf_report(
     table_data = [[
         Paragraph("<b>Velikostní třída / Size Class</b>", cell_header),
         Paragraph("<b>Rozsah velikosti / Range</b>", cell_header),
-        Paragraph("<b>Max. povolená úroveň / Limit</b>", cell_header),
-        Paragraph("<b>Naměřená úroveň / Measured</b>", cell_header),
+        Paragraph("<b>Max. povolený limit</b>", cell_header),
+        Paragraph("<b>Naměřeno z reportu</b>", cell_header),
         Paragraph("<b>Stav / Status</b>", cell_header),
     ]]
 
@@ -358,17 +354,17 @@ def create_pdf_report(
         elements.append(Spacer(1, 12))
 
     qual_data = [
-        [Paragraph("<b>Kvalitativní charakteristika částic (VDA 19.1)</b>", cell_header), Paragraph("<b>Zjištěný počet / podíl</b>", cell_header)],
+        [Paragraph("<b>Kvalitativní charakteristika částic z reportu (VDA 19.1)</b>", cell_header), Paragraph("<b>Zjištěná hodnota</b>", cell_header)],
         [Paragraph("Vlákna (Fibers)", cell_style), Paragraph(str(fibers_count), cell_style)],
         [Paragraph("Kovové lesklé částice (Metallic reflective)", cell_style), Paragraph(str(metallic_ref_count), cell_style)],
         [Paragraph("Kovové nelesklé / ostatní částice (Non-reflective)", cell_style), Paragraph(str(metallic_nonref_count), cell_style)],
     ]
 
     if advanced_data:
-        qual_data.append([Paragraph("Max. rozměr částice (L_max / Feret Max)", cell_style), Paragraph(f"{advanced_data.get('l_max', 0)} µm", cell_style)])
-        qual_data.append([Paragraph("Poměr stran (b/L threshold)", cell_style), Paragraph(str(advanced_data.get('aspect_ratio', '-')), cell_style)])
+        qual_data.append([Paragraph("Max. rozměr částice z reportu (L_max / Feret Max)", cell_style), Paragraph(f"{advanced_data.get('l_max', 0)} µm", cell_style)])
+        qual_data.append([Paragraph("Poměr stran (b/L threshold)", cell_style), Paragraph(str(advanced_data.get('aspect_ratio', '-')))])
         qual_data.append([Paragraph("Plošná hustota kontaminace (Specific Surface)", cell_style), Paragraph(f"{advanced_data.get('specific_surface', 0)} mg/m²", cell_style)])
-        qual_data.append([Paragraph("Účinnost extrakce (Recovery / Decline rate)", cell_style), Paragraph(f"{advanced_data.get('recovery_rate', 0)} %", cell_style)])
+        qual_data.append([Paragraph("Účinnost extrakce z protokolu (Recovery / Decline rate)", cell_style), Paragraph(f"{advanced_data.get('recovery_rate', 0)} %", cell_style)])
 
     qual_table = Table(qual_data, colWidths=[340, 200])
     qual_table.setStyle(
@@ -381,11 +377,11 @@ def create_pdf_report(
 
     if note:
         elements.append(Spacer(1, 10))
-        note_table = Table([[Paragraph("<b>Poznámka k měření:</b>", cell_bold)], [Paragraph(note, cell_style)]], colWidths=[540])
+        note_table = Table([[Paragraph("<b>Poznámka k záznamu:</b>", cell_bold)], [Paragraph(note, cell_style)]], colWidths=[540])
         elements.append(note_table)
 
     elements.append(Spacer(1, 20))
-    sig_table = Table([[Paragraph(f"<b>Protokol vytvořil (technik) / Inspector:</b> {inspector_name}", cell_style)]], colWidths=[540])
+    sig_table = Table([[Paragraph(f"<b>Záznam zapsal / ověřil (technik):</b> {inspector_name}", cell_style)]], colWidths=[540])
     elements.append(KeepTogether(sig_table))
 
     doc.build(elements)
@@ -395,7 +391,7 @@ def create_pdf_report(
 
 def show_standards_management(conn):
     st.subheader(t["standards_title"])
-    tab1, tab2 = st.tabs(["➕ Přidat novou normu", "✏️ Editovat / Smazat stávající normu"])
+    tab1, tab2 = st.tabs(["➕ Přidat novou podnikovou normu", "✏️ Editovat / Smazat stávající normu"])
     
     vda_classes = ["B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N"]
     
@@ -415,12 +411,12 @@ def show_standards_management(conn):
                     format_func=lambda x: f"{components_df[components_df['id'] == x]['part_number'].values[0]} - {components_df[components_df['id'] == x]['name'].values[0]}"
                 )
             with col2:
-                norm_name = st.text_input("Název normy (např. VDA 19.1 - Zpřísněná)", placeholder="Zadejte název...")
+                norm_name = st.text_input("Název podnikové/zákaznické normy (např. VDA 19.1 - Přísná)", placeholder="Zadejte název...")
 
-            st.markdown("**Gravimetrie (Limit hmotnosti zbytků)**")
-            gravimetry_limit_input = st.number_input("Max. povolená hmotnost (mg)", min_value=0.0, value=0.0, step=0.1, help="Pokud se gravimetrie nesleduje, nechte 0.")
+            st.markdown("**Gravimetrický limit pro hmotnost zbytků**")
+            gravimetry_limit_input = st.number_input("Max. povolená zbytková hmotnost (mg)", min_value=0.0, value=0.0, step=0.1, help="Pokud se gravimetrie nesleduje, nechte 0.")
 
-            st.markdown("**Maximální povolené limity frakcí (kódové úrovně 0-24)**")
+            st.markdown("**Maximální povolené limity frakcí z normy (kódové úrovně 0-24)**")
             limit_inputs = {}
             cols_r1 = st.columns(7)
             for i in range(7):
@@ -430,7 +426,7 @@ def show_standards_management(conn):
             for i in range(7, 13):
                 limit_inputs[vda_classes[i]] = cols_r2[i - 7].text_input(vda_classes[i], key=f"add_{vda_classes[i]}")
 
-            std_note = st.text_area("Poznámka k normě (např. interní požadavky na Feret_max)")
+            std_note = st.text_area("Poznámka k normě")
             submit_new_std = st.form_submit_button("Vytvořit a uložit normu", type="primary")
 
             if submit_new_std:
@@ -565,7 +561,7 @@ def show_evaluation_form(conn):
             standards_df = pd.read_sql(f"SELECT DISTINCT id, norm_name FROM customer_standards WHERE component_id = '{c_id}'", conn)
             if not standards_df.empty:
                 selected_std_idx = st.selectbox(
-                    "Zákaznický limit / norma / Cleanliness Standard",
+                    "Výběr podnikové / zákaznické normy pro porovnání",
                     options=standards_df.index,
                     format_func=lambda x: standards_df.loc[x, "norm_name"],
                 )
@@ -580,7 +576,7 @@ def show_evaluation_form(conn):
                 except:
                     pass
             else:
-                st.warning("Pro tento díl není definován limit v DB.")
+                st.warning("Pro tento díl není definována norma v DB.")
                 std_id, std_name, gravimetry_limit_db = None, "Neznámá norma", None
 
         db_limits_dict = {}
@@ -595,7 +591,7 @@ def show_evaluation_form(conn):
         st.markdown("---")
 
         # --- PŘEPÍNAČE PRO VOLITELNOST SEKCÍ (MIMO FORMULAR PRO OKAMŽITOU REAKCI) ---
-        st.subheader("Konfigurace volitelných bloků měření")
+        st.subheader("Volitelné bloky pro přepis z reportu")
         col_opt1, col_opt2, col_opt3, col_opt4 = st.columns(4)
         with col_opt1:
             enable_part_ext = st.checkbox("2. Parametry dílu", value=True, key="chk_p2")
@@ -649,24 +645,18 @@ def show_evaluation_form(conn):
 
             st.markdown("---")
 
-            # --- SEKCE 3: Gravimetrická analýza ---
-            residual_mass = 0.0
+            # --- SEKCE 3: Gravimetrická analýza (Zadání zbytkové hmotnosti přímo z reportu vah) ---
             if gravimetry_limit_db and enable_grav:
                 st.info(f"Očekávaný limit normy pro gravimetrii: **{gravimetry_limit_db} mg**")
             
             st.markdown(f"**{t['sec_grav']}**")
-            col_g, col_h, col_i = st.columns(3)
+            col_g, _ = st.columns([1, 2])
             with col_g:
-                mass_before = st.number_input(t["mass_b"], min_value=0.0, value=45.1200, format="%.4f", disabled=not enable_grav)
-            with col_h:
-                mass_after = st.number_input(t["mass_a"], min_value=0.0, value=45.5400, format="%.4f", disabled=not enable_grav)
-            with col_i:
-                residual_mass = max(0.0, mass_after - mass_before)
-                st.metric(label=t["resid_mass"], value=f"{residual_mass:.4f} mg")
+                residual_mass = st.number_input(t["resid_mass"], min_value=0.0, value=0.4200, format="%.4f", step=0.1, disabled=not enable_grav)
 
             st.markdown("---")
 
-            # --- SEKCE 4: Optická analýza ---
+            # --- SEKCE 4: Optická analýza (Přepis z optického reportu) ---
             st.markdown(f"**{t['sec_opt']}**")
             vda_classes = ["B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N"]
             entered_levels = {}
@@ -724,7 +714,7 @@ def show_evaluation_form(conn):
                 metallic_nonref_count = st.number_input(t["met_nonref"], min_value=0, value=0, step=1)
                 filter_occupancy_pct = st.number_input(t["filt_occ"], min_value=0.0, value=3.0)
 
-            # --- SEKCE 6: Pokročilé vyhodnotitelné parametry (PŘEDĚLANO NA ČÍSELNÁ OKNA) ---
+            # --- SEKCE 6: Pokročilé vyhodnotitelné parametry ---
             st.markdown("---")
             st.markdown(f"**{t['sec_adv']}**")
             
@@ -803,7 +793,7 @@ def show_evaluation_form(conn):
                     
                     if enable_grav and gravimetry_limit_db and residual_mass > gravimetry_limit_db:
                         failed = True
-                        st.error(f"Gravimetrie překročena: Naměřeno {residual_mass:.4f} mg (Limit normy: {gravimetry_limit_db} mg)")
+                        st.error(f"Gravimetrie překročena: Naměřená zbytková hmotnost {residual_mass:.4f} mg (Limit normy: {gravimetry_limit_db} mg)")
 
                     if enable_opt:
                         for s_class, actual_val in valid_levels.items():
@@ -899,7 +889,7 @@ def show_evaluation_form(conn):
                         st.download_button(
                             t["download_pdf"],
                             pdf_data,
-                            file_name=f"protokol_{filt_no}.pdf",
+                            file_name=f"porovnani_norma_{filt_no}.pdf",
                             mime="application/pdf",
                         )
                     with btn_col2:
@@ -917,7 +907,7 @@ def show_history(conn):
         if not history_df.empty:
             st.dataframe(history_df, use_container_width=True, hide_index=True)
         else:
-            st.info("Zatím nejsou uložena žádná měření.")
+            st.info("Zatím nejsou uložena žádná vyhodnocení.")
     except Exception as err:
         st.error(f"Chyba načítání historie: {err}")
 
