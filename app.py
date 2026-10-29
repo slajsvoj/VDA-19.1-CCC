@@ -144,7 +144,7 @@ translations = {
         "note": "Inspection Note",
         "submit_eval": "Compare with Standard & Save to Database",
         "l_max": "Maximum Particle Dimension (L_max / Feret Max) [µm]",
-        "l_max_desc": "Maximum length of the largest detected particle from report.",
+        "l_max_desc": "Maximální délka největší detekované částice z reportu.",
         "aspect_ratio": "Aspect Ratio Threshold (b/L)",
         "aspect_ratio_desc": "Width-to-length ratio.",
         "metallic_ratio": "Metallic Particles Share [%]",
@@ -587,23 +587,21 @@ def show_evaluation_form(conn):
             else:
                 std_id, std_name, gravimetry_limit_db = None, "testovacifirmaA", 0.50
 
-        # ABSOLUTNÍ GARANCE SPRÁVNÝCH LIMITŮ PRO TESTOVACÍ FIRMU A (IGNORUJE DB NULY)
+        # --- HLAVNÍ OPRAVA: PŘÍMÉ NAČTENÍ Z DATABÁZE PŘES DICTIONARY COMPREHENSION ---
+        db_limits_dict = {}
+        if std_id:
+            try:
+                lim_fetch = pd.read_sql(f"SELECT size_class, max_allowed_level FROM customer_standards WHERE id = '{std_id}' OR norm_name = '{std_name}'", conn)
+                for _, row in lim_fetch.iterrows():
+                    db_limits_dict[str(row['size_class']).strip()] = int(row['max_allowed_level'])
+            except Exception as e:
+                pass
+
+        # Pokud by v DB cokoliv chybělo, doplníme bezpečně výchozí hodnoty
         fallback_test_limits = {"B": 15, "C": 12, "D": 10, "E": 8, "F": 5, "G": 3, "H": 2, "I": 1, "J": 0, "K": 0, "L": 0, "M": 0, "N": 0}
-        
-        if std_name and "testovacifirmaA" in std_name.lower():
-            db_limits_dict = fallback_test_limits
-        else:
-            db_limits_dict = {}
-            if std_id:
-                try:
-                    lim_fetch = pd.read_sql(f"SELECT size_class, max_allowed_level FROM customer_standards WHERE id = '{std_id}'", conn)
-                    for _, row in lim_fetch.iterrows():
-                        db_limits_dict[row['size_class']] = int(row['max_allowed_level'])
-                except:
-                    pass
-            
-            if not db_limits_dict:
-                db_limits_dict = fallback_test_limits
+        for k, v in fallback_test_limits.items():
+            if k not in db_limits_dict:
+                db_limits_dict[k] = v
 
         st.markdown("---")
 
@@ -811,11 +809,7 @@ def show_evaluation_form(conn):
                     if enable_opt:
                         for s_class in vda_classes:
                             actual_val = valid_levels.get(s_class, 0)
-                            # ZDE JE HLAVNÍ POJISTKA: Pro testovací firmu A bereme limity přímo z fallback slovníku, nikoliv z chybné DB
-                            if std_name and "testovacifirmaA" in std_name.lower():
-                                max_alw = int(fallback_test_limits.get(s_class, 0))
-                            else:
-                                max_alw = int(db_limits_dict.get(s_class, 0))
+                            max_alw = int(db_limits_dict.get(s_class, 0))
                             
                             if profile_type == ProfileType.VDA_19_1:
                                 status = "NOK" if actual_val > max_alw else "OK"
