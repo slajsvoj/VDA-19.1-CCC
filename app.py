@@ -144,7 +144,7 @@ translations = {
         "note": "Inspection Note",
         "submit_eval": "Compare with Standard & Save to Database",
         "l_max": "Maximum Particle Dimension (L_max / Feret Max) [µm]",
-        "l_max_desc": "Maximální délka největší detekované částice z reportu.",
+        "l_max_desc": "Maximum length of the largest detected particle from report.",
         "aspect_ratio": "Aspect Ratio Threshold (b/L)",
         "aspect_ratio_desc": "Width-to-length ratio.",
         "metallic_ratio": "Metallic Particles Share [%]",
@@ -247,15 +247,17 @@ def create_pdf_report(
     ]
 
     current_date = datetime.date.today().strftime("%d.%m.%Y")
+    
+    res_mass_val = grav_data.get('residual_mass', 0.0) if grav_data else 0.0
+    grav_limit_val = grav_data.get('gravimetry_limit', 0.50) if grav_data else 0.50
+
     meta_data = [
         [Paragraph("<b>Oznaceni dilu:</b>", cell_style), Paragraph(comp_name, cell_style), Paragraph("<b>Datum vyhodnoceni:</b>", cell_style), Paragraph(current_date, cell_style)],
         [Paragraph("<b>Podnikova norma:</b>", cell_style), Paragraph(std_name, cell_style), Paragraph("<b>Zadal z reportu:</b>", cell_style), Paragraph(inspector_name, cell_style)],
         [Paragraph("<b>Cislo filtru:</b>", cell_style), Paragraph(filter_no, cell_style), Paragraph("<b>Sarze filtru:</b>", cell_style), Paragraph(filter_lot if filter_lot else "-", cell_style)],
-        [Paragraph("<b>Referencni jednotka:</b>", cell_style), Paragraph(ref_unit, cell_style), Paragraph("<b>Zbytková hmotnost M:</b>", cell_style), Paragraph(f"{grav_data.get('residual_mass', 0):.4f} mg", cell_style)],
+        [Paragraph("<b>Referencni jednotka:</b>", cell_style), Paragraph(ref_unit, cell_style), Paragraph("<b>Zbytková hmotnost M:</b>", cell_style), Paragraph(f"{res_mass_val:.4f} mg", cell_style)],
+        [Paragraph("<b>Limit gravimetrie:</b>", cell_style), Paragraph(f"{grav_limit_val:.4f} mg", cell_style), Paragraph("", cell_style), Paragraph("", cell_style)],
     ]
-    
-    if grav_data.get('gravimetry_limit'):
-        meta_data.append([Paragraph("<b>Limit gravimetrie:</b>", cell_style), Paragraph(f"{grav_data.get('gravimetry_limit'):.4f} mg", cell_style), Paragraph("", cell_style), Paragraph("", cell_style)])
 
     meta_table = Table(meta_data, colWidths=[110, 160, 100, 184])
     meta_table.setStyle(
@@ -587,7 +589,6 @@ def show_evaluation_form(conn):
             else:
                 std_id, std_name, gravimetry_limit_db = None, "testovacifirmaA", 0.50
 
-        # --- HLAVNÍ OPRAVA: PŘÍMÉ NAČTENÍ Z DATABÁZE PŘES DICTIONARY COMPREHENSION ---
         db_limits_dict = {}
         if std_id:
             try:
@@ -597,7 +598,6 @@ def show_evaluation_form(conn):
             except Exception as e:
                 pass
 
-        # Pokud by v DB cokoliv chybělo, doplníme bezpečně výchozí hodnoty
         fallback_test_limits = {"B": 15, "C": 12, "D": 10, "E": 8, "F": 5, "G": 3, "H": 2, "I": 1, "J": 0, "K": 0, "L": 0, "M": 0, "N": 0}
         for k, v in fallback_test_limits.items():
             if k not in db_limits_dict:
@@ -605,7 +605,6 @@ def show_evaluation_form(conn):
 
         st.markdown("---")
 
-        # --- PŘEPÍNAČE PRO VOLITELNOST SEKCÍ (MIMO FORMULAR PRO OKAMŽITOU REAKCI) ---
         st.subheader("Volitelné bloky pro přepis z reportu")
         col_opt1, col_opt2, col_opt3, col_opt4 = st.columns(4)
         with col_opt1:
@@ -638,7 +637,6 @@ def show_evaluation_form(conn):
 
             st.markdown("---")
             
-            # --- SEKCE 2: Parametry dílu a extrakce ---
             wetted_area, extraction_method, wetted_volume, extraction_medium, filter_material, filter_pore_size = 1000.0, "Tlakový oplach", 0.0, "Testovací benzín", "PET", 5.0
             
             st.markdown(f"**{t['sec_part']}**")
@@ -660,7 +658,6 @@ def show_evaluation_form(conn):
 
             st.markdown("---")
 
-            # --- SEKCE 3: Gravimetrická analýza ---
             if gravimetry_limit_db and enable_grav:
                 st.info(f"Očekávaný limit normy pro gravimetrii: **{gravimetry_limit_db} mg**")
             
@@ -671,7 +668,6 @@ def show_evaluation_form(conn):
 
             st.markdown("---")
 
-            # --- SEKCE 4: Optická analýza (Přepis z optického reportu - všechny třídy B až N) ---
             st.markdown(f"**{t['sec_opt']}**")
             vda_classes = ["B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N"]
             entered_levels = {}
@@ -716,7 +712,6 @@ def show_evaluation_form(conn):
 
             st.markdown("---")
 
-            # --- SEKCE 5: Kvalitativní charakteristiky ---
             st.markdown(f"**{t['sec_qual']}**")
             col_q1, col_q2, col_q3 = st.columns(3)
             with col_q1:
@@ -729,7 +724,6 @@ def show_evaluation_form(conn):
                 metallic_nonref_count = st.number_input(t["met_nonref"], min_value=0, value=0, step=1)
                 filter_occupancy_pct = st.number_input(t["filt_occ"], min_value=0.0, value=3.0, step=0.5)
 
-            # --- SEKCE 6: Pokročilé vyhodnotitelné parametry ---
             st.markdown("---")
             st.markdown(f"**{t['sec_adv']}**")
             
