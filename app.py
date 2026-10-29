@@ -54,29 +54,41 @@ translations = {
         "db_connected": "Připojeno k Supabase",
         "db_error": "Chyba připojení k databázi:",
         "nav": ["Zápis a vyhodnocení z reportu", "Správa norem (Limity)", "Přehled historie měření"],
-        "sec_ident": "1. Identifikace reportu a zkušební podmínky",
-        "sec_part": "2. Parametry dílu a extrakce (z protokolu)",
-        "sec_grav": "3. Gravimetrická analýza – Zbytková hmotnost M (z protokolu vah)",
-        "sec_opt": "4. Optická analýza – Naměřené třídy z optického reportu (B až N)",
-        "sec_qual": "5. Kvalitativní charakteristiky a Validační brány z reportu",
-        "sec_adv": "6. Pokročilé vyhodnotitelné parametry z reportu (VDA 19.1)",
-        "sec_hard": "7. Hard-Stop parametry (Interní norma)",
-        "order_no": "Číslo zakázky",
-        "rep_no": "Číslo laboratorní zprávy / protokolu",
-        "insp_name": "Jméno technika",
-        "insp_type": "Typ zkoušky",
-        "filt_no": "Číslo filtru",
-        "filt_lot": "Šarže filtru",
-        "profile": "Vyhodnocovací profil",
-        "supply_cond": "Stav při dodání",
-        "sample_size": "Kontrolní dávka (n)",
-        "ref_unit": "Referenční jednotka",
-        "wetted_area": "Smáčená plocha AC [cm²]",
-        "ext_method": "Metoda extrakce",
-        "wetted_vol": "Smáčený objem VC [cm³]",
-        "ext_medium": "Extrakční médium",
-        "filt_mat": "Materiál filtru",
-        "filt_pore": "Velikost pórů [µm]",
+        "sec_ident": "1. General Information & Inspected Object (VDA 19.1)",
+        "sec_prep": "2. Preparatory steps & Extraction",
+        "sec_filt": "3. Filtration & Drying",
+        "sec_grav": "4. Gravimetrická analýza – Zbytková hmotnost M",
+        "sec_opt": "5. Light-optical analysis & Particle size distribution (B až N)",
+        "sec_qual": "6. Kvalitativní charakteristiky a Validační brány",
+        "sec_adv": "7. Pokročilé vyhodnotitelné parametry",
+        "sec_hard": "8. Hard-Stop parametry (Interní norma)",
+        "order_no": "Order no. (Číslo zakázky)",
+        "rep_no": "Report no. (Číslo protokolu)",
+        "cust": "Customer (Zákazník)",
+        "contact": "Contact person (Kontaktní osoba)",
+        "insp_name": "Jméno technika / Inspector",
+        "test_ordered": "Test ordered (Typ zkoušky)",
+        "reason_test": "Reason for test (Důvod zkoušky)",
+        "designation": "Designation (Označení dílu)",
+        "part_no": "Part number (Číslo dílu)",
+        "batch_no": "Batch number (Šarže)",
+        "date_removed": "Date removed (Datum odběru)",
+        "time_removed": "Time removed (Čas odběru)",
+        "removed_from": "Removed from (Odebráno z)",
+        "cond_delivery": "Condition on delivery (Stav při dodání)",
+        "lot_size": "Inspection lot size (Velikost dávky)",
+        "control_area": "Control area Ac [cm²]",
+        "wetted_vol": "Wetted volume Vc [cm³]",
+        "prep_steps": "Preparatory steps (Přípravné kroky)",
+        "ext_scope": "Scope of extraction (Rozsah extrakce)",
+        "test_env": "Test environment (Zkušební prostředí)",
+        "ext_method": "Extraction method (Metoda extrakce)",
+        "dissolving_fluid": "Dissolving fluid (Rozpouštěcí médium)",
+        "filt_manuf": "Filter Manufacturer",
+        "filt_type": "Filter Type",
+        "filt_mat": "Filter material (Materiál filtru)",
+        "filt_pore": "Pore size (Velikost pórů µm)",
+        "drying_params": "Drying Manufacturer / Model / Temp",
         "resid_mass": "Zbytková hmotnost M z protokolu vah [mg]",
         "fibers": "Vlákna (Fibers)",
         "blank_val": "Slepá hodnota [% z limitu]",
@@ -89,13 +101,11 @@ translations = {
         "note": "Poznámka k měření",
         "submit_eval": "Porovnat s normou a uložit do databáze",
         "l_max": "Maximální rozměr částice (L_max / Feret Max) [µm]",
-        "l_max_desc": "Maximální délka největší detekované částice z reportu.",
         "aspect_ratio": "Prahová hodnota poměru stran (b/L)",
-        "aspect_ratio_desc": "Poměr šířky a délky pro detekci třísek.",
         "metallic_ratio": "Podíl kovových částic [%]",
         "cleanliness_class": "Kód čistoty (ISO 16232 / CCC kód)",
         "specific_surface": "Plošná hustota kontaminace [mg/m²]",
-        "recovery_rate": "Účinnost extrakce (Deklinační faktor / Recovery %)",
+        "recovery_rate": "Účinnost extrakce (Recovery %)",
         "res_title": "Výsledek porovnání s podnikovou normou",
         "download_pdf": "Stáhnout souhrnný protokol (PDF)",
         "new_insp": "Nové zadání z reportu",
@@ -109,29 +119,41 @@ translations = {
         "db_connected": "Connected to Supabase",
         "db_error": "Database connection error:",
         "nav": ["Report Evaluation & Entry", "Standards & Limits Management", "Inspection History"],
-        "sec_ident": "1. Report Identification & Inspection Conditions",
-        "sec_part": "2. Component & Extraction Parameters (from Protocol)",
-        "sec_grav": "3. Gravimetric Analysis – Residual Mass M (from Scale Protocol)",
-        "sec_opt": "4. Optical Analysis – Measured Classes from Optical Report (B to N)",
-        "sec_qual": "5. Qualitative Characteristics & Validation Gates from Report",
-        "sec_adv": "6. Advanced Evaluation Parameters from Report (VDA 19.1)",
-        "sec_hard": "7. Hard-Stop Parameters (Internal Standard)",
-        "order_no": "Order Number",
-        "rep_no": "Report Number",
+        "sec_ident": "1. General Information & Inspected Object (VDA 19.1)",
+        "sec_prep": "2. Preparatory steps & Extraction",
+        "sec_filt": "3. Filtration & Drying",
+        "sec_grav": "4. Gravimetric Analysis – Residual Mass M",
+        "sec_opt": "5. Light-optical analysis & Particle size distribution (B to N)",
+        "sec_qual": "6. Qualitative Characteristics & Validation Gates",
+        "sec_adv": "7. Advanced Evaluation Parameters",
+        "sec_hard": "8. Hard-Stop Parameters (Internal Standard)",
+        "order_no": "Order no.",
+        "rep_no": "Report no.",
+        "cust": "Customer",
+        "contact": "Contact person",
         "insp_name": "Inspector Name",
-        "insp_type": "Inspection Type",
-        "filt_no": "Filter Number",
-        "filt_lot": "Filter Lot / Batch",
-        "profile": "Evaluation Profile",
-        "supply_cond": "Supply Condition",
-        "sample_size": "Sample Size (n)",
-        "ref_unit": "Reference Unit",
-        "wetted_area": "Wetted Area AC [cm²]",
-        "ext_method": "Extraction Method",
-        "wetted_vol": "Wetted Volume VC [cm³]",
-        "ext_medium": "Extraction Medium",
-        "filt_mat": "Filter Material",
-        "filt_pore": "Pore Size [µm]",
+        "test_ordered": "Test ordered",
+        "reason_test": "Reason for test",
+        "designation": "Designation",
+        "part_no": "Part number",
+        "batch_no": "Batch number",
+        "date_removed": "Date removed",
+        "time_removed": "Time removed",
+        "removed_from": "Removed from",
+        "cond_delivery": "Condition on delivery",
+        "lot_size": "Inspection lot size",
+        "control_area": "Control area Ac [cm²]",
+        "wetted_vol": "Wetted volume Vc [cm³]",
+        "prep_steps": "Preparatory steps",
+        "ext_scope": "Scope of extraction",
+        "test_env": "Test environment",
+        "ext_method": "Extraction method",
+        "dissolving_fluid": "Dissolving fluid",
+        "filt_manuf": "Filter Manufacturer",
+        "filt_type": "Filter Type",
+        "filt_mat": "Filter material",
+        "filt_pore": "Pore size [µm]",
+        "drying_params": "Drying Manufacturer / Model / Temp",
         "resid_mass": "Residual Mass M from Scale [mg]",
         "fibers": "Fibers",
         "blank_val": "Blank Value [% of limit]",
@@ -144,13 +166,11 @@ translations = {
         "note": "Inspection Note",
         "submit_eval": "Compare with Standard & Save to Database",
         "l_max": "Maximum Particle Dimension (L_max / Feret Max) [µm]",
-        "l_max_desc": "Maximum length of the largest detected particle from report.",
         "aspect_ratio": "Aspect Ratio Threshold (b/L)",
-        "aspect_ratio_desc": "Width-to-length ratio.",
         "metallic_ratio": "Metallic Particles Share [%]",
         "cleanliness_class": "Cleanliness Class (ISO 16232 / CCC Code)",
         "specific_surface": "Specific Surface Contamination [mg/m²]",
-        "recovery_rate": "Extraction Efficiency / Decline Factor (Recovery %)",
+        "recovery_rate": "Extraction Efficiency (Recovery %)",
         "res_title": "Evaluation Result vs. Corporate Standard",
         "download_pdf": "Download Summary Report (PDF)",
         "new_insp": "New Report Entry",
@@ -186,24 +206,9 @@ def get_db_connection():
         return None
 
 
-class ReferenceType(str, Enum):
-    A = "A"
-    V = "V"
-    N = "N"
-
-
 class ProfileType(str, Enum):
     VDA_19_1 = "VDA 19.1"
     INTERNAL_CUSTOM = "Interní norma (Custom)"
-
-
-def count_to_ccc_level(count: float) -> int:
-    if count <= 0:
-        return 0
-    if count <= 1:
-        return 0
-    level = math.ceil(math.log2(count))
-    return min(max(level, 1), 24)
 
 
 def calculate_measurement_uncertainty():
@@ -221,8 +226,7 @@ def calculate_measurement_uncertainty():
 
 
 def create_pdf_report(
-    comp_name, std_name, filter_no, filter_lot, inspector_name, ref_unit,
-    ccc_string, report_df, conformity_text, failed, note, fibers_count,
+    meta_info, report_df, conformity_text, failed, note, fibers_count,
     metallic_ref_count, metallic_nonref_count, grav_data, uncertainty_info=None,
     advanced_data=None
 ):
@@ -234,44 +238,48 @@ def create_pdf_report(
     font_name = "Helvetica"
     styles = getSampleStyleSheet()
 
-    title_style = ParagraphStyle("DocTitle", fontName=font_name, fontSize=13, leading=16, textColor=colors.HexColor("#111827"), alignment=1, spaceAfter=4)
-    subtitle_style = ParagraphStyle("DocSubtitle", fontName=font_name, fontSize=8, leading=11, textColor=colors.HexColor("#4b5563"), alignment=1, spaceAfter=10)
-    cell_style = ParagraphStyle("TableCell", fontName=font_name, fontSize=8, leading=11, textColor=colors.HexColor("#1f2937"))
-    cell_bold = ParagraphStyle("TableCellBold", fontName=font_name, fontSize=8, leading=11, textColor=colors.HexColor("#111827"))
-    cell_header = ParagraphStyle("TableHeader", fontName=font_name, fontSize=8, leading=11, textColor=colors.whitesmoke)
-    ccc_style = ParagraphStyle("CCCStyle", fontName=font_name, fontSize=9.5, leading=13, textColor=colors.HexColor("#1e3a8a"), alignment=1)
+    title_style = ParagraphStyle("DocTitle", fontName=font_name, fontSize=12, leading=15, textColor=colors.HexColor("#111827"), alignment=1, spaceAfter=3)
+    subtitle_style = ParagraphStyle("DocSubtitle", fontName=font_name, fontSize=8, leading=10, textColor=colors.HexColor("#4b5563"), alignment=1, spaceAfter=8)
+    cell_style = ParagraphStyle("TableCell", fontName=font_name, fontSize=7.5, leading=10, textColor=colors.HexColor("#1f2937"))
+    cell_bold = ParagraphStyle("TableCellBold", fontName=font_name, fontSize=7.5, leading=10, textColor=colors.HexColor("#111827"))
+    cell_header = ParagraphStyle("TableHeader", fontName=font_name, fontSize=7.5, leading=10, textColor=colors.whitesmoke)
+    ccc_style = ParagraphStyle("CCCStyle", fontName=font_name, fontSize=9, leading=12, textColor=colors.HexColor("#1e3a8a"), alignment=1)
 
     elements = [
-        Paragraph("SOUHRNNY PROTOKOL KONTROLY CISTOTY / CLEANLINESS REPORT EVALUATION", title_style),
-        Paragraph("Porovnani namerenych hodnot z reportu s podnikovou normou (VDA 19.1 / ISO 16232)", subtitle_style),
+        Paragraph("INSPECTION REPORT: CLEANLINESS INSPECTION AS PER VDA 19.1 (2025)", title_style),
+        Paragraph("Souhrnný protokol technické čistoty dle podnikové normy", subtitle_style),
     ]
 
     current_date = datetime.date.today().strftime("%d.%m.%Y")
     
     meta_data = [
-        [Paragraph("<b>Oznaceni dilu:</b>", cell_style), Paragraph(comp_name, cell_style), Paragraph("<b>Datum vyhodnoceni:</b>", cell_style), Paragraph(current_date, cell_style)],
-        [Paragraph("<b>Podnikova norma:</b>", cell_style), Paragraph(std_name, cell_style), Paragraph("<b>Zadal z reportu:</b>", cell_style), Paragraph(inspector_name, cell_style)],
-        [Paragraph("<b>Cislo filtru:</b>", cell_style), Paragraph(filter_no, cell_style), Paragraph("<b>Sarze filtru:</b>", cell_style), Paragraph(filter_lot if filter_lot else "-", cell_style)],
-        [Paragraph("<b>Referencni jednotka:</b>", cell_style), Paragraph(ref_unit, cell_style), Paragraph("", cell_style), Paragraph("", cell_style)],
+        [Paragraph("<b>Order no.:</b>", cell_style), Paragraph(meta_info.get('order_no', '-'), cell_style), Paragraph("<b>Customer:</b>", cell_style), Paragraph(meta_info.get('customer', '-'), cell_style)],
+        [Paragraph("<b>Report no.:</b>", cell_style), Paragraph(meta_info.get('report_no', '-'), cell_style), Paragraph("<b>Contact person:</b>", cell_style), Paragraph(meta_info.get('contact', '-'), cell_style)],
+        [Paragraph("<b>Test ordered:</b>", cell_style), Paragraph(meta_info.get('test_ordered', '-'), cell_style), Paragraph("<b>Reason for test:</b>", cell_style), Paragraph(meta_info.get('reason_test', '-'), cell_style)],
+        [Paragraph("<b>Designation / Part:</b>", cell_style), Paragraph(meta_info.get('comp_name', '-'), cell_style), Paragraph("<b>Norma / Standard:</b>", cell_style), Paragraph(meta_info.get('std_name', '-'), cell_style)],
+        [Paragraph("<b>Batch number:</b>", cell_style), Paragraph(meta_info.get('filter_lot', '-'), cell_style), Paragraph("<b>Filter number:</b>", cell_style), Paragraph(meta_info.get('filter_no', '-'), cell_style)],
+        [Paragraph("<b>Control area (Ac):</b>", cell_style), Paragraph(f"{meta_info.get('wetted_area', 1000)} cm²", cell_style), Paragraph("<b>Extraction method:</b>", cell_style), Paragraph(meta_info.get('ext_method', '-'), cell_style)],
+        [Paragraph("<b>Filter material / pore:</b>", cell_style), Paragraph(f"{meta_info.get('filt_mat', '-')}, {meta_info.get('filt_pore', '-')} µm", cell_style), Paragraph("<b>Datum vyhodnoceni:</b>", cell_style), Paragraph(current_date, cell_style)],
     ]
 
-    meta_table = Table(meta_data, colWidths=[110, 160, 100, 184])
+    meta_table = Table(meta_data, colWidths=[110, 165, 100, 179])
     meta_table.setStyle(
         TableStyle([
             ("BACKGROUND", (0, 0), (-1, -1), colors.HexColor("#f8fafc")),
             ("BOX", (0, 0), (-1, -1), 0.75, colors.HexColor("#cbd5e1")),
             ("INNERGRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#e2e8f0")),
-            ("TOPPADDING", (0, 0), (-1, -1), 4),
-            ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
-            ("LEFTPADDING", (0, 0), (-1, -1), 6),
-            ("RIGHTPADDING", (0, 0), (-1, -1), 6),
+            ("TOPPADDING", (0, 0), (-1, -1), 3),
+            ("BOTTOMPADDING", (0, 0), (-1, -1), 3),
+            ("LEFTPADDING", (0, 0), (-1, -1), 5),
+            ("RIGHTPADDING", (0, 0), (-1, -1), 5),
             ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
         ])
     )
     elements.append(meta_table)
-    elements.append(Spacer(1, 8))
+    elements.append(Spacer(1, 6))
 
-    ccc_table = Table([[Paragraph(f"<b>CCC kod:</b> &nbsp;&nbsp; {ccc_string}", ccc_style)]], colWidths=[554], rowHeights=[24])
+    ccc_string = meta_info.get('ccc_string', 'CCC neuveden')
+    ccc_table = Table([[Paragraph(f"<b>CCC kód:</b> &nbsp;&nbsp; {ccc_string}", ccc_style)]], colWidths=[554], rowHeights=[22])
     ccc_table.setStyle(
         TableStyle([
             ("BACKGROUND", (0, 0), (-1, -1), colors.HexColor("#eff6ff")),
@@ -281,7 +289,7 @@ def create_pdf_report(
         ])
     )
     elements.append(ccc_table)
-    elements.append(Spacer(1, 8))
+    elements.append(Spacer(1, 6))
 
     if failed:
         res_color = colors.HexColor("#fee2e2")
@@ -290,8 +298,8 @@ def create_pdf_report(
         res_color = colors.HexColor("#d1fae5")
         res_text_color = colors.HexColor("#065f46")
 
-    res_style = ParagraphStyle("ResText", fontName=font_name, fontSize=9, leading=12, textColor=res_text_color, alignment=1)
-    res_table = Table([[Paragraph(f"<b>VYSLEDEK POSOUZENI / EVALUATION RESULT: {conformity_text.upper()}</b>", res_style)]], colWidths=[554], rowHeights=[22])
+    res_style = ParagraphStyle("ResText", fontName=font_name, fontSize=8.5, leading=11, textColor=res_text_color, alignment=1)
+    res_table = Table([[Paragraph(f"<b>VYSLEDEK POSOUZENI / EVALUATION RESULT: {conformity_text.upper()}</b>", res_style)]], colWidths=[554], rowHeights=[20])
     res_table.setStyle(
         TableStyle([
             ("BACKGROUND", (0, 0), (-1, -1), res_color),
@@ -301,14 +309,14 @@ def create_pdf_report(
         ])
     )
     elements.append(res_table)
-    elements.append(Spacer(1, 8))
+    elements.append(Spacer(1, 6))
 
     if uncertainty_info:
         unc_text = Paragraph(f"<b>Nejistota mereni (k=2, 95%):</b> Kombinovana: {uncertainty_info['combined_pct']}% | Rozsirena: {uncertainty_info['expanded_pct']}%", cell_style)
         elements.append(unc_text)
-        elements.append(Spacer(1, 6))
+        elements.append(Spacer(1, 5))
 
-    # --- SEKCE 3: GRAVIMETRICKÁ ANALÝZA ---
+    # --- GRAVIMETRIE ---
     res_mass_val = grav_data.get('residual_mass', 0.0) if grav_data else 0.0
     grav_limit_val = grav_data.get('gravimetry_limit', 0.50) if grav_data else 0.50
     grav_status = "NOK" if res_mass_val > grav_limit_val else "OK"
@@ -330,9 +338,9 @@ def create_pdf_report(
         ])
     )
     elements.append(grav_table)
-    elements.append(Spacer(1, 8))
+    elements.append(Spacer(1, 6))
 
-    # --- SEKCE 4: OPTICKÁ ANALÝZA ---
+    # --- OPTICKÁ ANALÝZA ---
     table_data = [[
         Paragraph("<b>Velikostni trida</b>", cell_header),
         Paragraph("<b>Rozsah velikosti</b>", cell_header),
@@ -342,11 +350,11 @@ def create_pdf_report(
     ]]
 
     size_ranges = {
-        "B": "5 um - 15 um", "C": "15 um - 25 um", "D": "25 um - 50 um",
-        "E": "50 um - 100 um", "F": "100 um - 150 um", "G": "150 um - 200 um",
-        "H": "200 um - 400 um", "I": "400 um - 600 um", "J": "600 um - 1000 um",
-        "K": "1000 um - 1500 um", "L": "1500 um - 2000 um", "M": "2000 um - 3000 um",
-        "N": "> 3000 um",
+        "B": "5 µm - 15 µm", "C": "15 µm - 25 µm", "D": "25 µm - 50 µm",
+        "E": "50 µm - 100 µm", "F": "100 µm - 150 µm", "G": "150 µm - 200 µm",
+        "H": "200 µm - 400 µm", "I": "400 µm - 600 µm", "J": "600 µm - 1000 µm",
+        "K": "1000 µm - 1500 µm", "L": "1500 µm - 2000 µm", "M": "2000 µm - 3000 µm",
+        "N": "> 3000 µm",
     }
 
     if not report_df.empty:
@@ -371,12 +379,12 @@ def create_pdf_report(
                 ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#1e293b")),
                 ("ALIGN", (0, 0), (-1, -1), "CENTER"),
                 ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#cbd5e1")),
-                ("TOPPADDING", (0, 0), (-1, -1), 3),
-                ("BOTTOMPADDING", (0, 0), (-1, -1), 3),
+                ("TOPPADDING", (0, 0), (-1, -1), 2.5),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 2.5),
             ])
         )
         elements.append(t)
-        elements.append(Spacer(1, 8))
+        elements.append(Spacer(1, 6))
 
     qual_data = [
         [Paragraph("<b>Kvalitativni charakteristiky z reportu (VDA 19.1)</b>", cell_header), Paragraph("<b>Zjistena hodnota</b>", cell_header)],
@@ -386,9 +394,9 @@ def create_pdf_report(
     ]
 
     if advanced_data:
-        qual_data.append([Paragraph("Max. rozmer castice z reportu (L_max / Feret Max)", cell_style), Paragraph(f"{advanced_data.get('l_max', 0)} um")])
+        qual_data.append([Paragraph("Max. rozmer castice z reportu (L_max / Feret Max)", cell_style), Paragraph(f"{advanced_data.get('l_max', 0)} µm")])
         qual_data.append([Paragraph("Pomer stran (b/L threshold)", cell_style), Paragraph(str(advanced_data.get('aspect_ratio', '-')))])
-        qual_data.append([Paragraph("Plosna hustota kontaminace (Specific Surface)", cell_style), Paragraph(f"{advanced_data.get('specific_surface', 0)} mg/m^2")])
+        qual_data.append([Paragraph("Plosna hustota kontaminace (Specific Surface)", cell_style), Paragraph(f"{advanced_data.get('specific_surface', 0)} mg/m²")])
         qual_data.append([Paragraph("Ucinnost extrakce z protokolu (Recovery rate)", cell_style), Paragraph(f"{advanced_data.get('recovery_rate', 0)} %")])
 
     qual_table = Table(qual_data, colWidths=[354, 200])
@@ -396,19 +404,19 @@ def create_pdf_report(
         TableStyle([
             ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#334155")),
             ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#cbd5e1")),
-            ("TOPPADDING", (0, 0), (-1, -1), 3),
-            ("BOTTOMPADDING", (0, 0), (-1, -1), 3),
+            ("TOPPADDING", (0, 0), (-1, -1), 2.5),
+            ("BOTTOMPADDING", (0, 0), (-1, -1), 2.5),
         ])
     )
     elements.append(qual_table)
 
     if note:
-        elements.append(Spacer(1, 8))
+        elements.append(Spacer(1, 6))
         note_table = Table([[Paragraph("<b>Poznamka k zaznamu:</b>", cell_bold)], [Paragraph(note, cell_style)]], colWidths=[554])
         elements.append(note_table)
 
-    elements.append(Spacer(1, 10))
-    sig_table = Table([[Paragraph(f"<b>Zaznam zapsal / overil (technik):</b> {inspector_name}", cell_style)]], colWidths=[554])
+    elements.append(Spacer(1, 8))
+    sig_table = Table([[Paragraph(f"<b>Zaznam zapsal / overil (technik):</b> {meta_info.get('inspector_name', 'Jan Novák')}", cell_style)]], colWidths=[554])
     elements.append(KeepTogether(sig_table))
 
     doc.build(elements)
@@ -629,68 +637,66 @@ def show_evaluation_form(conn):
         st.subheader("Volitelné bloky pro přepis z reportu")
         col_opt1, col_opt2, col_opt3, col_opt4 = st.columns(4)
         with col_opt1:
-            enable_part_ext = st.checkbox("2. Parametry dílu", value=True, key="chk_p2")
+            enable_part_ext = st.checkbox("2. Parametry extrakce", value=True, key="chk_p2")
         with col_opt2:
-            enable_grav = st.checkbox("3. Gravimetrie", value=True, key="chk_p3")
+            enable_grav = st.checkbox("4. Gravimetrie", value=True, key="chk_p3")
         with col_opt3:
-            enable_opt = st.checkbox("4. Optická analýza", value=True, key="chk_p4")
+            enable_opt = st.checkbox("5. Optická analýza", value=True, key="chk_p4")
         with col_opt4:
-            # ZMĚNA: Blok 6 (pokročilé metriky) je nyní automaticky zaškrtnutý
-            enable_adv = st.checkbox("6. Pokročilé metriky", value=True, key="chk_p6")
+            enable_adv = st.checkbox("7. Pokročilé metriky", value=True, key="chk_p6")
 
         st.markdown("---")
 
         with st.form("inspection_form"):
+            # --- SEKCE 1: General Information & Inspected Object ---
             st.subheader(t["sec_ident"])
             col_a, col_b, col_c = st.columns(3)
             with col_a:
-                order_number = st.text_input(t["order_no"])
-                report_number = st.text_input(t["rep_no"])
-                insp_name = st.text_input(t["insp_name"], value="Jan Novák")
+                order_number = st.text_input(t["order_no"], value="ORD-2026-001")
+                report_number = st.text_input(t["rep_no"], value="REP-VDA-042")
+                customer = st.text_input(t["cust"], value="Testovací Zákazník s.r.o.")
+                contact_person = st.text_input(t["contact"], value="Ing. Petr Novotný")
             with col_b:
-                inspection_type = st.selectbox(t["insp_type"], ["Rutinní kontrola", "Kvalifikační zkouška", "Dvojitá inspekce"])
-                filt_no = st.text_input(t["filt_no"])
-                filt_lot = st.text_input(t["filt_lot"])
+                insp_name = st.text_input(t["insp_name"], value="Jan Novák")
+                test_ordered = st.selectbox(t["test_ordered"], ["Routine inspection", "Double inspection", "Qualification test"])
+                reason_test = st.selectbox(t["reason_test"], ["Initial assessment", "Process monitoring", "Modifications, design"])
+                filt_no = st.text_input(t["filt_no"], value="F-1024")
             with col_c:
-                profile_type = st.selectbox(t["profile"], [ProfileType.VDA_19_1, ProfileType.INTERNAL_CUSTOM])
-                supply_condition = st.text_input(t["supply_cond"], value="Sériový díl")
-                sample_size = st.number_input(t["sample_size"], min_value=1, value=1, step=1)
-                ref_unit = st.selectbox(t["ref_unit"], ["A (1000 cm²)", "V (100 cm³)", "N (kus)"])
+                filt_lot = st.text_input(t["filt_lot"], value="sdvsdv")
+                profile_type = st.selectbox("Profil vyhodnocení", [ProfileType.VDA_19_1, ProfileType.INTERNAL_CUSTOM])
+                cond_delivery = st.text_input(t["cond_delivery"], value="Sériový díl čistý")
+                lot_size = st.number_input(t["lot_size"], min_value=1, value=100, step=1)
 
             st.markdown("---")
             
-            wetted_area, extraction_method, wetted_volume, extraction_medium, filter_material, filter_pore_size = 1000.0, "Tlakový oplach", 0.0, "Testovací benzín", "PET", 5.0
-            
-            st.markdown(f"**{t['sec_part']}**")
+            # --- SEKCE 2 & 3: Preparatory steps, Extraction & Filtration ---
+            st.subheader(t["sec_prep"])
             col_d, col_e, col_f = st.columns(3)
             with col_d:
-                wetted_area = st.number_input(t["wetted_area"], min_value=0.0, value=1000.0, disabled=not enable_part_ext)
-                extraction_method = st.selectbox(t["ext_method"], ["Tlakový oplach", "Ultrazvuk", "Vnitřní oplach", "Agitace"], disabled=not enable_part_ext)
+                wetted_area = st.number_input(t["control_area"], min_value=0.0, value=1000.0, disabled=not enable_part_ext)
+                extraction_method = st.selectbox(t["ext_method"], ["Pressure-rinsing", "Ultrasonics", "Internal rinsing", "Agitation"], disabled=not enable_part_ext)
             with col_e:
                 wetted_volume = st.number_input(t["wetted_vol"], min_value=0.0, value=0.0, disabled=not enable_part_ext)
-                extraction_medium = st.text_input(t["ext_medium"], value="Testovací benzín", disabled=not enable_part_ext)
+                extraction_medium = st.text_input(t["dissolving_fluid"], value="Testovací benzín", disabled=not enable_part_ext)
             with col_f:
-                filter_material_select = st.selectbox(
-                    t["filt_mat"], 
-                    ["PET (polyester)", "PA (polyamid)", "PTFE (teflon)", "Nitrocelulóza", "Kovové sítko", "Jiný"],
-                    disabled=not enable_part_ext
-                )
-                filter_material = st.text_input("Zadejte vlastní materiál filtru", disabled=not enable_part_ext) if filter_material_select == "Jiný" else filter_material_select
+                filter_material = st.text_input(t["filt_mat"], value="PET (polyester)", disabled=not enable_part_ext)
                 filter_pore_size = st.number_input(t["filt_pore"], min_value=0.1, value=5.0, disabled=not enable_part_ext)
 
             st.markdown("---")
 
+            # --- SEKCE 4: Gravimetrická analýza ---
             if gravimetry_limit_db and enable_grav:
                 st.info(f"Očekávaný limit normy pro gravimetrii: **{gravimetry_limit_db} mg**")
             
-            st.markdown(f"**{t['sec_grav']}**")
+            st.subheader(t["sec_grav"])
             col_g, _ = st.columns([1, 2])
             with col_g:
                 residual_mass = st.number_input(t["resid_mass"], min_value=0.0, value=0.4200, format="%.4f", step=0.1, disabled=not enable_grav)
 
             st.markdown("---")
 
-            st.markdown(f"**{t['sec_opt']}**")
+            # --- SEKCE 5: Optická analýza (B až N pod sebou) ---
+            st.subheader(t["sec_opt"])
             vda_classes = ["B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N"]
             size_ranges_desc = {
                 "B": "5 µm - 15 µm", "C": "15 µm - 25 µm", "D": "25 µm - 50 µm",
@@ -724,32 +730,34 @@ def show_evaluation_form(conn):
 
             st.markdown("---")
 
-            st.markdown(f"**{t['sec_qual']}**")
+            # --- SEKCE 6: Kvalitativní charakteristiky ---
+            st.subheader(t["sec_qual"])
             col_q1, col_q2, col_q3 = st.columns(3)
             with col_q1:
-                fibers_count = st.number_input(t["fibers"], min_value=0, value=0, step=1)
+                fibers_count = st.number_input(t["fibers"], min_value=0, value=9, step=1)
                 blank_value_pct = st.number_input(t["blank_val"], min_value=0.0, value=2.0, step=0.1)
             with col_q2:
-                metallic_ref_count = st.number_input(t["met_ref"], min_value=0, value=0, step=1)
+                metallic_ref_count = st.number_input(t["met_ref"], min_value=0, value=19, step=1)
                 declining_test_pct = st.number_input(t["decl_test"], min_value=0.0, value=5.0, step=0.5)
             with col_q3:
-                metallic_nonref_count = st.number_input(t["met_nonref"], min_value=0, value=0, step=1)
+                metallic_nonref_count = st.number_input(t["met_nonref"], min_value=0, value=24, step=1)
                 filter_occupancy_pct = st.number_input(t["filt_occ"], min_value=0.0, value=3.0, step=0.5)
 
+            # --- SEKCE 7: Pokročilé metriky ---
             st.markdown("---")
-            st.markdown(f"**{t['sec_adv']}**")
+            st.subheader(t["sec_adv"])
             
-            l_max_val, aspect_ratio_val, metallic_percentage, recovery_rate_val, specific_surface_val, cleanliness_class_code = 0.0, 0.1, 0.0, 92.5, 0.0, ""
+            l_max_val, aspect_ratio_val, metallic_percentage, recovery_rate_val, specific_surface_val, cleanliness_class_code = 450.0, 0.1, 2.5, 92.5, 0.0, ""
             col_ad1, col_ad2, col_ad3 = st.columns(3)
             with col_ad1:
-                l_max_val = st.number_input(t["l_max"], min_value=0.0, value=450.0, step=10.0, help=t["l_max_desc"], disabled=not enable_adv)
-                aspect_ratio_val = st.number_input(t["aspect_ratio"], min_value=0.0, max_value=1.0, value=0.1, step=0.01, help=t["aspect_ratio_desc"], disabled=not enable_adv)
+                l_max_val = st.number_input(t["l_max"], min_value=0.0, value=450.0, step=10.0, disabled=not enable_adv)
+                aspect_ratio_val = st.number_input(t["aspect_ratio"], min_value=0.0, max_value=1.0, value=0.1, step=0.01, disabled=not enable_adv)
             with col_ad2:
                 metallic_percentage = st.number_input(t["metallic_ratio"], min_value=0.0, max_value=100.0, value=2.5, step=0.1, disabled=not enable_adv)
                 recovery_rate_val = st.number_input(t["recovery_rate"], min_value=0.0, max_value=100.0, value=92.5, step=0.5, disabled=not enable_adv)
             with col_ad3:
                 specific_surface_val = st.number_input(t["specific_surface"], min_value=0.0, value=round(residual_mass / (wetted_area / 10000.0) if wetted_area > 0 else 0.0, 2), step=0.1, disabled=not enable_adv)
-                cleanliness_class_code = st.text_input(t["cleanliness_class"], value="CCC Code: E / 12 / 3", disabled=not enable_adv)
+                cleanliness_class_code = st.text_input("CCC Code string", value="CCC A(B 00/C 12/D15/E3/G34)", disabled=not enable_adv)
 
             st.markdown("---")
             col_x1, col_x2 = st.columns(2)
@@ -793,7 +801,7 @@ def show_evaluation_form(conn):
                     for err in gating_errors:
                         st.error(f"- {err}")
                 else:
-                    ref_unit_char = ref_unit[0]
+                    ref_unit_char = "A"
                     ccc_parts, valid_levels = [], {}
                     if enable_opt:
                         for s_class in vda_classes:
@@ -803,7 +811,7 @@ def show_evaluation_form(conn):
                                 ccc_parts.append(f"{s_class} {a_level_str}")
                                 valid_levels[s_class] = val_int
 
-                    generated_ccc_string = f"CCC {ref_unit_char}({' / '.join(ccc_parts)})" if valid_levels else "CCC neuveden"
+                    generated_ccc_string = cleanliness_class_code if cleanliness_class_code else (f"CCC {ref_unit_char}({' / '.join(ccc_parts)})" if valid_levels else "CCC neuveden")
 
                     failed, report = False, []
                     warning_triggered = False
@@ -883,20 +891,22 @@ def show_evaluation_form(conn):
                     if not report_df.empty:
                         st.dataframe(report_df, use_container_width=True)
 
+                    meta_info_dict = {
+                        "order_no": order_number, "report_no": report_number, "customer": customer,
+                        "contact": contact_person, "test_ordered": test_ordered, "reason_test": reason_test,
+                        "comp_name": comp_name, "std_name": std_name, "filter_no": filt_no, "filter_lot": filt_lot,
+                        "wetted_area": wetted_area, "ext_method": extraction_method, "filt_mat": filter_material,
+                        "filt_pore": filter_pore_size, "inspector_name": insp_name, "ccc_string": generated_ccc_string
+                    }
                     grav_data_dict = {"residual_mass": residual_mass, "gravimetry_limit": gravimetry_limit_db} if enable_grav else {"residual_mass": 0, "gravimetry_limit": None}
                     uncertainty_dict = calculate_measurement_uncertainty() if include_uncertainty else None
                     advanced_dict = {
-                        "l_max": l_max_val,
-                        "aspect_ratio": aspect_ratio_val,
-                        "metallic_percentage": metallic_percentage,
-                        "specific_surface": specific_surface_val,
-                        "recovery_rate": recovery_rate_val,
-                        "cleanliness_class": cleanliness_class_code
+                        "l_max": l_max_val, "aspect_ratio": aspect_ratio_val, "metallic_percentage": metallic_percentage,
+                        "specific_surface": specific_surface_val, "recovery_rate": recovery_rate_val
                     } if enable_adv else None
 
                     pdf_data = create_pdf_report(
-                        comp_name, std_name, filt_no, filt_lot, insp_name, ref_unit,
-                        generated_ccc_string, report_df, conformity_text, failed, note,
+                        meta_info_dict, report_df, conformity_text, failed, note,
                         fibers_count, metallic_ref_count, metallic_nonref_count,
                         grav_data_dict, uncertainty_dict, advanced_dict
                     )
