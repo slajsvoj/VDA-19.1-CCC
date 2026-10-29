@@ -135,6 +135,9 @@ def create_pdf_report(
         [Paragraph("<b>Číslo filtru:</b>", cell_style), Paragraph(filter_no, cell_style), Paragraph("<b>Šarže filtru:</b>", cell_style), Paragraph(filter_lot if filter_lot else "-", cell_style)],
         [Paragraph("<b>Referenční jednotka:</b>", cell_style), Paragraph(ref_unit, cell_style), Paragraph("<b>Zbytková hmotnost (M):</b>", cell_style), Paragraph(f"{grav_data.get('residual_mass', 0):.4f} mg", cell_style)],
     ]
+    
+    if grav_data.get('gravimetry_limit'):
+        meta_data.append([Paragraph("<b>Limit gravimetrie:</b>", cell_style), Paragraph(f"{grav_data.get('gravimetry_limit'):.4f} mg", cell_style), Paragraph("", cell_style), Paragraph("", cell_style)])
 
     meta_table = Table(meta_data, colWidths=[110, 160, 100, 170])
     meta_table.setStyle(
@@ -261,6 +264,161 @@ def create_pdf_report(
     return buffer
 
 
+# --- NOVÁ SEKCE PRO SPRÁVU NOREM (PŘIDÁVÁNÍ, EDITACE LIMITŮ A GRAVIMETRIE) ---
+def show_standards_management(conn):
+    st.subheader("Správa zákaznických a podnikových norem")
+    tab1, tab2 = st.tabs(["➕ Přidat novou normu", "✏️ Editovat / Smazat stávající normu"])
+    
+    vda_classes = ["B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N"]
+    
+    # --- ZÁLOŽKA 1: PŘIDAT NORMU ---
+    with tab1:
+        try:
+            components_df = pd.read_sql("SELECT id, part_number, name FROM components", conn)
+        except Exception as e:
+            st.error("Chyba při načítání dílů.")
+            return
+
+        with st.form("add_standard_form"):
+            col1, col2 = st.columns(2)
+            with col1:
+                selected_comp_id = st.selectbox(
+                    "Přiřadit k dílu",
+                    options=components_df['id'].tolist(),
+                    format_func=lambda x: f"{components_df[components_df['id'] == x]['part_number'].values[0]} - {components_df[components_df['id'] == x]['name'].values[0]}"
+                )
+            with col2:
+                norm_name = st.text_input("Název normy (např. VDA 19.1 - Zpřísněná)", placeholder="Zadejte název...")
+
+            st.markdown("**Gravimetrie (Limit hmotnosti zbytků)**")
+            gravimetry_limit_input = st.number_input("Max. povolená hmotnost (mg)", min_value=0.0, value=0.0, step=0.1, help="Pokud se gravimetrie nesleduje, nechte 0.")
+
+            st.markdown("**Maximální povolené limity frakcí (kódové úrovně 0-24)**")
+            st.caption("Pokud danou třídu norma nesleduje, nechte pole prázdné nebo zadejte pomlčku.")
+            
+            limit_inputs = {}
+            cols_r1 = st.columns(7)
+            for i in range(7):
+                limit_inputs[vda_classes[i]] = cols_r1[i].text_input(vda_classes[i], key=f"add_{vda_classes[i]}")
+            
+            cols_r2 = st.columns(6)
+            for i in range(7, 13):
+                limit_inputs[vda_classes[i]] = cols_r2[i - 7].text_input(vda_classes[i], key=f"add_{vda_classes[i]}")
+
+            std_note = st.text_area("Poznámka k normě (např. interní požadavky na Feret_max)")
+            submit_new_std = st.form_submit_button("Vytvořit a uložit normu", type="primary")
+
+            if submit_new_std:
+                if not norm_name:
+                    st.error("Název normy je povinný.")
+                else:
+                    try:
+                        cur = conn.cursor()
+                        new_std_id = str(uuid.uuid4()) 
+                        inserted_any = False
+                        for s_class, limit_val in limit_inputs.items():
+                            if limit_val.strip() and limit_val.strip() != "-":
+                                cur.execute(
+                                    "INSERT INTO customer_standards (id, component_id, norm_name, size_class, max_allowed_level, note, gravimetry_limit_mg) VALUES (%s, %s, %s, %s, %s, %s, %s)",
+                                    (new_std_id, selected_comp_id, norm_name, s_class, int(limit_val), std_note, gravimetry_limit_input if gravimetry_limit_input > 0 else None)
+                                )
+                                inserted_any = True
+                                
+                        if inserted_any:
+                            conn.commit()
+                            st.success(f"Norma '{norm_name}' byla úspěšně uložena.")
+                        else:
+                            st.warning("Nevyplnili jste žádné limity pro velikostní třídy.")
+                            conn.rollback()
+                        cur.close()
+                    except Exception as e:
+                        conn.rollback()
+                        st.error(f"Chyba při ukládání: Ošetřete SQL strukturu dle návodu nahoře. ({e})")
+
+    # --- ZÁLOŽKA 2: EDITOVAT NORMU ---
+    with tab2:
+        try:
+            all_standards_df = pd.read_sql(
+                "SELECT DISTINCT cs.id, cs.norm_name, c.part_number, c.name as comp_name FROM customer_standards cs JOIN components c ON cs.component_id = c.id", conn
+            )
+        except Exception as e:
+            st.error("Nelze načíst existující normy.")
+            all_standards_df = pd.DataFrame()
+
+        if not all_standards_df.empty:
+            edit_std_id = st.selectbox(
+                "Vyberte normu k editaci",
+                options=all_standards_df['id'].tolist(),
+                format_func=lambda x: f"{all_standards_df[all_standards_df['id'] == x]['norm_name'].values[0]} (Díl: {all_standards_df[all_standards_df['id'] == x]['part_number'].values[0]})"
+            )
+
+            if edit_std_id:
+                # Načtení dat stávající normy z DB
+                existing_limits_df = pd.read_sql(f"SELECT size_class, max_allowed_level, note, gravimetry_limit_mg, component_id, norm_name FROM customer_standards WHERE id = '{edit_std_id}'", conn)
+                
+                curr_note = existing_limits_df['note'].iloc[0] if not existing_limits_df.empty and existing_limits_df['note'].notna().any() else ""
+                curr_grav = existing_limits_df['gravimetry_limit_mg'].iloc[0] if not existing_limits_df.empty and existing_limits_df['gravimetry_limit_mg'].notna().any() else 0.0
+                curr_norm_name = existing_limits_df['norm_name'].iloc[0]
+                curr_comp_id = existing_limits_df['component_id'].iloc[0]
+
+                # Vytažení existujících limitů pro frakce
+                current_class_limits = {}
+                for _, row in existing_limits_df.iterrows():
+                    current_class_limits[row['size_class']] = str(int(row['max_allowed_level']))
+
+                st.markdown(f"**Upravit parametry normy**")
+                with st.form("edit_standard_form"):
+                    edit_norm_name = st.text_input("Název normy", value=curr_norm_name)
+                    edit_gravimetry = st.number_input("Max. povolená hmotnost gravimetrie (mg)", min_value=0.0, value=float(curr_grav), step=0.1)
+                    
+                    st.markdown("**Limity frakcí (kódové úrovně 0-24)**")
+                    edit_inputs = {}
+                    cols_e1 = st.columns(7)
+                    for i in range(7):
+                        cls = vda_classes[i]
+                        edit_inputs[cls] = cols_e1[i].text_input(cls, value=current_class_limits.get(cls, ""), key=f"edit_{cls}")
+                    
+                    cols_e2 = st.columns(6)
+                    for i in range(7, 13):
+                        cls = vda_classes[i]
+                        edit_inputs[cls] = cols_e2[i - 7].text_input(cls, value=current_class_limits.get(cls, ""), key=f"edit_{cls}")
+
+                    edit_note = st.text_area("Poznámka", value=curr_note)
+                    
+                    col_save, col_del = st.columns([1, 4])
+                    with col_save:
+                        submit_edit = st.form_submit_button("Uložit úpravy", type="primary")
+                    with col_del:
+                        submit_delete = st.form_submit_button("🗑️ Smazat normu")
+
+                    if submit_edit:
+                        try:
+                            cur = conn.cursor()
+                            cur.execute(f"DELETE FROM customer_standards WHERE id = '{edit_std_id}'")
+                            
+                            for s_class, limit_val in edit_inputs.items():
+                                if limit_val.strip() and limit_val.strip() != "-":
+                                    cur.execute(
+                                        "INSERT INTO customer_standards (id, component_id, norm_name, size_class, max_allowed_level, note, gravimetry_limit_mg) VALUES (%s, %s, %s, %s, %s, %s, %s)",
+                                        (edit_std_id, curr_comp_id, edit_norm_name, s_class, int(limit_val), edit_note, edit_gravimetry if edit_gravimetry > 0 else None)
+                                    )
+                            conn.commit()
+                            st.success("Změny byly úspěšně uloženy. (Pro aktualizaci výběru nahoře prosím překlikněte záložku)")
+                        except Exception as e:
+                            conn.rollback()
+                            st.error(f"Chyba při ukládání úprav: {e}")
+                            
+                    if submit_delete:
+                        try:
+                            cur = conn.cursor()
+                            cur.execute(f"DELETE FROM customer_standards WHERE id = '{edit_std_id}'")
+                            conn.commit()
+                            st.warning("Norma byla kompletně smazána.")
+                        except Exception as e:
+                            conn.rollback()
+                            st.error(f"Chyba při mazání: {e}")
+
+
 def show_evaluation_form(conn):
     try:
         components_df = pd.read_sql("SELECT id, part_number, name FROM components", conn)
@@ -291,9 +449,18 @@ def show_evaluation_form(conn):
                 )
                 std_id = standards_df.loc[selected_std_idx, "id"]
                 std_name = standards_df.loc[selected_std_idx, "norm_name"]
+                
+                # Získání limitu gravimetrie z DB
+                gravimetry_limit_db = None
+                try:
+                    grav_df = pd.read_sql(f"SELECT gravimetry_limit_mg FROM customer_standards WHERE id = '{std_id}' LIMIT 1", conn)
+                    if not grav_df.empty and pd.notna(grav_df.iloc[0]['gravimetry_limit_mg']):
+                        gravimetry_limit_db = float(grav_df.iloc[0]['gravimetry_limit_mg'])
+                except:
+                    pass
             else:
                 st.warning("Pro tento díl není definován limit v DB.")
-                std_id, std_name = None, "Neznámá norma"
+                std_id, std_name, gravimetry_limit_db = None, "Neznámá norma", None
 
         st.markdown("---")
 
@@ -336,6 +503,9 @@ def show_evaluation_form(conn):
 
             st.markdown("---")
             st.subheader("3. Gravimetrická analýza (Zbytková hmotnost)")
+            if gravimetry_limit_db:
+                st.info(f"Očekávaný limit normy pro gravimetrii: **{gravimetry_limit_db} mg**")
+            
             col_g, col_h, col_i = st.columns(3)
             with col_g:
                 mass_before = st.number_input("Hmotnost před filtrací M1 [mg]", min_value=0.0, value=45.1200, format="%.4f")
@@ -431,6 +601,12 @@ def show_evaluation_form(conn):
 
                         failed, report = False, []
                         warning_triggered = False
+                        
+                        # Kontrola limitu gravimetrie
+                        if gravimetry_limit_db and residual_mass > gravimetry_limit_db:
+                            failed = True
+                            st.error(f"Gravimetrie překročena: Naměřeno {residual_mass:.4f} mg (Limit normy: {gravimetry_limit_db} mg)")
+
                         for s_class, actual_val in valid_levels.items():
                             lim_row = limits_df[limits_df["size_class"] == s_class]
                             max_alw = int(lim_row.iloc[0]["max_allowed_level"]) if not lim_row.empty else 0
@@ -461,9 +637,11 @@ def show_evaluation_form(conn):
                             if hard_stop_feret_max > 0 and max_feret_measured > hard_stop_feret_max:
                                 hard_stop_failed = True
                                 failed = True
+                                st.error("Překročen Hard-Stop limit pro největší částici (Feret max).")
                             if has_v3:
                                 hard_stop_failed = True
                                 failed = True
+                                st.error("Detekovány zakázané částice V3 (>1000 HV).")
 
                         report_df = pd.DataFrame(report)
 
@@ -500,7 +678,7 @@ def show_evaluation_form(conn):
                         
                         st.dataframe(report_df, use_container_width=True)
 
-                        grav_data_dict = {"residual_mass": residual_mass}
+                        grav_data_dict = {"residual_mass": residual_mass, "gravimetry_limit": gravimetry_limit_db}
                         uncertainty_dict = calculate_measurement_uncertainty() if include_uncertainty else None
 
                         pdf_data = create_pdf_report(
@@ -521,142 +699,6 @@ def show_evaluation_form(conn):
                         with btn_col2:
                             if st.button("Nové vyhodnocení"):
                                 st.rerun()
-
-
-# --- NOVÁ SEKCE PRO SPRÁVU NOREM ---
-def show_standards_management(conn):
-    st.subheader("Správa zákaznických a podnikových norem")
-    tab1, tab2 = st.tabs(["➕ Přidat novou normu", "✏️ Editovat / Smazat normu"])
-    
-    with tab1:
-        try:
-            components_df = pd.read_sql("SELECT id, part_number, name FROM components", conn)
-        except Exception as e:
-            st.error("Chyba při načítání dílů.")
-            return
-
-        with st.form("add_standard_form"):
-            col1, col2 = st.columns(2)
-            with col1:
-                selected_comp_id = st.selectbox(
-                    "Přiřadit k dílu",
-                    options=components_df['id'].tolist(),
-                    format_func=lambda x: f"{components_df[components_df['id'] == x]['part_number'].values[0]} - {components_df[components_df['id'] == x]['name'].values[0]}"
-                )
-            with col2:
-                norm_name = st.text_input("Název normy (např. VDA 19.1 - Zpřísněná)", placeholder="Zadejte název...")
-
-            st.markdown("**Maximální povolené limity (kódové úrovně 0-24 pro jednotlivé třídy)**")
-            st.caption("Pokud danou třídu norma nesleduje, nechte pole prázdné nebo zadejte pomlčku.")
-            
-            vda_classes = ["B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N"]
-            limit_inputs = {}
-            
-            cols_r1 = st.columns(7)
-            for i in range(7):
-                limit_inputs[vda_classes[i]] = cols_r1[i].text_input(vda_classes[i], key=f"add_{vda_classes[i]}")
-            
-            cols_r2 = st.columns(6)
-            for i in range(7, 13):
-                limit_inputs[vda_classes[i]] = cols_r2[i - 7].text_input(vda_classes[i], key=f"add_{vda_classes[i]}")
-
-            std_note = st.text_area("Poznámka k normě (např. interní požadavky na Feret_max)")
-            submit_new_std = st.form_submit_button("Vytvořit a uložit normu", type="primary")
-
-            if submit_new_std:
-                if not norm_name:
-                    st.error("Název normy je povinný.")
-                else:
-                    try:
-                        cur = conn.cursor()
-                        new_std_id = str(uuid.uuid4()) 
-                        inserted_any = False
-                        for s_class, limit_val in limit_inputs.items():
-                            if limit_val.strip() and limit_val.strip() != "-":
-                                cur.execute(
-                                    "INSERT INTO customer_standards (id, component_id, norm_name, size_class, max_allowed_level, note) VALUES (%s, %s, %s, %s, %s, %s)",
-                                    (new_std_id, selected_comp_id, norm_name, s_class, int(limit_val), std_note)
-                                )
-                                inserted_any = True
-                                
-                        if inserted_any:
-                            conn.commit()
-                            st.success(f"Norma '{norm_name}' byla úspěšně uložena.")
-                        else:
-                            st.warning("Nevyplnili jste žádné limity pro velikostní třídy.")
-                            conn.rollback()
-                        cur.close()
-                    except Exception as e:
-                        conn.rollback()
-                        st.error(f"Chyba při ukládání: {e}")
-
-    with tab2:
-        try:
-            all_standards_df = pd.read_sql(
-                "SELECT DISTINCT cs.id, cs.norm_name, c.part_number FROM customer_standards cs JOIN components c ON cs.component_id = c.id", conn
-            )
-        except Exception as e:
-            st.error("Nelze načíst existující normy.")
-            all_standards_df = pd.DataFrame()
-
-        if not all_standards_df.empty:
-            edit_std_id = st.selectbox(
-                "Vyberte normu k editaci",
-                options=all_standards_df['id'].tolist(),
-                format_func=lambda x: f"{all_standards_df[all_standards_df['id'] == x]['norm_name'].values[0]} (Díl: {all_standards_df[all_standards_df['id'] == x]['part_number'].values[0]})"
-            )
-
-            if edit_std_id:
-                limits_df = pd.read_sql(
-                    f"SELECT size_class, max_allowed_level, note FROM customer_standards WHERE id = '{edit_std_id}'", conn
-                )
-                
-                st.markdown(f"**Editace limitů pro vybranou normu**")
-                edited_df = st.data_editor(
-                    limits_df,
-                    num_rows="dynamic",
-                    column_config={
-                        "size_class": st.column_config.SelectboxColumn("Velikostní třída", options=["B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N"], required=True),
-                        "max_allowed_level": st.column_config.NumberColumn("Max. povolený kód (0-24)", min_value=0, max_value=24, required=True),
-                        "note": "Poznámka"
-                    },
-                    use_container_width=True
-                )
-
-                col_save, col_del = st.columns([1, 4])
-                with col_save:
-                    if st.button("Uložit úpravy", type="primary"):
-                        try:
-                            cur = conn.cursor()
-                            # Získání původního component_id a názvu pro přepsání
-                            cur.execute(f"SELECT component_id, norm_name FROM customer_standards WHERE id = '{edit_std_id}' LIMIT 1")
-                            res = cur.fetchone()
-                            if res:
-                                comp_id, n_name = res
-                                cur.execute(f"DELETE FROM customer_standards WHERE id = '{edit_std_id}'")
-                                
-                                for index, row in edited_df.iterrows():
-                                    if pd.notna(row['size_class']) and pd.notna(row['max_allowed_level']):
-                                        cur.execute(
-                                            "INSERT INTO customer_standards (id, component_id, norm_name, size_class, max_allowed_level, note) VALUES (%s, %s, %s, %s, %s, %s)",
-                                            (edit_std_id, comp_id, n_name, row['size_class'], int(row['max_allowed_level']), row['note'] if pd.notna(row['note']) else "")
-                                        )
-                                conn.commit()
-                                st.success("Změny byly uloženy.")
-                        except Exception as e:
-                            conn.rollback()
-                            st.error(f"Chyba při ukládání úprav: {e}")
-                            
-                with col_del:
-                    if st.button("🗑️ Smazat celou normu"):
-                        try:
-                            cur = conn.cursor()
-                            cur.execute(f"DELETE FROM customer_standards WHERE id = '{edit_std_id}'")
-                            conn.commit()
-                            st.warning("Norma byla smazána. Pro obnovení zobrazení překlikněte do jiné záložky.")
-                        except Exception as e:
-                            conn.rollback()
-                            st.error(f"Chyba při mazání: {e}")
 
 
 def show_history(conn):
