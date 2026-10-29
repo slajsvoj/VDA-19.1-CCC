@@ -594,6 +594,20 @@ def show_evaluation_form(conn):
 
         st.markdown("---")
 
+        # --- PŘEPÍNAČE PRO VOLITELNOST SEKCÍ (MIMO FORMULAR PRO OKAMŽITOU REAKCI) ---
+        st.subheader("Konfigurace volitelných bloků měření")
+        col_opt1, col_opt2, col_opt3, col_opt4 = st.columns(4)
+        with col_opt1:
+            enable_part_ext = st.checkbox("2. Parametry dílu", value=True, key="chk_p2")
+        with col_opt2:
+            enable_grav = st.checkbox("3. Gravimetrie", value=True, key="chk_p3")
+        with col_opt3:
+            enable_opt = st.checkbox("4. Optická analýza", value=True, key="chk_p4")
+        with col_opt4:
+            enable_adv = st.checkbox("6. Pokročilé metriky", value=False, key="chk_p6")
+
+        st.markdown("---")
+
         with st.form("inspection_form"):
             st.subheader(t["sec_ident"])
             col_a, col_b, col_c = st.columns(3)
@@ -614,9 +628,9 @@ def show_evaluation_form(conn):
             st.markdown("---")
             
             # --- SEKCE 2: Parametry dílu a extrakce ---
-            enable_part_ext = st.checkbox(t["sec_part"], value=True)
             wetted_area, extraction_method, wetted_volume, extraction_medium, filter_material, filter_pore_size = 1000.0, "Tlakový oplach", 0.0, "Testovací benzín", "PET", 5.0
             
+            st.markdown(f"**{t['sec_part']}**")
             col_d, col_e, col_f = st.columns(3)
             with col_d:
                 wetted_area = st.number_input(t["wetted_area"], min_value=0.0, value=1000.0, disabled=not enable_part_ext)
@@ -636,11 +650,11 @@ def show_evaluation_form(conn):
             st.markdown("---")
 
             # --- SEKCE 3: Gravimetrická analýza ---
-            enable_grav = st.checkbox(t["sec_grav"], value=True)
             residual_mass = 0.0
             if gravimetry_limit_db and enable_grav:
                 st.info(f"Očekávaný limit normy pro gravimetrii: **{gravimetry_limit_db} mg**")
             
+            st.markdown(f"**{t['sec_grav']}**")
             col_g, col_h, col_i = st.columns(3)
             with col_g:
                 mass_before = st.number_input(t["mass_b"], min_value=0.0, value=45.1200, format="%.4f", disabled=not enable_grav)
@@ -653,7 +667,7 @@ def show_evaluation_form(conn):
             st.markdown("---")
 
             # --- SEKCE 4: Optická analýza ---
-            enable_opt = st.checkbox(t["sec_opt"], value=True)
+            st.markdown(f"**{t['sec_opt']}**")
             vda_classes = ["B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N"]
             entered_levels = {}
 
@@ -698,21 +712,21 @@ def show_evaluation_form(conn):
             st.markdown("---")
 
             # --- SEKCE 5: Kvalitativní charakteristiky ---
-            enable_qual = st.checkbox(t["sec_qual"], value=True)
+            st.markdown(f"**{t['sec_qual']}**")
             col_q1, col_q2, col_q3 = st.columns(3)
             with col_q1:
-                fibers_count = st.number_input(t["fibers"], min_value=0, value=0, step=1, disabled=not enable_qual)
-                blank_value_pct = st.number_input(t["blank_val"], min_value=0.0, value=2.0, disabled=not enable_qual)
+                fibers_count = st.number_input(t["fibers"], min_value=0, value=0, step=1)
+                blank_value_pct = st.number_input(t["blank_val"], min_value=0.0, value=2.0)
             with col_q2:
-                metallic_ref_count = st.number_input(t["met_ref"], min_value=0, value=0, step=1, disabled=not enable_qual)
-                declining_test_pct = st.number_input(t["decl_test"], min_value=0.0, value=5.0, disabled=not enable_qual)
+                metallic_ref_count = st.number_input(t["met_ref"], min_value=0, value=0, step=1)
+                declining_test_pct = st.number_input(t["decl_test"], min_value=0.0, value=5.0)
             with col_q3:
-                metallic_nonref_count = st.number_input(t["met_nonref"], min_value=0, value=0, step=1, disabled=not enable_qual)
-                filter_occupancy_pct = st.number_input(t["filt_occ"], min_value=0.0, value=3.0, disabled=not enable_qual)
+                metallic_nonref_count = st.number_input(t["met_nonref"], min_value=0, value=0, step=1)
+                filter_occupancy_pct = st.number_input(t["filt_occ"], min_value=0.0, value=3.0)
 
             # --- SEKCE 6: Pokročilé vyhodnotitelné parametry ---
             st.markdown("---")
-            enable_adv = st.checkbox(t["sec_adv"], value=False)
+            st.markdown(f"**{t['sec_adv']}**")
             
             l_max_val, aspect_ratio_val, metallic_percentage, recovery_rate_val, specific_surface_val, cleanliness_class_code = 0.0, 0.1, 0.0, 92.5, 0.0, ""
             col_ad1, col_ad2, col_ad3 = st.columns(3)
@@ -729,7 +743,7 @@ def show_evaluation_form(conn):
             st.markdown("---")
             col_x1, col_x2 = st.columns(2)
             with col_x1:
-                pixel_resolution_ok = st.checkbox(t["pixel_res"], value=True, disabled=not enable_qual)
+                pixel_resolution_ok = st.checkbox(t["pixel_res"], value=True)
             with col_x2:
                 include_uncertainty = st.checkbox(t["inc_unc"], value=True)
 
@@ -754,15 +768,14 @@ def show_evaluation_form(conn):
                 st.error("Vyplňte číslo filtru a vyberte normu.")
             else:
                 gating_errors = []
-                if enable_qual:
-                    if blank_value_pct > 10.0:
-                        gating_errors.append(f"Slepá hodnota ({blank_value_pct}%) překračuje max. povolenou (10%).")
-                    if filter_occupancy_pct > 10.0:
-                        gating_errors.append(f"Pokrytí filtru ({filter_occupancy_pct}%) překračuje max. povolené (10%).")
-                    if declining_test_pct > 10.0:
-                        gating_errors.append(f"Klesající zkouška ({declining_test_pct}%) překračuje limit (10%).")
-                    if not pixel_resolution_ok:
-                        gating_errors.append("Pixelové rozlišení neodpovídá požadavkům.")
+                if blank_value_pct > 10.0:
+                    gating_errors.append(f"Slepá hodnota ({blank_value_pct}%) překračuje max. povolenou (10%).")
+                if filter_occupancy_pct > 10.0:
+                    gating_errors.append(f"Pokrytí filtru ({filter_occupancy_pct}%) překračuje max. povolené (10%).")
+                if declining_test_pct > 10.0:
+                    gating_errors.append(f"Klesající zkouška ({declining_test_pct}%) překračuje limit (10%).")
+                if not pixel_resolution_ok:
+                    gating_errors.append("Pixelové rozlišení neodpovídá požadavkům.")
 
                 if gating_errors:
                     st.error("TEST JE NEPLATNÝ (Chyba validačních bran):")
@@ -877,7 +890,7 @@ def show_evaluation_form(conn):
                     pdf_data = create_pdf_report(
                         comp_name, std_name, filt_no, filt_lot, insp_name, ref_unit,
                         generated_ccc_string, report_df, conformity_text, failed, note,
-                        fibers_count if enable_qual else 0, metallic_ref_count if enable_qual else 0, metallic_nonref_count if enable_qual else 0,
+                        fibers_count, metallic_ref_count, metallic_nonref_count,
                         grav_data_dict, uncertainty_dict, advanced_dict
                     )
 
