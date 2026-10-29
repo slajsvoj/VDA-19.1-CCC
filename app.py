@@ -248,15 +248,11 @@ def create_pdf_report(
 
     current_date = datetime.date.today().strftime("%d.%m.%Y")
     
-    res_mass_val = grav_data.get('residual_mass', 0.0) if grav_data else 0.0
-    grav_limit_val = grav_data.get('gravimetry_limit', 0.50) if grav_data else 0.50
-
     meta_data = [
         [Paragraph("<b>Oznaceni dilu:</b>", cell_style), Paragraph(comp_name, cell_style), Paragraph("<b>Datum vyhodnoceni:</b>", cell_style), Paragraph(current_date, cell_style)],
         [Paragraph("<b>Podnikova norma:</b>", cell_style), Paragraph(std_name, cell_style), Paragraph("<b>Zadal z reportu:</b>", cell_style), Paragraph(inspector_name, cell_style)],
         [Paragraph("<b>Cislo filtru:</b>", cell_style), Paragraph(filter_no, cell_style), Paragraph("<b>Sarze filtru:</b>", cell_style), Paragraph(filter_lot if filter_lot else "-", cell_style)],
-        [Paragraph("<b>Referencni jednotka:</b>", cell_style), Paragraph(ref_unit, cell_style), Paragraph("<b>Zbytková hmotnost M:</b>", cell_style), Paragraph(f"{res_mass_val:.4f} mg", cell_style)],
-        [Paragraph("<b>Limit gravimetrie:</b>", cell_style), Paragraph(f"{grav_limit_val:.4f} mg", cell_style), Paragraph("", cell_style), Paragraph("", cell_style)],
+        [Paragraph("<b>Referencni jednotka:</b>", cell_style), Paragraph(ref_unit, cell_style), Paragraph("", cell_style), Paragraph("", cell_style)],
     ]
 
     meta_table = Table(meta_data, colWidths=[110, 160, 100, 184])
@@ -312,6 +308,31 @@ def create_pdf_report(
         elements.append(unc_text)
         elements.append(Spacer(1, 6))
 
+    # --- DEDIKOVANÁ SEKCE 3: GRAVIMETRICKÁ ANALÝZA ---
+    res_mass_val = grav_data.get('residual_mass', 0.0) if grav_data else 0.0
+    grav_limit_val = grav_data.get('gravimetry_limit', 0.50) if grav_data else 0.50
+    grav_status = "NOK" if res_mass_val > grav_limit_val else "OK"
+    grav_status_html = '<font color="#991b1b"><b>NOK</b></font>' if grav_status == "NOK" else '<font color="#065f46"><b>OK</b></font>'
+
+    grav_table_data = [
+        [Paragraph("<b>Gravimetrická analýza (Zbytková hmotnost M)</b>", cell_header), Paragraph("<b>Limit / Hodnota</b>", cell_header), Paragraph("<b>Stav / Status</b>", cell_header)],
+        [Paragraph("Zbytková hmotnost M z protokolu vah", cell_style), Paragraph(f"{res_mass_val:.4f} mg", cell_style), Paragraph("-", cell_style)],
+        [Paragraph("Max. povolená zbytková hmotnost (Limit normy)", cell_style), Paragraph(f"{grav_limit_val:.4f} mg", cell_style), Paragraph(grav_status_html, cell_style)],
+    ]
+    grav_table = Table(grav_table_data, colWidths=[254, 150, 150])
+    grav_table.setStyle(
+        TableStyle([
+            ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#334155")),
+            ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#cbd5e1")),
+            ("TOPPADDING", (0, 0), (-1, -1), 3),
+            ("BOTTOMPADDING", (0, 0), (-1, -1), 3),
+            ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+        ])
+    )
+    elements.append(grav_table)
+    elements.append(Spacer(1, 8))
+
+    # --- SEKCE 4: OPTICKÁ ANALÝZA ---
     table_data = [[
         Paragraph("<b>Velikostni trida</b>", cell_header),
         Paragraph("<b>Rozsah velikosti</b>", cell_header),
