@@ -27,33 +27,28 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# Vylepšené CSS: Vynucení fontu pouze na texty (aby se nerozbilo heslové očičko) 
-# a naimportování profi ikon z Google Material Fonts.
+# Vylepšené CSS: Vynucení fontu pouze na texty a naimportování profi ikon
 st.markdown(
     """
     <style>
     @import url('https://fonts.cdnfonts.com/css/computer-modern-serif');
     @import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0');
 
-    /* Aplikovat font pouze na specifické textové tagy (bez plošných span a div, aby se nerozbilo UI Streamlitu) */
     p, h1, h2, h3, h4, h5, h6, li, label, input, textarea, select, table, th, td {
         font-family: 'Computer Modern Serif', serif !important;
     }
     
-    /* Vynucení i pro texty uvnitř tlačítek Streamlitu */
     .stButton button p {
         font-family: 'Computer Modern Serif', serif !important;
     }
 
-    /* Styl pro nové Google Material Ikony */
     .material-symbols-rounded {
         font-family: 'Material Symbols Rounded' !important;
         vertical-align: middle;
         margin-right: 6px;
-        color: #4b5563; /* Decentní tmavě šedá barva */
+        color: #4b5563;
     }
     
-    /* Barva speciálního tlačítka 'Nové vyhodnocení' */
     button[kind="secondary"]:has(div:contains("Nové vyhodnocení")),
     button[kind="secondary"]:has(div:contains("New Inspection")),
     div.stButton > button:has(div:contains("Nové vyhodnocení")),
@@ -807,19 +802,6 @@ def show_evaluation_form(conn):
 
         st.markdown("---")
 
-        st.subheader("Volitelné bloky pro přepis z reportu")
-        col_opt1, col_opt2, col_opt3, col_opt4 = st.columns(4)
-        with col_opt1:
-            enable_part_ext = st.checkbox("2. Parametry extrakce", value=True, key="chk_p2")
-        with col_opt2:
-            enable_grav = st.checkbox("4. Gravimetrie", value=True, key="chk_p3")
-        with col_opt3:
-            enable_opt = st.checkbox("5. Optická analýza", value=True, key="chk_p4")
-        with col_opt4:
-            enable_adv = st.checkbox("7. Pokročilé metriky", value=True, key="chk_p6")
-
-        st.markdown("---")
-
         with st.form("inspection_form"):
             # --- SEKCE 1: General Information & Inspected Object ---
             st.subheader(t["sec_ident"])
@@ -843,7 +825,12 @@ def show_evaluation_form(conn):
             st.markdown("---")
             
             # --- SEKCE 2 & 3: Preparatory steps, Extraction & Filtration ---
-            st.subheader(t["sec_prep"])
+            col_h1, col_h2 = st.columns([4, 1])
+            with col_h1:
+                st.subheader(t["sec_prep"])
+            with col_h2:
+                enable_part_ext = st.toggle("Aktivovat sekci", value=True, key="chk_p2")
+
             col_d, col_e, col_f = st.columns(3)
             with col_d:
                 wetted_area = st.number_input(t["control_area"], min_value=0.0, value=1000.0, disabled=not enable_part_ext)
@@ -858,10 +845,15 @@ def show_evaluation_form(conn):
             st.markdown("---")
 
             # --- SEKCE 4: Gravimetrická analýza ---
+            col_h3, col_h4 = st.columns([4, 1])
+            with col_h3:
+                st.subheader(t["sec_grav"])
+            with col_h4:
+                enable_grav = st.toggle("Aktivovat sekci", value=True, key="chk_p3")
+
             if gravimetry_limit_db and enable_grav:
                 st.info(f"Očekávaný limit normy pro gravimetrii: **{gravimetry_limit_db} mg**")
             
-            st.subheader(t["sec_grav"])
             col_g, _ = st.columns([1, 2])
             with col_g:
                 residual_mass = st.number_input(t["resid_mass"], min_value=0.0, value=0.4200, format="%.4f", step=0.1, disabled=not enable_grav)
@@ -869,7 +861,12 @@ def show_evaluation_form(conn):
             st.markdown("---")
 
             # --- SEKCE 5: Optická analýza (B až N pod sebou) ---
-            st.subheader(t["sec_opt"])
+            col_h5, col_h6 = st.columns([4, 1])
+            with col_h5:
+                st.subheader(t["sec_opt"])
+            with col_h6:
+                enable_opt = st.toggle("Aktivovat sekci", value=True, key="chk_p4")
+
             vda_classes = ["B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N"]
             size_ranges_desc = {
                 "B": "5 µm - 15 µm", "C": "15 µm - 25 µm", "D": "25 µm - 50 µm",
@@ -916,9 +913,14 @@ def show_evaluation_form(conn):
                 metallic_nonref_count = st.number_input(t["met_nonref"], min_value=0, value=24, step=1)
                 filter_occupancy_pct = st.number_input(t["filt_occ"], min_value=0.0, value=3.0, step=0.5)
 
-            # --- SEKCE 7: Pokročilé metriky ---
             st.markdown("---")
-            st.subheader(t["sec_adv"])
+
+            # --- SEKCE 7: Pokročilé metriky ---
+            col_h7, col_h8 = st.columns([4, 1])
+            with col_h7:
+                st.subheader(t["sec_adv"])
+            with col_h8:
+                enable_adv = st.toggle("Aktivovat sekci", value=True, key="chk_p6")
             
             l_max_val, aspect_ratio_val, metallic_percentage, recovery_rate_val, specific_surface_val, cleanliness_class_code = 450.0, 0.1, 2.5, 92.5, 0.0, ""
             col_ad1, col_ad2, col_ad3 = st.columns(3)
@@ -1154,7 +1156,6 @@ if DB_PASSWORD:
     if conn:
         st.sidebar.success(t["db_connected"])
         
-        # Změna z obřího st.title na decentnější menší nadpis
         st.markdown(f"## {t['title']}")
 
         if "active_tab" not in st.session_state:
