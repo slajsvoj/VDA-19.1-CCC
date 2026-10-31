@@ -27,17 +27,33 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# Kompletní vynucení LaTeXového fontu (Computer Modern Serif) pro celé webové rozhraní včetně Home screenu a tlačítek
+# Vylepšené CSS: Vynucení fontu pouze na texty (aby se nerozbilo heslové očičko) 
+# a naimportování profi ikon z Google Material Fonts.
 st.markdown(
     """
     <style>
     @import url('https://fonts.cdnfonts.com/css/computer-modern-serif');
+    @import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0');
 
-    html, body, [class*="css"], .stApp, div, span, p, label, input, textarea, select, button {
+    /* Aplikovat font pouze na specifické textové tagy (bez plošných span a div, aby se nerozbilo UI Streamlitu) */
+    p, h1, h2, h3, h4, h5, h6, li, label, input, textarea, select, table, th, td {
         font-family: 'Computer Modern Serif', serif !important;
     }
     
-    /* Vylepšení vzhledu hlavního tlačítka pro nová vyhodnocení */
+    /* Vynucení i pro texty uvnitř tlačítek Streamlitu */
+    .stButton button p {
+        font-family: 'Computer Modern Serif', serif !important;
+    }
+
+    /* Styl pro nové Google Material Ikony */
+    .material-symbols-rounded {
+        font-family: 'Material Symbols Rounded' !important;
+        vertical-align: middle;
+        margin-right: 6px;
+        color: #4b5563; /* Decentní tmavě šedá barva */
+    }
+    
+    /* Barva speciálního tlačítka 'Nové vyhodnocení' */
     button[kind="secondary"]:has(div:contains("Nové vyhodnocení")),
     button[kind="secondary"]:has(div:contains("New Inspection")),
     div.stButton > button:has(div:contains("Nové vyhodnocení")),
@@ -456,30 +472,31 @@ def show_home_screen():
     col1, col2, col3 = st.columns(3)
     
     with col1:
-        st.markdown("### 📋 Zápis a vyhodnocení")
-        st.write("Zadání dat z reportu, porovnání s normou a generování PDF protokolu.")
+        st.markdown("### <span class='material-symbols-rounded'>description</span> Zápis z reportu", unsafe_allow_html=True)
+        # Přidání min-height zajistí, že tlačítka pod textem budou všechna přesně ve stejné rovině
+        st.markdown("<div style='min-height: 75px;'>Zadání dat z reportu, porovnání s normou a generování PDF protokolu.</div>", unsafe_allow_html=True)
         if st.button("Přejít na vyhodnocení", use_container_width=True, type="primary"):
             st.session_state.active_tab = t["nav"][0]
             st.rerun()
             
     with col2:
-        st.markdown("### ⚙️ Správa norem")
-        st.write("Nastavení a úprava podnikových a zákaznických limitů pro jednotlivé díly.")
+        st.markdown("### <span class='material-symbols-rounded'>tune</span> Správa norem", unsafe_allow_html=True)
+        st.markdown("<div style='min-height: 75px;'>Nastavení a úprava podnikových a zákaznických limitů pro jednotlivé díly.</div>", unsafe_allow_html=True)
         if st.button("Přejít na normy", use_container_width=True):
             st.session_state.active_tab = t["nav"][1]
             st.rerun()
             
     with col3:
-        st.markdown("### 📊 Historie měření")
-        st.write("Přehled všech uložených vyhodnocení a protokolů z databáze.")
+        st.markdown("### <span class='material-symbols-rounded'>history</span> Historie měření", unsafe_allow_html=True)
+        st.markdown("<div style='min-height: 75px;'>Přehled všech uložených vyhodnocení a protokolů z databáze.</div>", unsafe_allow_html=True)
         if st.button("Přejít na historii", use_container_width=True):
             st.session_state.active_tab = t["nav"][2]
             st.rerun()
 
 
 def show_standards_management(conn):
-    st.subheader(f"⚙️ {t['nav'][1]}")
-    tab1, tab2 = st.tabs(["➕ Přidat novou podnikovou normu", "✏️ Editovat / Smazat stávající normu"])
+    st.markdown(f"### <span class='material-symbols-rounded'>tune</span> {t['nav'][1]}", unsafe_allow_html=True)
+    tab1, tab2 = st.tabs(["Přidat novou podnikovou normu", "Editovat / Smazat stávající normu"])
     
     vda_classes = ["B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N"]
     size_ranges_desc = {
@@ -687,7 +704,7 @@ def show_standards_management(conn):
                     with col_save:
                         submit_edit = st.form_submit_button("Uložit úpravy", type="primary")
                     with col_del:
-                        submit_delete = st.form_submit_button("🗑️ Smazat normu")
+                        submit_delete = st.form_submit_button("Odstranit normu")
 
                     if submit_edit:
                         try:
@@ -724,7 +741,7 @@ def show_standards_management(conn):
 
 
 def show_evaluation_form(conn):
-    st.subheader(f"📋 {t['nav'][0]}")
+    st.markdown(f"### <span class='material-symbols-rounded'>description</span> {t['nav'][0]}", unsafe_allow_html=True)
     try:
         components_df = pd.read_sql("SELECT id, part_number, name FROM components", conn)
     except Exception as err:
@@ -1103,7 +1120,7 @@ def show_evaluation_form(conn):
 
 
 def show_history(conn):
-    st.subheader(f"📊 {t['history_title']}")
+    st.markdown(f"### <span class='material-symbols-rounded'>history</span> {t['history_title']}", unsafe_allow_html=True)
     try:
         history_df = pd.read_sql(
             '''
@@ -1139,22 +1156,19 @@ if DB_PASSWORD:
         st.sidebar.success(t["db_connected"])
         st.title(t["title"])
 
-        # Inicializace stavu (výchozí obrazovka po přihlášení je Home)
         if "active_tab" not in st.session_state:
             st.session_state.active_tab = "Home"
 
-        # Pokud nejsme na domovské obrazovce, zobrazíme horní lištu s Home tlačítkem
         if st.session_state.active_tab != "Home":
             col_home, col_info = st.columns([1, 5])
             with col_home:
-                if st.button("🏠 Domů", use_container_width=True):
+                if st.button("Zpět na menu", use_container_width=True):
                     st.session_state.active_tab = "Home"
                     st.rerun()
             with col_info:
                 st.markdown(f"Aktivní sekce: **{st.session_state.active_tab}**")
             st.markdown("---")
 
-        # Vykreslení podle aktivního stavu
         if st.session_state.active_tab == "Home":
             show_home_screen()
         elif st.session_state.active_tab == t["nav"][0]:
