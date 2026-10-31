@@ -7,3 +7,10 @@ pandas
 psycopg2-binary
 reportlab
 plotly
+streamlit
+pandas
+psycopg2-binary
+reportlab
+plotly
+matplotlib
+numpy
