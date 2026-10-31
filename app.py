@@ -7,6 +7,8 @@ from enum import Enum
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
+import matplotlib.pyplot as plt
+import numpy as np
 import psycopg2
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4
@@ -20,7 +22,9 @@ from reportlab.platypus import (
     Spacer,
     Table,
     TableStyle,
+    Image as PD 이미지, # budeme používat reportlab.platypus.Image
 )
+from reportlab.platypus import Image as RLImage
 import streamlit as st
 
 st.set_page_config(
@@ -252,6 +256,37 @@ def calculate_measurement_uncertainty():
     }
 
 
+def generate_pdf_chart_image(report_df):
+    """Generuje statický graf pro PDF protokol pomocí matplotlib s plnými popisky a diakritikou."""
+    fig, ax = plt.subplots(figsize=(7, 2.8))
+    
+    classes = report_df["Velikostní třída"].tolist()
+    measured = pd.to_numeric(report_df["Naměřená úroveň"], errors="coerce").fillna(0).tolist()
+    limits = pd.to_numeric(report_df["Povolený limit"], errors="coerce").fillna(0).tolist()
+    
+    x = np.arange(len(classes))
+    width = 0.38
+    
+    ax.bar(x - width/2, measured, width, label='Naměřeno', color='#3b82f6')
+    ax.bar(x + width/2, limits, width, label='Limit normy', color='#94a3b8', alpha=0.6)
+    
+    ax.set_ylabel('Počet částic / Úroveň', fontsize=8)
+    ax.set_xlabel('Velikostní třída (VDA 19.1)', fontsize=8)
+    ax.set_title('Porovnání naměřených hodnot s limity normy', fontsize=9, fontweight='bold', pad=8)
+    ax.set_xticks(x)
+    ax.set_xticklabels(classes, fontsize=7)
+    ax.tick_params(axis='y', labelsize=7)
+    ax.legend(fontsize=7, loc='upper right')
+    ax.grid(axis='y', linestyle='--', alpha=0.5)
+    
+    plt.tight_layout()
+    img_buffer = io.BytesIO()
+    plt.savefig(img_buffer, format='png', dpi=200)
+    plt.close(fig)
+    img_buffer.seek(0)
+    return img_buffer
+
+
 def create_pdf_report(
     meta_info, report_df, conformity_text, failed, note, fibers_count,
     metallic_ref_count, metallic_nonref_count, grav_data, uncertainty_info=None,
@@ -262,28 +297,37 @@ def create_pdf_report(
         buffer, pagesize=A4, rightMargin=30, leftMargin=30, topMargin=30, bottomMargin=30
     )
 
-    font_name = "Times-Roman"
-    font_name_bold = "Times-Bold"
+    # Robustní podpora pro českou diakritiku v ReportLab
+    font_name = "Helvetica"
+    font_name_bold = "Helvetica-Bold"
     try:
-        if os.path.exists("cmr10.ttf"):
+        dejavu_regular = "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"
+        dejavu_bold = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
+        if os.path.exists(dejavu_regular) and os.path.exists(dejavu_bold):
+            pdfmetrics.registerFont(TTFont('DejaVu', dejavu_regular))
+            pdfmetrics.registerFont(TTFont('DejaVu-Bold', dejavu_bold))
+            font_name = "DejaVu"
+            font_name_bold = "DejaVu-Bold"
+        elif os.path.exists("cmr10.ttf"):
             pdfmetrics.registerFont(TTFont('ComputerModern', 'cmr10.ttf'))
-            pdfmetrics.registerFont(TTFont('ComputerModern-Bold', 'cmbx10.ttf' if os.path.exists('cmbx10.ttf' ) else 'cmr10.ttf'))
+            if os.path.exists('cmbx10.ttf'):
+                pdfmetrics.registerFont(TTFont('ComputerModern-Bold', 'cmbx10.ttf'))
             font_name = "ComputerModern"
             font_name_bold = "ComputerModern-Bold"
-    except:
+    except Exception:
         pass
 
     styles = getSampleStyleSheet()
 
-    title_style = ParagraphStyle("DocTitle", fontName=font_name_bold, fontSize=12, leading=15, textColor=colors.HexColor("#111827"), alignment=1, spaceAfter=3)
-    subtitle_style = ParagraphStyle("DocSubtitle", fontName=font_name, fontSize=8, leading=10, textColor=colors.HexColor("#4b5563"), alignment=1, spaceAfter=8)
-    cell_style = ParagraphStyle("TableCell", fontName=font_name, fontSize=7.5, leading=10, textColor=colors.HexColor("#1f2937"))
-    cell_bold = ParagraphStyle("TableCellBold", fontName=font_name_bold, fontSize=7.5, leading=10, textColor=colors.HexColor("#111827"))
-    cell_header = ParagraphStyle("TableHeader", fontName=font_name_bold, fontSize=7.5, leading=10, textColor=colors.whitesmoke)
-    ccc_style = ParagraphStyle("CCCStyle", fontName=font_name_bold, fontSize=9, leading=12, textColor=colors.HexColor("#1e3a8a"), alignment=1)
+    title_style = ParagraphStyle("DocTitle", fontName=font_name_bold, fontSize=11, leading=14, textColor=colors.HexColor("#111827"), alignment=1, spaceAfter=2)
+    subtitle_style = ParagraphStyle("DocSubtitle", fontName=font_name, fontSize=7.5, leading=9, textColor=colors.HexColor("#4b5563"), alignment=1, spaceAfter=6)
+    cell_style = ParagraphStyle("TableCell", fontName=font_name, fontSize=7, leading=9, textColor=colors.HexColor("#1f2937"))
+    cell_bold = ParagraphStyle("TableCellBold", fontName=font_name_bold, fontSize=7, leading=9, textColor=colors.HexColor("#111827"))
+    cell_header = ParagraphStyle("TableHeader", fontName=font_name_bold, fontSize=7, leading=9, textColor=colors.whitesmoke)
+    ccc_style = ParagraphStyle("CCCStyle", fontName=font_name_bold, fontSize=8.5, leading=11, textColor=colors.HexColor("#1e3a8a"), alignment=1)
 
     elements = [
-        Paragraph("INSPECTION REPORT: CLEANLINESS INSPECTION AS PER VDA 19.1 (2025)", title_style),
+        Paragraph("INSPECTION REPORT: CLEANLINESS INSPECTION AS PER VDA 19.1", title_style),
         Paragraph("Souhrnný protokol technické čistoty dle podnikové normy", subtitle_style),
     ]
 
@@ -296,7 +340,7 @@ def create_pdf_report(
         [Paragraph("<b>Designation / Part:</b>", cell_style), Paragraph(meta_info.get('comp_name', '-'), cell_style), Paragraph("<b>Norma / Standard:</b>", cell_style), Paragraph(meta_info.get('std_name', '-'), cell_style)],
         [Paragraph("<b>Batch number:</b>", cell_style), Paragraph(meta_info.get('filter_lot', '-'), cell_style), Paragraph("<b>Filter number:</b>", cell_style), Paragraph(meta_info.get('filter_no', '-'), cell_style)],
         [Paragraph("<b>Control area (Ac):</b>", cell_style), Paragraph(f"{meta_info.get('wetted_area', 1000)} cm²", cell_style), Paragraph("<b>Extraction method:</b>", cell_style), Paragraph(meta_info.get('ext_method', '-'), cell_style)],
-        [Paragraph("<b>Filter material / pore:</b>", cell_style), Paragraph(f"{meta_info.get('filt_mat', '-')}, {meta_info.get('filt_pore', '-')} µm", cell_style), Paragraph("<b>Datum vyhodnoceni:</b>", cell_style), Paragraph(current_date, cell_style)],
+        [Paragraph("<b>Filter material / pore:</b>", cell_style), Paragraph(f"{meta_info.get('filt_mat', '-')}, {meta_info.get('filt_pore', '-')} µm", cell_style), Paragraph("<b>Datum vyhodnocení:</b>", cell_style), Paragraph(current_date, cell_style)],
     ]
 
     meta_table = Table(meta_data, colWidths=[110, 165, 100, 179])
@@ -305,18 +349,18 @@ def create_pdf_report(
             ("BACKGROUND", (0, 0), (-1, -1), colors.HexColor("#f8fafc")),
             ("BOX", (0, 0), (-1, -1), 0.75, colors.HexColor("#cbd5e1")),
             ("INNERGRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#e2e8f0")),
-            ("TOPPADDING", (0, 0), (-1, -1), 3),
-            ("BOTTOMPADDING", (0, 0), (-1, -1), 3),
+            ("TOPPADDING", (0, 0), (-1, -1), 2.5),
+            ("BOTTOMPADDING", (0, 0), (-1, -1), 2.5),
             ("LEFTPADDING", (0, 0), (-1, -1), 5),
             ("RIGHTPADDING", (0, 0), (-1, -1), 5),
             ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
         ])
     )
     elements.append(meta_table)
-    elements.append(Spacer(1, 6))
+    elements.append(Spacer(1, 4))
 
     ccc_string = meta_info.get('ccc_string', 'CCC neuveden')
-    ccc_table = Table([[Paragraph(f"<b>CCC kód:</b> &nbsp;&nbsp; {ccc_string}", ccc_style)]], colWidths=[554], rowHeights=[22])
+    ccc_table = Table([[Paragraph(f"<b>CCC kód:</b> &nbsp;&nbsp; {ccc_string}", ccc_style)]], colWidths=[554], rowHeights=[20])
     ccc_table.setStyle(
         TableStyle([
             ("BACKGROUND", (0, 0), (-1, -1), colors.HexColor("#eff6ff")),
@@ -326,7 +370,7 @@ def create_pdf_report(
         ])
     )
     elements.append(ccc_table)
-    elements.append(Spacer(1, 6))
+    elements.append(Spacer(1, 4))
 
     if failed:
         res_color = colors.HexColor("#fee2e2")
@@ -335,8 +379,8 @@ def create_pdf_report(
         res_color = colors.HexColor("#d1fae5")
         res_text_color = colors.HexColor("#065f46")
 
-    res_style = ParagraphStyle("ResText", fontName=font_name_bold, fontSize=8.5, leading=11, textColor=res_text_color, alignment=1)
-    res_table = Table([[Paragraph(f"<b>VYSLEDEK POSOUZENI / EVALUATION RESULT: {conformity_text.upper()}</b>", res_style)]], colWidths=[554], rowHeights=[20])
+    res_style = ParagraphStyle("ResText", fontName=font_name_bold, fontSize=8, leading=10, textColor=res_text_color, alignment=1)
+    res_table = Table([[Paragraph(f"<b>VÝSLEDEK POSOUZENÍ / EVALUATION RESULT: {conformity_text.upper()}</b>", res_style)]], colWidths=[554], rowHeights=[18])
     res_table.setStyle(
         TableStyle([
             ("BACKGROUND", (0, 0), (-1, -1), res_color),
@@ -346,12 +390,12 @@ def create_pdf_report(
         ])
     )
     elements.append(res_table)
-    elements.append(Spacer(1, 6))
+    elements.append(Spacer(1, 4))
 
     if uncertainty_info:
-        unc_text = Paragraph(f"<b>Nejistota mereni (k=2, 95%):</b> Kombinovana: {uncertainty_info['combined_pct']}% | Rozsirena: {uncertainty_info['expanded_pct']}%", cell_style)
+        unc_text = Paragraph(f"<b>Nejistota měření (k=2, 95%):</b> Kombinovaná: {uncertainty_info['combined_pct']}% | Rozšířená: {uncertainty_info['expanded_pct']}%", cell_style)
         elements.append(unc_text)
-        elements.append(Spacer(1, 5))
+        elements.append(Spacer(1, 4))
 
     # --- GRAVIMETRIE ---
     res_mass_val = grav_data.get('residual_mass', 0.0) if grav_data else 0.0
@@ -369,20 +413,20 @@ def create_pdf_report(
         TableStyle([
             ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#334155")),
             ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#cbd5e1")),
-            ("TOPPADDING", (0, 0), (-1, -1), 3),
-            ("BOTTOMPADDING", (0, 0), (-1, -1), 3),
+            ("TOPPADDING", (0, 0), (-1, -1), 2.5),
+            ("BOTTOMPADDING", (0, 0), (-1, -1), 2.5),
             ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
         ])
     )
     elements.append(grav_table)
-    elements.append(Spacer(1, 6))
+    elements.append(Spacer(1, 4))
 
-    # --- OPTICKÁ ANALÝZA ---
+    # --- OPTICKÁ ANALÝZA (TABULKA) ---
     table_data = [[
-        Paragraph("<b>Velikostni trida</b>", cell_header),
+        Paragraph("<b>Velikostní třída</b>", cell_header),
         Paragraph("<b>Rozsah velikosti</b>", cell_header),
-        Paragraph("<b>Max. povoleny limit</b>", cell_header),
-        Paragraph("<b>Namereno z reportu</b>", cell_header),
+        Paragraph("<b>Max. povolený limit</b>", cell_header),
+        Paragraph("<b>Naměřeno z reportu</b>", cell_header),
         Paragraph("<b>Stav / Status</b>", cell_header),
     ]]
 
@@ -416,44 +460,54 @@ def create_pdf_report(
                 ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#1e293b")),
                 ("ALIGN", (0, 0), (-1, -1), "CENTER"),
                 ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#cbd5e1")),
-                ("TOPPADDING", (0, 0), (-1, -1), 2.5),
-                ("BOTTOMPADDING", (0, 0), (-1, -1), 2.5),
+                ("TOPPADDING", (0, 0), (-1, -1), 2),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 2),
             ])
         )
         elements.append(t)
-        elements.append(Spacer(1, 6))
+        elements.append(Spacer(1, 4))
+
+        # --- GRAF V PDF ---
+        try:
+            chart_img_buf = generate_pdf_chart_image(report_df)
+            elements.append(Paragraph("<b>Grafické porovnání distribuce částic:</b>", cell_bold))
+            elements.append(Spacer(1, 2))
+            elements.append(RLImage(chart_img_buf, width=500, height=200))
+            elements.append(Spacer(1, 4))
+        except Exception:
+            pass
 
     qual_data = [
-        [Paragraph("<b>Kvalitativni charakteristiky z reportu (VDA 19.1)</b>", cell_header), Paragraph("<b>Zjistena hodnota</b>", cell_header)],
-        [Paragraph("Vlakna (Fibers)", cell_style), Paragraph(str(fibers_count), cell_style)],
-        [Paragraph("Kovove leskle castice (Metallic reflective)", cell_style), Paragraph(str(metallic_ref_count), cell_style)],
-        [Paragraph("Kovove neleskle / ostatni castice (Non-reflective)", cell_style), Paragraph(str(metallic_nonref_count), cell_style)],
+        [Paragraph("<b>Kvalitativní charakteristiky z reportu (VDA 19.1)</b>", cell_header), Paragraph("<b>Zjištěná hodnota</b>", cell_header)],
+        [Paragraph("Vlákna (Fibers)", cell_style), Paragraph(str(fibers_count), cell_style)],
+        [Paragraph("Kovové lesklé částice (Metallic reflective)", cell_style), Paragraph(str(metallic_ref_count), cell_style)],
+        [Paragraph("Kovové nelesklé / ostatní částice (Non-reflective)", cell_style), Paragraph(str(metallic_nonref_count), cell_style)],
     ]
 
     if advanced_data:
-        qual_data.append([Paragraph("Max. rozmer castice z reportu (L_max / Feret Max)", cell_style), Paragraph(f"{advanced_data.get('l_max', 0)} µm")])
-        qual_data.append([Paragraph("Pomer stran (b/L threshold)", cell_style), Paragraph(str(advanced_data.get('aspect_ratio', '-')))])
-        qual_data.append([Paragraph("Plosna hustota kontaminace (Specific Surface)", cell_style), Paragraph(f"{advanced_data.get('specific_surface', 0)} mg/m²")])
-        qual_data.append([Paragraph("Ucinnost extrakce z protokolu (Recovery rate)", cell_style), Paragraph(f"{advanced_data.get('recovery_rate', 0)} %")])
+        qual_data.append([Paragraph("Max. rozměr částice z reportu (L_max / Feret Max)", cell_style), Paragraph(f"{advanced_data.get('l_max', 0)} µm")])
+        qual_data.append([Paragraph("Poměr stran (b/L threshold)", cell_style), Paragraph(str(advanced_data.get('aspect_ratio', '-')))])
+        qual_data.append([Paragraph("Plošná hustota kontaminace (Specific Surface)", cell_style), Paragraph(f"{advanced_data.get('specific_surface', 0)} mg/m²")])
+        qual_data.append([Paragraph("Účinnost extrakce z protokolu (Recovery rate)", cell_style), Paragraph(f"{advanced_data.get('recovery_rate', 0)} %")])
 
     qual_table = Table(qual_data, colWidths=[354, 200])
     qual_table.setStyle(
         TableStyle([
             ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#334155")),
             ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#cbd5e1")),
-            ("TOPPADDING", (0, 0), (-1, -1), 2.5),
-            ("BOTTOMPADDING", (0, 0), (-1, -1), 2.5),
+            ("TOPPADDING", (0, 0), (-1, -1), 2),
+            ("BOTTOMPADDING", (0, 0), (-1, -1), 2),
         ])
     )
     elements.append(qual_table)
 
     if note:
-        elements.append(Spacer(1, 6))
-        note_table = Table([[Paragraph("<b>Poznamka k zaznamu:</b>", cell_bold)], [Paragraph(note, cell_style)]], colWidths=[554])
+        elements.append(Spacer(1, 4))
+        note_table = Table([[Paragraph("<b>Poznámka k záznamu:</b>", cell_bold)], [Paragraph(note, cell_style)]], colWidths=[554])
         elements.append(note_table)
 
-    elements.append(Spacer(1, 8))
-    sig_table = Table([[Paragraph(f"<b>Zaznam zapsal / overil (technik):</b> {meta_info.get('inspector_name', 'Jan Novák')}", cell_style)]], colWidths=[554])
+    elements.append(Spacer(1, 6))
+    sig_table = Table([[Paragraph(f"<b>Záznam zapsal / ověřil (technik):</b> {meta_info.get('inspector_name', 'Jan Novák')}", cell_style)]], colWidths=[554])
     elements.append(KeepTogether(sig_table))
 
     doc.build(elements)
@@ -751,10 +805,8 @@ def show_evaluation_form(conn):
         if not st.session_state.eval_report_df.empty:
             st.dataframe(st.session_state.eval_report_df, use_container_width=True)
             
-            # --- INTERAKTIVNÍ PLOTLY HISTOGRAM ROZDĚLENÍ ČÁSTIC ---
             st.markdown("#### 📈 Grafické porovnání naměřených hodnot s limity normy")
             chart_df = st.session_state.eval_report_df.copy()
-            # Převedení typů pro plotly
             chart_df["Povolený limit"] = pd.to_numeric(chart_df["Povolený limit"], errors="coerce").fillna(0)
             chart_df["Naměřená úroveň"] = pd.to_numeric(chart_df["Naměřená úroveň"], errors="coerce").fillna(0)
             
@@ -762,7 +814,7 @@ def show_evaluation_form(conn):
             fig.add_trace(go.Bar(
                 x=chart_df["Velikostní třída"],
                 y=chart_df["Naměřená úroveň"],
-                name="Naměřeno",
+                name="Naměřená úroveň částic",
                 marker_color=["#ef4444" if row["Stav"] in ["specifikace nesplněna", "NOK"] else "#3b82f6" for _, row in chart_df.iterrows()]
             ))
             fig.add_trace(go.Scatter(
@@ -958,18 +1010,23 @@ def show_evaluation_form(conn):
 
         st.markdown("---")
 
-        # --- SEKCE 6: Kvalitativní charakteristiky ---
-        st.subheader(t["sec_qual"])
+        # --- SEKCE 6: Kvalitativní charakteristiky a Validační brány ---
+        col_hq1, col_hq2 = st.columns([5, 1])
+        with col_hq1:
+            st.subheader(t["sec_qual"])
+        with col_hq2:
+            enable_qual = st.toggle("Aktivní sekce", value=True, key="chk_p5")
+
         col_q1, col_q2, col_q3 = st.columns(3)
         with col_q1:
-            fibers_count = st.number_input(t["fibers"], min_value=0, value=9, step=1, help=f"Limit z normy: {limit_fibers}" if limit_fibers is not None else None)
-            blank_value_pct = st.number_input(t["blank_val"], min_value=0.0, value=2.0, step=0.1)
+            fibers_count = st.number_input(t["fibers"], min_value=0, value=9, step=1, disabled=not enable_qual, help=f"Limit z normy: {limit_fibers}" if limit_fibers is not None else None)
+            blank_value_pct = st.number_input(t["blank_val"], min_value=0.0, value=2.0, step=0.1, disabled=not enable_qual)
         with col_q2:
-            metallic_ref_count = st.number_input(t["met_ref"], min_value=0, value=19, step=1, help=f"Limit z normy: {limit_metallic}" if limit_metallic is not None else None)
-            declining_test_pct = st.number_input(t["decl_test"], min_value=0.0, value=5.0, step=0.5)
+            metallic_ref_count = st.number_input(t["met_ref"], min_value=0, value=19, step=1, disabled=not enable_qual, help=f"Limit z normy: {limit_metallic}" if limit_metallic is not None else None)
+            declining_test_pct = st.number_input(t["decl_test"], min_value=0.0, value=5.0, step=0.5, disabled=not enable_qual)
         with col_q3:
-            metallic_nonref_count = st.number_input(t["met_nonref"], min_value=0, value=24, step=1)
-            filter_occupancy_pct = st.number_input(t["filt_occ"], min_value=0.0, value=3.0, step=0.5)
+            metallic_nonref_count = st.number_input(t["met_nonref"], min_value=0, value=24, step=1, disabled=not enable_qual)
+            filter_occupancy_pct = st.number_input(t["filt_occ"], min_value=0.0, value=3.0, step=0.5, disabled=not enable_qual)
 
         st.markdown("---")
 
@@ -1021,12 +1078,13 @@ def show_evaluation_form(conn):
                 st.error("Vyplňte číslo filtru.")
             else:
                 gating_errors = []
-                if blank_value_pct > 10.0:
-                    gating_errors.append(f"Slepá hodnota ({blank_value_pct}%) překračuje max. povolenou (10%).")
-                if filter_occupancy_pct > 10.0:
-                    gating_errors.append(f"Pokrytí filtru ({filter_occupancy_pct}%) překračuje max. povolené (10%).")
-                if declining_test_pct > 10.0:
-                    gating_errors.append(f"Klesající zkouška ({declining_test_pct}%) překračuje limit (10%).")
+                if enable_qual:
+                    if blank_value_pct > 10.0:
+                        gating_errors.append(f"Slepá hodnota ({blank_value_pct}%) překračuje max. povolenou (10%).")
+                    if filter_occupancy_pct > 10.0:
+                        gating_errors.append(f"Pokrytí filtru ({filter_occupancy_pct}%) překračuje max. povolené (10%).")
+                    if declining_test_pct > 10.0:
+                        gating_errors.append(f"Klesající zkouška ({declining_test_pct}%) překračuje limit (10%).")
                 if not pixel_resolution_ok:
                     gating_errors.append("Pixelové rozlišení neodpovídá požadavkům.")
 
@@ -1054,13 +1112,14 @@ def show_evaluation_form(conn):
                         failed = True
                         st.error(f"Gravimetrie překročena: Naměřená zbytková hmotnost {residual_mass:.4f} mg (Limit normy: {gravimetry_limit_db} mg)")
 
-                    if limit_fibers is not None and fibers_count > limit_fibers:
-                        failed = True
-                        st.error(f"Překročen limit pro Vlákna: naměřeno {fibers_count} (Limit normy: {limit_fibers})")
-                        
-                    if limit_metallic is not None and metallic_ref_count > limit_metallic:
-                        failed = True
-                        st.error(f"Překročen limit pro Kovové částice: naměřeno {metallic_ref_count} (Limit normy: {limit_metallic})")
+                    if enable_qual:
+                        if limit_fibers is not None and fibers_count > limit_fibers:
+                            failed = True
+                            st.error(f"Překročen limit pro Vlákna: naměřeno {fibers_count} (Limit normy: {limit_fibers})")
+                            
+                        if limit_metallic is not None and metallic_ref_count > limit_metallic:
+                            failed = True
+                            st.error(f"Překročen limit pro Kovové částice: naměřeno {metallic_ref_count} (Limit normy: {limit_metallic})")
                         
                     if enable_adv:
                         if limit_lmax is not None and l_max_val > limit_lmax:
@@ -1152,7 +1211,7 @@ def show_evaluation_form(conn):
 
                     pdf_data = create_pdf_report(
                         meta_info_dict, report_df, conformity_text, failed, note,
-                        fibers_count, metallic_ref_count, metallic_nonref_count,
+                        fibers_count if enable_qual else 0, metallic_ref_count if enable_qual else 0, metallic_nonref_count if enable_qual else 0,
                         grav_data_dict, uncertainty_dict, advanced_dict
                     )
                     
