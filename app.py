@@ -24,21 +24,29 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
+# Vložení LaTeXového fontu (Computer Modern Serif) do webového rozhraní
 st.markdown(
     """
     <style>
+    @import url('https://fonts.cdnfonts.com/css/computer-modern-serif');
+
+    html, body, [class*="css"] {
+        font-family: 'Computer Modern Serif', serif !important;
+    }
+    
+    /* Vylepšení vzhledu tlačítek a formulářů pro serióznější vzhled */
     button[kind="secondary"]:has(div:contains("Nové vyhodnocení")),
     button[kind="secondary"]:has(div:contains("New Inspection")),
     div.stButton > button:has(div:contains("Nové vyhodnocení")),
     div.stButton > button:has(div:contains("New Inspection")) {
-        background-color: #dc2626 !important;
+        background-color: #991b1b !important;
         color: white !important;
-        border-color: #dc2626 !important;
+        border-color: #991b1b !important;
     }
     div.stButton > button:has(div:contains("Nové vyhodnocení")):hover,
     div.stButton > button:has(div:contains("New Inspection")):hover {
-        background-color: #b91c1c !important;
-        border-color: #b91c1c !important;
+        background-color: #7f1d1d !important;
+        border-color: #7f1d1d !important;
         color: white !important;
     }
     </style>
@@ -239,15 +247,18 @@ def create_pdf_report(
         buffer, pagesize=A4, rightMargin=30, leftMargin=30, topMargin=30, bottomMargin=30
     )
 
-    font_name = "Helvetica"
+    # Použití Times-Roman (seriózní LaTeXový / akademický tiskový vzhled)
+    font_name = "Times-Roman"
+    font_name_bold = "Times-Bold"
+
     styles = getSampleStyleSheet()
 
-    title_style = ParagraphStyle("DocTitle", fontName=font_name, fontSize=12, leading=15, textColor=colors.HexColor("#111827"), alignment=1, spaceAfter=3)
+    title_style = ParagraphStyle("DocTitle", fontName=font_name_bold, fontSize=12, leading=15, textColor=colors.HexColor("#111827"), alignment=1, spaceAfter=3)
     subtitle_style = ParagraphStyle("DocSubtitle", fontName=font_name, fontSize=8, leading=10, textColor=colors.HexColor("#4b5563"), alignment=1, spaceAfter=8)
     cell_style = ParagraphStyle("TableCell", fontName=font_name, fontSize=7.5, leading=10, textColor=colors.HexColor("#1f2937"))
-    cell_bold = ParagraphStyle("TableCellBold", fontName=font_name, fontSize=7.5, leading=10, textColor=colors.HexColor("#111827"))
-    cell_header = ParagraphStyle("TableHeader", fontName=font_name, fontSize=7.5, leading=10, textColor=colors.whitesmoke)
-    ccc_style = ParagraphStyle("CCCStyle", fontName=font_name, fontSize=9, leading=12, textColor=colors.HexColor("#1e3a8a"), alignment=1)
+    cell_bold = ParagraphStyle("TableCellBold", fontName=font_name_bold, fontSize=7.5, leading=10, textColor=colors.HexColor("#111827"))
+    cell_header = ParagraphStyle("TableHeader", fontName=font_name_bold, fontSize=7.5, leading=10, textColor=colors.whitesmoke)
+    ccc_style = ParagraphStyle("CCCStyle", fontName=font_name_bold, fontSize=9, leading=12, textColor=colors.HexColor("#1e3a8a"), alignment=1)
 
     elements = [
         Paragraph("INSPECTION REPORT: CLEANLINESS INSPECTION AS PER VDA 19.1 (2025)", title_style),
@@ -302,7 +313,7 @@ def create_pdf_report(
         res_color = colors.HexColor("#d1fae5")
         res_text_color = colors.HexColor("#065f46")
 
-    res_style = ParagraphStyle("ResText", fontName=font_name, fontSize=8.5, leading=11, textColor=res_text_color, alignment=1)
+    res_style = ParagraphStyle("ResText", fontName=font_name_bold, fontSize=8.5, leading=11, textColor=res_text_color, alignment=1)
     res_table = Table([[Paragraph(f"<b>VYSLEDEK POSOUZENI / EVALUATION RESULT: {conformity_text.upper()}</b>", res_style)]], colWidths=[554], rowHeights=[20])
     res_table.setStyle(
         TableStyle([
