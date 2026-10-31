@@ -323,8 +323,8 @@ def create_pdf_report(
     # --- GRAVIMETRIE ---
     res_mass_val = grav_data.get('residual_mass', 0.0) if grav_data else 0.0
     grav_limit_val = grav_data.get('gravimetry_limit', 0.50) if grav_data else 0.50
-    grav_status = "NOK" if res_mass_val > grav_limit_val else "OK"
-    grav_status_html = '<font color="#991b1b"><b>NOK</b></font>' if grav_status == "NOK" else '<font color="#065f46"><b>OK</b></font>'
+    grav_status = "specifikace nesplněna" if res_mass_val > grav_limit_val else "specifikace splněna"
+    grav_status_html = '<font color="#991b1b"><b>specifikace nesplněna</b></font>' if res_status == "specifikace nesplněna" else '<font color="#065f46"><b>specifikace splněna</b></font>'
 
     grav_table_data = [
         [Paragraph("<b>Gravimetrická analýza (Zbytková hmotnost M)</b>", cell_header), Paragraph("<b>Limit / Hodnota</b>", cell_header), Paragraph("<b>Stav / Status</b>", cell_header)],
@@ -367,8 +367,8 @@ def create_pdf_report(
             s_range = size_ranges.get(s_class, "-")
             status = str(row["Stav"])
             status_html = (
-                '<font color="#065f46"><b>OK</b></font>' if status in ["OK", "specifikace splněna"] else
-                ('<font color="#991b1b"><b>NOK</b></font>' if status in ["NOK", "specifikace nesplněna"] else '<font color="#b45309"><b>VAROVANI</b></font>')
+                '<font color="#065f46"><b>specifikace splněna</b></font>' if status in ["specifikace splněna", "OK"] else
+                ('<font color="#991b1b"><b>specifikace nesplněna</b></font>' if status in ["specifikace nesplněna", "NOK"] else '<font color="#b45309"><b>VAROVÁNÍ</b></font>')
             )
 
             table_data.append([
@@ -954,15 +954,15 @@ def show_evaluation_form(conn):
                             max_alw = int(db_limits_dict.get(s_class, 0))
                             
                             if profile_type == ProfileType.VDA_19_1:
-                                status = "NOK" if actual_val > max_alw else "OK"
-                                if status == "NOK":
+                                status = "specifikace nesplněna" if actual_val > max_alw else "specifikace splněna"
+                                if status == "specifikace nesplněna":
                                     failed = True
                                 else:
                                     if max_alw > 0 and actual_val >= max_alw * 0.8:
                                         status = "VAROVÁNÍ"
                                         warning_triggered = True
                                     else:
-                                        status = "OK"
+                                        status = "specifikace splněna"
 
                             report.append({
                                 "Velikostní třída": s_class,
@@ -988,11 +988,11 @@ def show_evaluation_form(conn):
                         conformity_text = "specifikace nesplněna" if failed else "specifikace splněna"
                     else:
                         if failed or hard_stop_failed:
-                            conformity_text = "NOK"
+                            conformity_text = "specifikace nesplněna"
                         elif warning_triggered:
                             conformity_text = "VAROVÁNÍ"
                         else:
-                            conformity_text = "OK"
+                            conformity_text = "specifikace splněna"
 
                     cur = conn.cursor()
                     cur.execute(
@@ -1056,7 +1056,23 @@ def show_history(conn):
     st.subheader(t["history_title"])
     try:
         history_df = pd.read_sql(
-            'SELECT i.inspection_date AS "Datum", c.part_number AS "Číslo dílu", i.filter_number AS "Filtr", i.entered_ccc_string AS "CCC kód", i.evaluation_result AS "Výsledek" FROM inspections i JOIN components c ON i.component_id = c.id ORDER BY i.inspection_date DESC;',
+            '''
+            SELECT 
+                i.inspection_date AS "Datum", 
+                c.part_number AS "Číslo dílu", 
+                c.name AS "Název dílu",
+                COALESCE(cs.norm_name, '-') AS "Norma",
+                i.inspector_name AS "Technik", 
+                i.filter_number AS "Filtr", 
+                i.filter_lot_number AS "Šarže filtru",
+                i.entered_ccc_string AS "CCC kód", 
+                i.evaluation_result AS "Výsledek",
+                COALESCE(i.note, '-') AS "Poznámka"
+            FROM inspections i 
+            JOIN components c ON i.component_id = c.id 
+            LEFT JOIN customer_standards cs ON i.standard_id = cs.id
+            ORDER BY i.inspection_date DESC;
+            ''',
             conn,
         )
         if not history_df.empty:
