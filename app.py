@@ -53,7 +53,6 @@ translations = {
         "db_pass": "Heslo k databázi",
         "db_connected": "Připojeno k Supabase",
         "db_error": "Chyba připojení k databázi:",
-        "home": "Domů (Home screen)",
         "nav": ["Zápis a vyhodnocení z reportu", "Správa norem (Limity)", "Přehled historie měření"],
         "sec_ident": "1. General Information & Inspected Object (VDA 19.1)",
         "sec_prep": "2. Preparatory steps & Extraction",
@@ -121,7 +120,6 @@ translations = {
         "db_pass": "Database Password",
         "db_connected": "Connected to Supabase",
         "db_error": "Database connection error:",
-        "home": "Home screen",
         "nav": ["Report Evaluation & Entry", "Standards & Limits Management", "Inspection History"],
         "sec_ident": "1. General Information & Inspected Object (VDA 19.1)",
         "sec_prep": "2. Preparatory steps & Extraction",
@@ -431,9 +429,7 @@ def create_pdf_report(
 
 
 def show_home_screen():
-    st.subheader("🏠 Úvodní obrazovka (Home Screen)")
     st.write("Vítejte v systému vyhodnocení technické čistoty dle VDA 19.1. Vyberte požadovanou sekci:")
-    
     st.markdown("<br>", unsafe_allow_html=True)
     
     col1, col2, col3 = st.columns(3)
@@ -1122,7 +1118,7 @@ if DB_PASSWORD:
         st.sidebar.success(t["db_connected"])
         st.title(t["title"])
 
-        # Inicializace stavu (výchozí obrazovka je Home)
+        # Inicializace stavu (výchozí obrazovka po přihlášení je Home)
         if "active_tab" not in st.session_state:
             st.session_state.active_tab = "Home"
 
@@ -1134,7 +1130,7 @@ if DB_PASSWORD:
                     st.session_state.active_tab = "Home"
                     st.rerun()
             with col_info:
-                st.markdown(f"Aktuální sekce: **{st.session_state.active_tab}**")
+                st.markdown(f"Aktivní sekce: **{st.session_state.active_tab}**")
             st.markdown("---")
 
         # Vykreslení podle aktivního stavu
