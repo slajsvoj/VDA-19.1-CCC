@@ -1,6 +1,7 @@
 import datetime
 import io
 import math
+import os
 import uuid
 from enum import Enum
 import pandas as pd
@@ -8,6 +9,8 @@ import psycopg2
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.platypus import (
     KeepTogether,
     Paragraph,
@@ -24,7 +27,7 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# Vložení LaTeXového fontu (Computer Modern Serif) do webového rozhraní
+# Načtení Google Fontu (Computer Modern Serif) přes CSS pro celé webové rozhraní
 st.markdown(
     """
     <style>
@@ -34,7 +37,7 @@ st.markdown(
         font-family: 'Computer Modern Serif', serif !important;
     }
     
-    /* Vylepšení vzhledu tlačítek a formulářů pro serióznější vzhled */
+    /* Vylepšení vzhledu tlačítek a formulářů */
     button[kind="secondary"]:has(div:contains("Nové vyhodnocení")),
     button[kind="secondary"]:has(div:contains("New Inspection")),
     div.stButton > button:has(div:contains("Nové vyhodnocení")),
@@ -247,9 +250,17 @@ def create_pdf_report(
         buffer, pagesize=A4, rightMargin=30, leftMargin=30, topMargin=30, bottomMargin=30
     )
 
-    # Použití Times-Roman (seriózní LaTeXový / akademický tiskový vzhled)
+    # Registrace profesionálního serifového fontu pro PDF (fallback na Times-Roman, pokud by soubor chyběl)
     font_name = "Times-Roman"
     font_name_bold = "Times-Bold"
+    try:
+        if os.path.exists("cmr10.ttf"):
+            pdfmetrics.registerFont(TTFont('ComputerModern', 'cmr10.ttf'))
+            pdfmetrics.registerFont(TTFont('ComputerModern-Bold', 'cmbx10.ttf' if os.path.exists('cmbx10.ttf') else 'cmr10.ttf'))
+            font_name = "ComputerModern"
+            font_name_bold = "ComputerModern-Bold"
+    except:
+        pass
 
     styles = getSampleStyleSheet()
 
