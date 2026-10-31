@@ -5,6 +5,8 @@ import os
 import uuid
 from enum import Enum
 import pandas as pd
+import plotly.express as px
+import plotly.graph_objects as go
 import psycopg2
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4
@@ -265,7 +267,7 @@ def create_pdf_report(
     try:
         if os.path.exists("cmr10.ttf"):
             pdfmetrics.registerFont(TTFont('ComputerModern', 'cmr10.ttf'))
-            pdfmetrics.registerFont(TTFont('ComputerModern-Bold', 'cmbx10.ttf' if os.path.exists('cmbx10.ttf') else 'cmr10.ttf'))
+            pdfmetrics.registerFont(TTFont('ComputerModern-Bold', 'cmbx10.ttf' if os.path.exists('cmbx10.ttf' ) else 'cmr10.ttf'))
             font_name = "ComputerModern"
             font_name_bold = "ComputerModern-Bold"
     except:
@@ -455,7 +457,6 @@ def create_pdf_report(
     elements.append(KeepTogether(sig_table))
 
     doc.build(elements)
-    # Vrátíme ihned byte strukturu pro bezpečné stahování
     return buffer.getvalue()
 
 
@@ -736,12 +737,10 @@ def show_standards_management(conn):
 def show_evaluation_form(conn):
     st.markdown(f"### <span class='material-symbols-rounded'>description</span> {t['nav'][0]}", unsafe_allow_html=True)
     
-    # Inicializace stavu pro řízení zobrazení (přechod formulář -> hotové PDF)
     if "eval_success" not in st.session_state:
         st.session_state.eval_success = False
 
     if st.session_state.eval_success:
-        # POKUD BYLO VYHODNOCENÍ ÚSPĚŠNÉ, ZOBRAZÍME ROVNOU VÝSLEDKY A PDF BEZ FORMULÁŘE
         st.subheader(t["res_title"])
         st.info(f"**CCC kód:** {st.session_state.generated_ccc}")
         if st.session_state.eval_failed:
@@ -751,6 +750,36 @@ def show_evaluation_form(conn):
         
         if not st.session_state.eval_report_df.empty:
             st.dataframe(st.session_state.eval_report_df, use_container_width=True)
+            
+            # --- INTERAKTIVNÍ PLOTLY HISTOGRAM ROZDĚLENÍ ČÁSTIC ---
+            st.markdown("#### 📈 Grafické porovnání naměřených hodnot s limity normy")
+            chart_df = st.session_state.eval_report_df.copy()
+            # Převedení typů pro plotly
+            chart_df["Povolený limit"] = pd.to_numeric(chart_df["Povolený limit"], errors="coerce").fillna(0)
+            chart_df["Naměřená úroveň"] = pd.to_numeric(chart_df["Naměřená úroveň"], errors="coerce").fillna(0)
+            
+            fig = go.Figure()
+            fig.add_trace(go.Bar(
+                x=chart_df["Velikostní třída"],
+                y=chart_df["Naměřená úroveň"],
+                name="Naměřeno",
+                marker_color=["#ef4444" if row["Stav"] in ["specifikace nesplněna", "NOK"] else "#3b82f6" for _, row in chart_df.iterrows()]
+            ))
+            fig.add_trace(go.Scatter(
+                x=chart_df["Velikostní třída"],
+                y=chart_df["Povolený limit"],
+                name="Limit normy",
+                mode="lines+markers",
+                line=dict(color="#0f172a", width=2, dash="dash")
+            ))
+            fig.update_layout(
+                xaxis_title="Velikostní třída (VDA 19.1)",
+                yaxis_title="Počet částic / Úroveň",
+                legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
+                margin=dict(l=20, r=20, t=30, b=20),
+                height=350
+            )
+            st.plotly_chart(fig, use_container_width=True)
 
         btn_col1, btn_col2 = st.columns(2)
         with btn_col1:
@@ -764,10 +793,8 @@ def show_evaluation_form(conn):
             if st.button(t["new_insp"]):
                 st.session_state.eval_success = False
                 st.rerun()
-        # Ukončíme funkci tady, aby se samotný formulář nevykresloval
         return
 
-    # ------------------ ZAČÁTEK FORMULÁŘE (Interaktivní) ------------------
     try:
         components_df = pd.read_sql("SELECT id, part_number, name FROM components", conn)
     except Exception as err:
@@ -919,7 +946,6 @@ def show_evaluation_form(conn):
                 raw_input = st.text_input(f"Úroveň {s_class}", value="", placeholder="-", key=f"cls_{s_class}", label_visibility="collapsed", disabled=not enable_opt)
                 entered_levels[s_class] = raw_input
             
-            # LIVE validace přímo během psaní (funguje díky odstranění st.form)
             if enable_opt and raw_input.strip() and raw_input.strip() != "-":
                 try:
                     val_num = int(raw_input.strip())
@@ -988,7 +1014,6 @@ def show_evaluation_form(conn):
 
         note = st.text_area(t["note"])
         
-        # Běžné interaktivní tlačítko místo form_submit
         sub_btn = st.button(t["submit_eval"], type="primary", use_container_width=True)
 
         if sub_btn:
@@ -1131,7 +1156,6 @@ def show_evaluation_form(conn):
                         grav_data_dict, uncertainty_dict, advanced_dict
                     )
                     
-                    # Uložení výsledků do session_state pro okamžité přepnutí pohledu
                     st.session_state.eval_success = True
                     st.session_state.generated_pdf = pdf_data
                     st.session_state.eval_message = conformity_text
@@ -1140,7 +1164,7 @@ def show_evaluation_form(conn):
                     st.session_state.eval_report_df = report_df
                     st.session_state.filt_no_for_pdf = filt_no
                     
-                    st.rerun() # Okamžitý refresh, ukáže se jen vyhodnocení
+                    st.rerun()
 
 
 def show_history(conn):
