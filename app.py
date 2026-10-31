@@ -27,17 +27,17 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# Načtení Google Fontu (Computer Modern Serif) přes CSS pro celé webové rozhraní
+# Kompletní vynucení LaTeXového fontu (Computer Modern Serif) pro celé webové rozhraní včetně Home screenu a tlačítek
 st.markdown(
     """
     <style>
     @import url('https://fonts.cdnfonts.com/css/computer-modern-serif');
 
-    html, body, [class*="css"] {
+    html, body, [class*="css"], .stApp, div, span, p, label, input, textarea, select, button {
         font-family: 'Computer Modern Serif', serif !important;
     }
     
-    /* Vylepšení vzhledu tlačítek a formulářů */
+    /* Vylepšení vzhledu hlavního tlačítka pro nová vyhodnocení */
     button[kind="secondary"]:has(div:contains("Nové vyhodnocení")),
     button[kind="secondary"]:has(div:contains("New Inspection")),
     div.stButton > button:has(div:contains("Nové vyhodnocení")),
@@ -250,7 +250,6 @@ def create_pdf_report(
         buffer, pagesize=A4, rightMargin=30, leftMargin=30, topMargin=30, bottomMargin=30
     )
 
-    # Registrace profesionálního serifového fontu pro PDF (fallback na Times-Roman, pokud by soubor chyběl)
     font_name = "Times-Roman"
     font_name_bold = "Times-Bold"
     try:
