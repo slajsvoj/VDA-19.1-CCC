@@ -719,7 +719,7 @@ def show_evaluation_form(conn):
                 filt_lot = st.text_input(t["filt_lot"], value="sdvsdv")
                 profile_type = st.selectbox("Profil vyhodnocení", [ProfileType.VDA_19_1, ProfileType.INTERNAL_CUSTOM])
                 cond_delivery = st.text_input(t["cond_delivery"], value="Sériový díl čistý")
-                lot_size = st.number_input(t["lot_size"], min_value=1, value=100, step=1)
+                lot_size = st.number_input(t["lot_size"], min_value=1, value=1, step=1)
 
             st.markdown("---")
             
