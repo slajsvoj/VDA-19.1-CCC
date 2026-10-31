@@ -324,7 +324,7 @@ def create_pdf_report(
     res_mass_val = grav_data.get('residual_mass', 0.0) if grav_data else 0.0
     grav_limit_val = grav_data.get('gravimetry_limit', 0.50) if grav_data else 0.50
     grav_status = "specifikace nesplněna" if res_mass_val > grav_limit_val else "specifikace splněna"
-    grav_status_html = '<font color="#991b1b"><b>specifikace nesplněna</b></font>' if res_status == "specifikace nesplněna" else '<font color="#065f46"><b>specifikace splněna</b></font>'
+    grav_status_html = '<font color="#991b1b"><b>specifikace nesplněna</b></font>' if grav_status == "specifikace nesplněna" else '<font color="#065f46"><b>specifikace splněna</b></font>'
 
     grav_table_data = [
         [Paragraph("<b>Gravimetrická analýza (Zbytková hmotnost M)</b>", cell_header), Paragraph("<b>Limit / Hodnota</b>", cell_header), Paragraph("<b>Stav / Status</b>", cell_header)],
@@ -1089,19 +1089,30 @@ if DB_PASSWORD:
         st.sidebar.success(t["db_connected"])
         st.title(t["title"])
 
-        menu_choice = st.radio(
-            "Navigace",
-            t["nav"],
-            horizontal=True,
-            label_visibility="collapsed",
-        )
+        # Inicializace aktivní záložky v session state
+        if "active_tab" not in st.session_state:
+            st.session_state.active_tab = t["nav"][0]
+
+        # Tlačítkový panel jako navigace
+        col_n1, col_n2, col_n3 = st.columns(3)
+        with col_n1:
+            if st.button("📋 Zápis a vyhodnocení z reportu", use_container_width=True):
+                st.session_state.active_tab = t["nav"][0]
+        with col_n2:
+            if st.button("⚙️ Správa norem (Limity)", use_container_width=True):
+                st.session_state.active_tab = t["nav"][1]
+        with col_n3:
+            if st.button("📊 Přehled historie měření", use_container_width=True):
+                st.session_state.active_tab = t["nav"][2]
+
         st.markdown("---")
 
-        if menu_choice == t["nav"][0]:
+        # Vykreslení vybrané sekce
+        if st.session_state.active_tab == t["nav"][0]:
             show_evaluation_form(conn)
-        elif menu_choice == t["nav"][1]:
+        elif st.session_state.active_tab == t["nav"][1]:
             show_standards_management(conn)
-        elif menu_choice == t["nav"][2]:
+        elif st.session_state.active_tab == t["nav"][2]:
             show_history(conn)
 
         conn.close()
