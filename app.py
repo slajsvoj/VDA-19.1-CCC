@@ -473,7 +473,6 @@ def show_home_screen():
     
     with col1:
         st.markdown("### <span class='material-symbols-rounded'>description</span> Zápis z reportu", unsafe_allow_html=True)
-        # Přidání min-height zajistí, že tlačítka pod textem budou všechna přesně ve stejné rovině
         st.markdown("<div style='min-height: 75px;'>Zadání dat z reportu, porovnání s normou a generování PDF protokolu.</div>", unsafe_allow_html=True)
         if st.button("Přejít na vyhodnocení", use_container_width=True, type="primary"):
             st.session_state.active_tab = t["nav"][0]
@@ -1154,7 +1153,9 @@ if DB_PASSWORD:
     conn = get_db_connection()
     if conn:
         st.sidebar.success(t["db_connected"])
-        st.title(t["title"])
+        
+        # Změna z obřího st.title na decentnější menší nadpis
+        st.markdown(f"## {t['title']}")
 
         if "active_tab" not in st.session_state:
             st.session_state.active_tab = "Home"
