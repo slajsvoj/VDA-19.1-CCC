@@ -473,7 +473,10 @@ def show_standards_management(conn):
             with col_o3:
                 add_lmax = st.text_input("Max. rozměr částice L_max [µm]", value="")
 
-            st.markdown("**3. Maximální povolené limity frakcí (CCC kódové úrovně 0-24)**")
+            st.markdown("---")
+            st.markdown("### 3. Nastavení limitů pro velikostní frakce (CCC kódové úrovně)")
+            st.caption("Do políček níže zadejte povolený **limit** (max. úroveň) pro každou velikostní třídu:")
+            
             default_test_limits = {"B": "15", "C": "12", "D": "10", "E": "8", "F": "5", "G": "3", "H": "2", "I": "1", "J": "0", "K": "0", "L": "0", "M": "0", "N": "0"}
             
             limit_inputs = {}
@@ -488,7 +491,8 @@ def show_standards_management(conn):
                         f"Limit {s_class}",
                         value=default_test_limits.get(s_class, ""),
                         key=f"add_{s_class}",
-                        label_visibility="collapsed"
+                        label_visibility="collapsed",
+                        placeholder="Zadejte limit..."
                     )
 
             std_note = st.text_area("Poznámka k normě", value="Testovací norma A s výchozími limity")
@@ -576,7 +580,10 @@ def show_standards_management(conn):
                     with col_e_o3:
                         edit_lmax = st.text_input("Max. rozměr částice L_max [µm]", value=current_class_limits.get("L_MAX", ""))
 
-                    st.markdown("**3. Maximální povolené limity frakcí (CCC kódové úrovně 0-24)**")
+                    st.markdown("---")
+                    st.markdown("### 3. Úprava limitů pro velikostní frakce (CCC kódové úrovně)")
+                    st.caption("Do políček níže zadejte povolený **limit** (max. úroveň) pro každou velikostní třídu:")
+
                     edit_inputs = {}
                     for s_class in vda_classes:
                         col_c1, col_c2, col_c3 = st.columns([1, 3, 3])
@@ -589,7 +596,8 @@ def show_standards_management(conn):
                                 f"Edit Limit {s_class}",
                                 value=current_class_limits.get(s_class, ""),
                                 key=f"edit_{s_class}",
-                                label_visibility="collapsed"
+                                label_visibility="collapsed",
+                                placeholder="Zadejte limit..."
                             )
 
                     edit_note = st.text_area("Poznámka", value=curr_note)
