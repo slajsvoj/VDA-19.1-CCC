@@ -22,9 +22,8 @@ from reportlab.platypus import (
     Spacer,
     Table,
     TableStyle,
-    Image as PD 이미지, # budeme používat reportlab.platypus.Image
+    Image as RLImage,
 )
-from reportlab.platypus import Image as RLImage
 import streamlit as st
 
 st.set_page_config(
@@ -257,7 +256,6 @@ def calculate_measurement_uncertainty():
 
 
 def generate_pdf_chart_image(report_df):
-    """Generuje statický graf pro PDF protokol pomocí matplotlib s plnými popisky a diakritikou."""
     fig, ax = plt.subplots(figsize=(7, 2.8))
     
     classes = report_df["Velikostní třída"].tolist()
@@ -267,7 +265,7 @@ def generate_pdf_chart_image(report_df):
     x = np.arange(len(classes))
     width = 0.38
     
-    ax.bar(x - width/2, measured, width, label='Naměřeno', color='#3b82f6')
+    ax.bar(x - width/2, measured, width, label='Naměřená úroveň částic', color='#3b82f6')
     ax.bar(x + width/2, limits, width, label='Limit normy', color='#94a3b8', alpha=0.6)
     
     ax.set_ylabel('Počet částic / Úroveň', fontsize=8)
@@ -297,7 +295,6 @@ def create_pdf_report(
         buffer, pagesize=A4, rightMargin=30, leftMargin=30, topMargin=30, bottomMargin=30
     )
 
-    # Robustní podpora pro českou diakritiku v ReportLab
     font_name = "Helvetica"
     font_name_bold = "Helvetica-Bold"
     try:
@@ -397,7 +394,6 @@ def create_pdf_report(
         elements.append(unc_text)
         elements.append(Spacer(1, 4))
 
-    # --- GRAVIMETRIE ---
     res_mass_val = grav_data.get('residual_mass', 0.0) if grav_data else 0.0
     grav_limit_val = grav_data.get('gravimetry_limit', 0.50) if grav_data else 0.50
     grav_status = "specifikace nesplněna" if res_mass_val > grav_limit_val else "specifikace splněna"
@@ -421,7 +417,6 @@ def create_pdf_report(
     elements.append(grav_table)
     elements.append(Spacer(1, 4))
 
-    # --- OPTICKÁ ANALÝZA (TABULKA) ---
     table_data = [[
         Paragraph("<b>Velikostní třída</b>", cell_header),
         Paragraph("<b>Rozsah velikosti</b>", cell_header),
@@ -467,7 +462,6 @@ def create_pdf_report(
         elements.append(t)
         elements.append(Spacer(1, 4))
 
-        # --- GRAF V PDF ---
         try:
             chart_img_buf = generate_pdf_chart_image(report_df)
             elements.append(Paragraph("<b>Grafické porovnání distribuce částic:</b>", cell_bold))
