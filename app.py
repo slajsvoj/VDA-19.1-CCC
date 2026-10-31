@@ -462,16 +462,33 @@ def show_standards_management(conn):
             st.markdown("**1. Gravimetrický limit**")
             gravimetry_limit_input = st.number_input("Max. povolená zbytková hmotnost (mg)", min_value=0.0, value=0.50, step=0.1)
 
-            st.markdown("**2. Kvalitativní a pokročilé limity (nepovinné)**")
-            col_o1, col_o2, col_o3 = st.columns(3)
-            with col_o1:
-                add_fibers = st.text_input("Max. počet vláken (Fibers)", value="")
-                add_bl = st.text_input("Limitní poměr b/L", value="")
-            with col_o2:
-                add_metallic = st.text_input("Max. kovových částic (Metallic)", value="")
-                add_surface = st.text_input("Max. plošná hustota [mg/m²]", value="")
-            with col_o3:
-                add_lmax = st.text_input("Max. rozměr částice L_max [µm]", value="")
+            st.markdown("---")
+            st.markdown("### 2. Nastavení kvalitativních a pokročilých limitů (nepovinné)")
+            st.caption("Zadejte maximální povolené limity pro jednotlivé parametry:")
+
+            adv_limit_definitions = [
+                ("FIBERS", "Max. počet vláken (Fibers)", ""),
+                ("METALLIC", "Max. kovových částic (Metallic)", ""),
+                ("L_MAX", "Max. rozměr částice L_max [µm]", ""),
+                ("B_L_RATIO", "Limitní poměr b/L", ""),
+                ("SPEC_SURFACE", "Max. plošná hustota kontaminace [mg/m²]", "")
+            ]
+
+            adv_limit_inputs = {}
+            for key, label_text, default_val in adv_limit_definitions:
+                col_a1, col_a2, col_a3 = st.columns([1, 3, 3])
+                with col_a1:
+                    st.markdown(f"**{key}**")
+                with col_a2:
+                    st.caption(label_text)
+                with col_a3:
+                    adv_limit_inputs[key] = st.text_input(
+                        f"Limit {key}",
+                        value=default_val,
+                        key=f"add_adv_{key}",
+                        label_visibility="collapsed",
+                        placeholder="Zadejte limit..."
+                    )
 
             st.markdown("---")
             st.markdown("### 3. Nastavení limitů pro velikostní frakce (CCC kódové úrovně)")
@@ -507,11 +524,9 @@ def show_standards_management(conn):
                         inserted_any = False
                         
                         all_limits_to_save = limit_inputs.copy()
-                        if add_fibers.strip(): all_limits_to_save["FIBERS"] = add_fibers
-                        if add_metallic.strip(): all_limits_to_save["METALLIC"] = add_metallic
-                        if add_lmax.strip(): all_limits_to_save["L_MAX"] = add_lmax
-                        if add_bl.strip(): all_limits_to_save["B_L_RATIO"] = add_bl
-                        if add_surface.strip(): all_limits_to_save["SPEC_SURFACE"] = add_surface
+                        for k, val_str in adv_limit_inputs.items():
+                            if val_str.strip():
+                                all_limits_to_save[k] = val_str
 
                         for s_class, limit_val in all_limits_to_save.items():
                             if limit_val.strip() and limit_val.strip() != "-":
@@ -569,16 +584,33 @@ def show_standards_management(conn):
                     st.markdown("**1. Gravimetrický limit**")
                     edit_gravimetry = st.number_input("Max. povolená hmotnost gravimetrie (mg)", min_value=0.0, value=float(curr_grav), step=0.1)
                     
-                    st.markdown("**2. Kvalitativní a pokročilé limity (nepovinné)**")
-                    col_e_o1, col_e_o2, col_e_o3 = st.columns(3)
-                    with col_e_o1:
-                        edit_fibers = st.text_input("Max. počet vláken (Fibers)", value=current_class_limits.get("FIBERS", ""))
-                        edit_bl = st.text_input("Limitní poměr b/L", value=current_class_limits.get("B_L_RATIO", ""))
-                    with col_e_o2:
-                        edit_metallic = st.text_input("Max. kovových částic (Metallic)", value=current_class_limits.get("METALLIC", ""))
-                        edit_surface = st.text_input("Max. plošná hustota [mg/m²]", value=current_class_limits.get("SPEC_SURFACE", ""))
-                    with col_e_o3:
-                        edit_lmax = st.text_input("Max. rozměr částice L_max [µm]", value=current_class_limits.get("L_MAX", ""))
+                    st.markdown("---")
+                    st.markdown("### 2. Úprava kvalitativních a pokročilých limitů (nepovinné)")
+                    st.caption("Upravte maximální povolené limity pro jednotlivé parametry:")
+
+                    adv_limit_definitions = [
+                        ("FIBERS", "Max. počet vláken (Fibers)", ""),
+                        ("METALLIC", "Max. kovových částic (Metallic)", ""),
+                        ("L_MAX", "Max. rozměr částice L_max [µm]", ""),
+                        ("B_L_RATIO", "Limitní poměr b/L", ""),
+                        ("SPEC_SURFACE", "Max. plošná hustota kontaminace [mg/m²]", "")
+                    ]
+
+                    edit_adv_inputs = {}
+                    for key, label_text, _ in adv_limit_definitions:
+                        col_e1, col_e2, col_e3 = st.columns([1, 3, 3])
+                        with col_e1:
+                            st.markdown(f"**{key}**")
+                        with col_e2:
+                            st.caption(label_text)
+                        with col_e3:
+                            edit_adv_inputs[key] = st.text_input(
+                                f"Edit Limit {key}",
+                                value=current_class_limits.get(key, ""),
+                                key=f"edit_adv_{key}",
+                                label_visibility="collapsed",
+                                placeholder="Zadejte limit..."
+                            )
 
                     st.markdown("---")
                     st.markdown("### 3. Úprava limitů pro velikostní frakce (CCC kódové úrovně)")
@@ -614,11 +646,9 @@ def show_standards_management(conn):
                             cur.execute(f"DELETE FROM customer_standards WHERE norm_name = '{curr_norm_name}'")
                             
                             all_edit_limits = edit_inputs.copy()
-                            if edit_fibers.strip(): all_edit_limits["FIBERS"] = edit_fibers
-                            if edit_metallic.strip(): all_edit_limits["METALLIC"] = edit_metallic
-                            if edit_lmax.strip(): all_edit_limits["L_MAX"] = edit_lmax
-                            if edit_bl.strip(): all_edit_limits["B_L_RATIO"] = edit_bl
-                            if edit_surface.strip(): all_edit_limits["SPEC_SURFACE"] = edit_surface
+                            for k, val_str in edit_adv_inputs.items():
+                                if val_str.strip():
+                                    all_edit_limits[k] = val_str
 
                             for s_class, limit_val in all_edit_limits.items():
                                 if limit_val.strip() and limit_val.strip() != "-":
