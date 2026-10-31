@@ -53,6 +53,7 @@ translations = {
         "db_pass": "Heslo k databázi",
         "db_connected": "Připojeno k Supabase",
         "db_error": "Chyba připojení k databázi:",
+        "home": "Domů (Home screen)",
         "nav": ["Zápis a vyhodnocení z reportu", "Správa norem (Limity)", "Přehled historie měření"],
         "sec_ident": "1. General Information & Inspected Object (VDA 19.1)",
         "sec_prep": "2. Preparatory steps & Extraction",
@@ -120,6 +121,7 @@ translations = {
         "db_pass": "Database Password",
         "db_connected": "Connected to Supabase",
         "db_error": "Database connection error:",
+        "home": "Home screen",
         "nav": ["Report Evaluation & Entry", "Standards & Limits Management", "Inspection History"],
         "sec_ident": "1. General Information & Inspected Object (VDA 19.1)",
         "sec_prep": "2. Preparatory steps & Extraction",
@@ -428,8 +430,38 @@ def create_pdf_report(
     return buffer
 
 
+def show_home_screen():
+    st.subheader("🏠 Úvodní obrazovka (Home Screen)")
+    st.write("Vítejte v systému vyhodnocení technické čistoty dle VDA 19.1. Vyberte požadovanou sekci:")
+    
+    st.markdown("<br>", unsafe_allow_html=True)
+    
+    col1, col2, col3 = st.columns(3)
+    
+    with col1:
+        st.markdown("### 📋 Zápis a vyhodnocení")
+        st.write("Zadání dat z reportu, porovnání s normou a generování PDF protokolu.")
+        if st.button("Přejít na vyhodnocení", use_container_width=True, type="primary"):
+            st.session_state.active_tab = t["nav"][0]
+            st.rerun()
+            
+    with col2:
+        st.markdown("### ⚙️ Správa norem")
+        st.write("Nastavení a úprava podnikových a zákaznických limitů pro jednotlivé díly.")
+        if st.button("Přejít na normy", use_container_width=True):
+            st.session_state.active_tab = t["nav"][1]
+            st.rerun()
+            
+    with col3:
+        st.markdown("### 📊 Historie měření")
+        st.write("Přehled všech uložených vyhodnocení a protokolů z databáze.")
+        if st.button("Přejít na historii", use_container_width=True):
+            st.session_state.active_tab = t["nav"][2]
+            st.rerun()
+
+
 def show_standards_management(conn):
-    st.subheader(t["standards_title"])
+    st.subheader(f"⚙️ {t['nav'][1]}")
     tab1, tab2 = st.tabs(["➕ Přidat novou podnikovou normu", "✏️ Editovat / Smazat stávající normu"])
     
     vda_classes = ["B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N"]
@@ -675,6 +707,7 @@ def show_standards_management(conn):
 
 
 def show_evaluation_form(conn):
+    st.subheader(f"📋 {t['nav'][0]}")
     try:
         components_df = pd.read_sql("SELECT id, part_number, name FROM components", conn)
     except Exception as err:
@@ -1053,7 +1086,7 @@ def show_evaluation_form(conn):
 
 
 def show_history(conn):
-    st.subheader(t["history_title"])
+    st.subheader(f"📊 {t['history_title']}")
     try:
         history_df = pd.read_sql(
             '''
@@ -1089,26 +1122,25 @@ if DB_PASSWORD:
         st.sidebar.success(t["db_connected"])
         st.title(t["title"])
 
-        # Inicializace aktivní záložky v session state
+        # Inicializace stavu (výchozí obrazovka je Home)
         if "active_tab" not in st.session_state:
-            st.session_state.active_tab = t["nav"][0]
+            st.session_state.active_tab = "Home"
 
-        # Tlačítkový panel jako navigace
-        col_n1, col_n2, col_n3 = st.columns(3)
-        with col_n1:
-            if st.button("📋 Zápis a vyhodnocení z reportu", use_container_width=True):
-                st.session_state.active_tab = t["nav"][0]
-        with col_n2:
-            if st.button("⚙️ Správa norem (Limity)", use_container_width=True):
-                st.session_state.active_tab = t["nav"][1]
-        with col_n3:
-            if st.button("📊 Přehled historie měření", use_container_width=True):
-                st.session_state.active_tab = t["nav"][2]
+        # Pokud nejsme na domovské obrazovce, zobrazíme horní lištu s Home tlačítkem
+        if st.session_state.active_tab != "Home":
+            col_home, col_info = st.columns([1, 5])
+            with col_home:
+                if st.button("🏠 Domů", use_container_width=True):
+                    st.session_state.active_tab = "Home"
+                    st.rerun()
+            with col_info:
+                st.markdown(f"Aktuální sekce: **{st.session_state.active_tab}**")
+            st.markdown("---")
 
-        st.markdown("---")
-
-        # Vykreslení vybrané sekce
-        if st.session_state.active_tab == t["nav"][0]:
+        # Vykreslení podle aktivního stavu
+        if st.session_state.active_tab == "Home":
+            show_home_screen()
+        elif st.session_state.active_tab == t["nav"][0]:
             show_evaluation_form(conn)
         elif st.session_state.active_tab == t["nav"][1]:
             show_standards_management(conn)
