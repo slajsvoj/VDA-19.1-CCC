@@ -118,6 +118,7 @@ translations = {
         "filt_pore": "Pore size (Velikost pórů µm)",
         "drying_params": "Drying Manufacturer / Model / Temp",
         "resid_mass": "Zbytková hmotnost M z protokolu vah [mg]",
+        "scale_readable": "Scale readable to (Přesnost vah)",
         "fibers": "Vlákna (Fibers)",
         "blank_val": "Slepá hodnota [% z limitu]",
         "met_ref": "Kovové lesklé částice",
@@ -185,6 +186,7 @@ translations = {
         "filt_pore": "Pore size [µm]",
         "drying_params": "Drying Manufacturer / Model / Temp",
         "resid_mass": "Residual Mass M from Scale [mg]",
+        "scale_readable": "Scale readable to",
         "fibers": "Fibers",
         "blank_val": "Blank Value [% of limit]",
         "met_ref": "Metallic Reflective Particles",
@@ -337,7 +339,8 @@ def create_pdf_report(
         [Paragraph("<b>Designation / Part:</b>", cell_style), Paragraph(meta_info.get('comp_name', '-'), cell_style), Paragraph("<b>Norma / Standard:</b>", cell_style), Paragraph(meta_info.get('std_name', '-'), cell_style)],
         [Paragraph("<b>Batch number:</b>", cell_style), Paragraph(meta_info.get('filter_lot', '-'), cell_style), Paragraph("<b>Filter number:</b>", cell_style), Paragraph(meta_info.get('filter_no', '-'), cell_style)],
         [Paragraph("<b>Control area (Ac):</b>", cell_style), Paragraph(f"{meta_info.get('wetted_area', 1000)} cm²", cell_style), Paragraph("<b>Extraction method:</b>", cell_style), Paragraph(meta_info.get('ext_method', '-'), cell_style)],
-        [Paragraph("<b>Filter material / pore:</b>", cell_style), Paragraph(f"{meta_info.get('filt_mat', '-')}, {meta_info.get('filt_pore', '-')} µm", cell_style), Paragraph("<b>Datum vyhodnocení:</b>", cell_style), Paragraph(current_date, cell_style)],
+        [Paragraph("<b>Filter material / pore:</b>", cell_style), Paragraph(f"{meta_info.get('filt_mat', '-')}, {meta_info.get('filt_pore', '-')} µm", cell_style), Paragraph("<b>Dissolving fluid:</b>", cell_style), Paragraph(meta_info.get('dissolving_fluid', '-'), cell_style)],
+        [Paragraph("<b>Datum vyhodnocení:</b>", cell_style), Paragraph(current_date, cell_style), Paragraph("", cell_style), Paragraph("", cell_style)],
     ]
 
     meta_table = Table(meta_data, colWidths=[110, 165, 100, 179])
@@ -396,12 +399,13 @@ def create_pdf_report(
 
     res_mass_val = grav_data.get('residual_mass', 0.0) if grav_data else 0.0
     grav_limit_val = grav_data.get('gravimetry_limit', 0.50) if grav_data else 0.50
+    scale_readable_val = grav_data.get('scale_readable', '±0.01 mg') if grav_data else '±0.01 mg'
     grav_status = "specifikace nesplněna" if res_mass_val > grav_limit_val else "specifikace splněna"
     grav_status_html = '<font color="#991b1b"><b>specifikace nesplněna</b></font>' if grav_status == "specifikace nesplněna" else '<font color="#065f46"><b>specifikace splněna</b></font>'
 
     grav_table_data = [
         [Paragraph("<b>Gravimetrická analýza (Zbytková hmotnost M)</b>", cell_header), Paragraph("<b>Limit / Hodnota</b>", cell_header), Paragraph("<b>Stav / Status</b>", cell_header)],
-        [Paragraph("Zbytková hmotnost M z protokolu vah", cell_style), Paragraph(f"{res_mass_val:.4f} mg", cell_style), Paragraph("-", cell_style)],
+        [Paragraph(f"Zbytková hmotnost M z protokolu vah (Scale readable: {scale_readable_val})", cell_style), Paragraph(f"{res_mass_val:.4f} mg", cell_style), Paragraph("-", cell_style)],
         [Paragraph("Max. povolená zbytková hmotnost (Limit normy)", cell_style), Paragraph(f"{grav_limit_val:.4f} mg", cell_style), Paragraph(grav_status_html, cell_style)],
     ]
     grav_table = Table(grav_table_data, colWidths=[254, 150, 150])
@@ -928,7 +932,7 @@ def show_evaluation_form(conn):
 
         st.markdown("---")
         
-        # --- SEKCE 2 & 3: Preparatory steps ---
+        # --- SEKCE 2 & 3: Preparatory steps & Extraction (s výběrovými okenky) ---
         col_h1, col_h2 = st.columns([5, 1])
         with col_h1:
             st.subheader(t["sec_prep"])
@@ -941,14 +945,24 @@ def show_evaluation_form(conn):
             extraction_method = st.selectbox(t["ext_method"], ["Pressure-rinsing", "Ultrasonics", "Internal rinsing", "Agitation"], disabled=not enable_part_ext)
         with col_e:
             wetted_volume = st.number_input(t["wetted_vol"], min_value=0.0, value=0.0, disabled=not enable_part_ext)
-            extraction_medium = st.text_input(t["dissolving_fluid"], value="Testovací benzín", disabled=not enable_part_ext)
+            # Rozpouštěcí médium jako výběrové okénko dle vzorového protokolu
+            extraction_medium = st.selectbox(
+                t["dissolving_fluid"],
+                ["Testovací benzín (Petroether)", "Izopropanol (IPA)", "Aceton", "Demineralizovaná voda", "Ethanol"],
+                disabled=not enable_part_ext
+            )
         with col_f:
-            filter_material = st.text_input(t["filt_mat"], value="PET (polyester)", disabled=not enable_part_ext)
+            # Materiál filtru jako výběrové okénko dle vzorového protokolu
+            filter_material = st.selectbox(
+                t["filt_mat"],
+                ["PET (polyester)", "PTFE (polytetrafluorethylen)", "Cellulose nitrate", "Nylon / PA", "Glass fiber"],
+                disabled=not enable_part_ext
+            )
             filter_pore_size = st.number_input(t["filt_pore"], min_value=0.1, value=5.0, disabled=not enable_part_ext)
 
         st.markdown("---")
 
-        # --- SEKCE 4: Gravimetrická analýza ---
+        # --- SEKCE 4: Gravimetrická analýza (s výběrem Scale readable to) ---
         col_h3, col_h4 = st.columns([5, 1])
         with col_h3:
             st.subheader(t["sec_grav"])
@@ -958,9 +972,16 @@ def show_evaluation_form(conn):
         if gravimetry_limit_db and enable_grav:
             st.info(f"Očekávaný limit normy pro gravimetrii: **{gravimetry_limit_db} mg**")
         
-        col_g, _ = st.columns([1, 2])
-        with col_g:
+        col_g1, col_g2 = st.columns(2)
+        with col_g1:
             residual_mass = st.number_input(t["resid_mass"], min_value=0.0, value=0.4200, format="%.4f", step=0.1, disabled=not enable_grav)
+        with col_g2:
+            scale_readable_choice = st.selectbox(
+                t["scale_readable"],
+                ["±0.01 mg", "±0.1 mg", "0.001 mg"],
+                index=0,
+                disabled=not enable_grav
+            )
 
         st.markdown("---")
 
@@ -1193,10 +1214,10 @@ def show_evaluation_form(conn):
                         "order_no": order_number, "report_no": report_number, "customer": customer,
                         "contact": contact_person, "test_ordered": test_ordered, "reason_test": reason_test,
                         "comp_name": comp_name, "std_name": std_name, "filter_no": filt_no, "filter_lot": filt_lot,
-                        "wetted_area": wetted_area, "ext_method": extraction_method, "filt_mat": filter_material,
-                        "filt_pore": filter_pore_size, "inspector_name": insp_name, "ccc_string": generated_ccc_string
+                        "wetted_area": wetted_area, "ext_method": extraction_method, "dissolving_fluid": extraction_medium,
+                        "filt_mat": filter_material, "filt_pore": filter_pore_size, "inspector_name": insp_name, "ccc_string": generated_ccc_string
                     }
-                    grav_data_dict = {"residual_mass": residual_mass, "gravimetry_limit": gravimetry_limit_db} if enable_grav else {"residual_mass": 0, "gravimetry_limit": None}
+                    grav_data_dict = {"residual_mass": residual_mass, "gravimetry_limit": gravimetry_limit_db, "scale_readable": scale_readable_choice} if enable_grav else {"residual_mass": 0, "gravimetry_limit": None, "scale_readable": scale_readable_choice}
                     uncertainty_dict = calculate_measurement_uncertainty() if include_uncertainty else None
                     advanced_dict = {
                         "l_max": l_max_val, "aspect_ratio": aspect_ratio_val, "metallic_percentage": metallic_percentage,
