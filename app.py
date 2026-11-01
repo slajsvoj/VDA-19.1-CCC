@@ -397,12 +397,12 @@ def create_pdf_report(
     elements.append(grav_table)
     elements.append(Spacer(1, 4))
 
-    # Matice optické analýzy (Velikostní třída | Rozsah | Metalické | Nemetalické | Vlákna | Limit | Stav)
+    # Matice optické analýzy (Velikostní třída | Rozsah | Kovové | Nekovové | Vlákna | Limit | Stav)
     table_data = [[
         Paragraph("<b>Třída</b>", cell_header),
         Paragraph("<b>Rozsah</b>", cell_header),
-        Paragraph("<b>Metalické</b>", cell_header),
-        Paragraph("<b>Nemetalické</b>", cell_header),
+        Paragraph("<b>Kovové</b>", cell_header),
+        Paragraph("<b>Nekovové</b>", cell_header),
         Paragraph("<b>Vlákna</b>", cell_header),
         Paragraph("<b>Limit</b>", cell_header),
         Paragraph("<b>Stav</b>", cell_header),
@@ -429,8 +429,8 @@ def create_pdf_report(
             table_data.append([
                 Paragraph(s_class, cell_bold), 
                 Paragraph(s_range, cell_style),
-                Paragraph(str(row["Metalické"]), cell_style),
-                Paragraph(str(row["Nemetalické"]), cell_style),
+                Paragraph(str(row["Kovové"]), cell_style),
+                Paragraph(str(row["Nekovové"]), cell_style),
                 Paragraph(str(row["Vlákna"]), cell_style),
                 Paragraph(str(row["Povolený limit"]), cell_style),
                 Paragraph(status_html, cell_style),
@@ -549,11 +549,11 @@ def show_standards_management(conn):
             with col2:
                 norm_name = st.text_input("Název podnikové/zákaznické normy", value="testovacifirmaA")
 
-            st.markdown("**1. Gravimetrický limit**")
+            st.markdown("**Gravimetrický limit**")
             gravimetry_limit_input = st.number_input("Max. povolená zbytková hmotnost (mg)", min_value=0.0, value=0.50, step=0.1)
 
             st.markdown("---")
-            st.markdown("### 2. Nastavení limitů pro velikostní frakce (CCC kódové úrovně)")
+            st.markdown("### Nastavení limitů pro velikostní frakce (CCC kódové úrovně)")
             st.caption("Do políček níže zadejte povolený **limit** (max. úroveň) pro každou velikostní třídu:")
             
             default_test_limits = {"B": "15", "C": "12", "D": "10", "E": "8", "F": "5", "G": "3", "H": "2", "I": "1", "J": "0", "K": "0", "L": "0", "M": "0", "N": "0"}
@@ -638,11 +638,11 @@ def show_standards_management(conn):
                 with st.form("edit_standard_form"):
                     edit_norm_name = st.text_input("Název normy", value=curr_norm_name)
                     
-                    st.markdown("**1. Gravimetrický limit**")
+                    st.markdown("**Gravimetrický limit**")
                     edit_gravimetry = st.number_input("Max. povolená hmotnost gravimetrie (mg)", min_value=0.0, value=float(curr_grav), step=0.1)
                     
                     st.markdown("---")
-                    st.markdown("### 2. Úprava limitů pro velikostní frakce")
+                    st.markdown("### Úprava limitů pro velikostní frakce")
 
                     edit_inputs = {}
                     for s_class in vda_classes:
@@ -813,8 +813,8 @@ def show_evaluation_form(conn):
 
         st.markdown("---")
 
-        # --- SEKCE 1: Obecné informace ---
-        st.subheader(f"1. {t['sec_ident']}")
+        # --- SEKCE: Obecné informace ---
+        st.subheader(t["sec_ident"])
         col_a, col_b, col_c = st.columns(3)
         with col_a:
             order_number = st.text_input(t["order_no"], value="ORD-2026-001")
@@ -834,8 +834,8 @@ def show_evaluation_form(conn):
 
         st.markdown("---")
         
-        # --- SEKCE 2: Parametry extrakce a filtrace ---
-        st.subheader(f"2. {t['sec_prep']}")
+        # --- SEKCE: Parametry extrakce a filtrace ---
+        st.subheader(t["sec_prep"])
         col_d, col_e, col_f = st.columns(3)
         with col_d:
             wetted_area = st.number_input(t["control_area"], min_value=0.0, value=1000.0)
@@ -855,8 +855,8 @@ def show_evaluation_form(conn):
 
         st.markdown("---")
 
-        # --- SEKCE 3: Gravimetrická analýza ---
-        st.subheader(f"3. {t['sec_grav']}")
+        # --- SEKCE: Gravimetrická analýza ---
+        st.subheader(t["sec_grav"])
         if gravimetry_limit_db:
             st.info(f"Očekávaný limit normy pro gravimetrii: **{gravimetry_limit_db} mg**")
         
@@ -868,8 +868,8 @@ def show_evaluation_form(conn):
 
         st.markdown("---")
 
-        # --- SEKCE 4: Optická analýza (Matice B až N s detaily mikroskopu) ---
-        st.subheader(f"4. {t['sec_opt']}")
+        # --- SEKCE: Optická analýza (Matice B až N s detaily mikroskopu) ---
+        st.subheader(t["sec_opt"])
         
         col_m1, col_m2, col_m3 = st.columns(3)
         with col_m1:
@@ -896,12 +896,12 @@ def show_evaluation_form(conn):
         
         matrix_inputs = {}
         
-        # Hlavička matice
+        # Hlavička matice s opravenými sloupci Kovové / Nekovové / Vlákna
         h_c1, h_c2, h_c3, h_c4, h_c5 = st.columns([1, 2, 2, 2, 2])
         h_c1.markdown("**Třída**")
         h_c2.markdown("**Rozsah**")
-        h_c3.markdown("**Metalické**")
-        h_c4.markdown("**Nemetalické**")
+        h_c3.markdown("**Kovové**")
+        h_c4.markdown("**Nekovové**")
         h_c5.markdown("**Vlákna**")
         
         for s_class in vda_classes:
@@ -912,9 +912,9 @@ def show_evaluation_form(conn):
             with c2:
                 st.caption(f"{size_ranges_desc.get(s_class, '')} (Limit: {limit_val})")
             with c3:
-                met_val = st.text_input(f"Met {s_class}", value="", placeholder="0", key=f"mat_met_{s_class}", label_visibility="collapsed")
+                met_val = st.text_input(f"Kov {s_class}", value="", placeholder="0", key=f"mat_kov_{s_class}", label_visibility="collapsed")
             with c4:
-                nonmet_val = st.text_input(f"NonMet {s_class}", value="", placeholder="0", key=f"mat_nonmet_{s_class}", label_visibility="collapsed")
+                nonmet_val = st.text_input(f"Nekov {s_class}", value="", placeholder="0", key=f"mat_nekov_{s_class}", label_visibility="collapsed")
             with c5:
                 fib_val = st.text_input(f"Fib {s_class}", value="", placeholder="0", key=f"mat_fib_{s_class}", label_visibility="collapsed")
                 
@@ -926,8 +926,8 @@ def show_evaluation_form(conn):
 
         st.markdown("---")
 
-        # --- SEKCE 5: Validační brány a doplňkové parametry ---
-        st.subheader(f"5. {t['sec_qual']}")
+        # --- SEKCE: Validační brány a doplňkové parametry ---
+        st.subheader(t["sec_qual"])
         col_q1, col_q2, col_q3 = st.columns(3)
         with col_q1:
             blank_value_pct = st.number_input(t["blank_val"], min_value=0.0, value=2.0, step=0.1)
@@ -938,8 +938,8 @@ def show_evaluation_form(conn):
 
         st.markdown("---")
 
-        # --- SEKCE 6: Pokročilé metriky ---
-        st.subheader(f"6. {t['sec_adv']}")
+        # --- SEKCE: Pokročilé metriky ---
+        st.subheader(t["sec_adv"])
         col_ad1, col_ad2, col_ad3 = st.columns(3)
         with col_ad1:
             l_max_val = st.number_input(t["l_max"], min_value=0.0, value=450.0, step=10.0)
@@ -963,7 +963,7 @@ def show_evaluation_form(conn):
         max_feret_measured = 0.0
         if profile_type == ProfileType.INTERNAL_CUSTOM:
             st.markdown("---")
-            st.subheader(f"7. {t['sec_hard']}")
+            st.subheader(t["sec_hard"])
             col_h1, col_h2 = st.columns(2)
             with col_h1:
                 hard_stop_feret_max = st.number_input("Max. povolený Feret_max [µm] (Hard-stop)", min_value=0.0, value=1500.0)
@@ -1013,11 +1013,11 @@ def show_evaluation_form(conn):
                             except:
                                 return 0
 
-                        met_count = parse_int(vals["metallic"])
-                        nonmet_count = parse_int(vals["non_metallic"])
+                        kov_count = parse_int(vals["metallic"])
+                        nekov_count = parse_int(vals["non_metallic"])
                         fib_count = parse_int(vals["fibers"])
                         
-                        total_class_val = met_count + nonmet_count + fib_count
+                        total_class_val = kov_count + nekov_count + fib_count
                         valid_matrix_totals[s_class] = total_class_val
                         
                         if total_class_val > 0:
@@ -1038,8 +1038,8 @@ def show_evaluation_form(conn):
 
                         report.append({
                             "Velikostní třída": s_class,
-                            "Metalické": met_count,
-                            "Nemetalické": nonmet_count,
+                            "Kovové": kov_count,
+                            "Nekovové": nekov_count,
                             "Vlákna": fib_count,
                             "Povolený limit": str(max_alw),
                             "Naměřená úroveň": total_class_val,
