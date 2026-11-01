@@ -213,7 +213,6 @@ def get_db_connection():
         return None
 
 
-# --- CACHED DATA FUNCTIONS (Optimalizace rychlosti) ---
 @st.cache_data(ttl=300)
 def cached_fetch_components(pwd):
     try:
@@ -234,7 +233,6 @@ class ProfileType(str, Enum):
     INTERNAL_CUSTOM = "Interní norma (Custom)"
 
 
-# --- OFICIÁLNÍ TABULKA KÓDOVÝCH ÚROVNÍ VDA 19.1 (Tabulka 9-21) ---
 VDA_CONTAMINATION_LEVELS = {
     '00': 0, '0': 1, '1': 2, '2': 4, '3': 8, '4': 16, '5': 32, '6': 64, '7': 130,
     '8': 250, '9': 500, '10': 1000, '11': 2000, '12': 4000, '13': 8000,
@@ -549,35 +547,28 @@ def create_pdf_report(meta_info, report_df, conformity_text, failed, note, grav_
 
 
 def show_home_screen():
-    st.write("Vítejte v systému vyhodnocení technické čistoty dle VDA 19.1. Vyberte požadovanou sekci:")
-    st.markdown("<br>", unsafe_allow_html=True)
-    
     col1, col2, col3, col4 = st.columns(4)
     
     with col1:
         st.markdown("### <span class='material-symbols-rounded'>description</span> Zápis", unsafe_allow_html=True)
-        st.markdown("<div style='min-height: 60px;'>Zadání dat z reportu a generování PDF.</div>", unsafe_allow_html=True)
         if st.button("Vyhodnocení", use_container_width=True, type="primary"):
             st.session_state.active_tab = t["nav"][0]
             st.rerun()
             
     with col2:
         st.markdown("### <span class='material-symbols-rounded'>tune</span> Normy", unsafe_allow_html=True)
-        st.markdown("<div style='min-height: 60px;'>Nastavení podnikových limitů.</div>", unsafe_allow_html=True)
         if st.button("Správa norem", use_container_width=True):
             st.session_state.active_tab = t["nav"][1]
             st.rerun()
             
     with col3:
         st.markdown("### <span class='material-symbols-rounded'>history</span> Historie", unsafe_allow_html=True)
-        st.markdown("<div style='min-height: 60px;'>Přehled uložených protokolů.</div>", unsafe_allow_html=True)
         if st.button("Zobrazit historii", use_container_width=True):
             st.session_state.active_tab = t["nav"][2]
             st.rerun()
 
     with col4:
         st.markdown("### <span class='material-symbols-rounded'>analytics</span> Dashboard", unsafe_allow_html=True)
-        st.markdown("<div style='min-height: 60px;'>Manažerské trendy a analýzy.</div>", unsafe_allow_html=True)
         if st.button("Otevřít dashboard", use_container_width=True):
             st.session_state.active_tab = t["nav"][3]
             st.rerun()
