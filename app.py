@@ -217,6 +217,41 @@ class ProfileType(str, Enum):
     INTERNAL_CUSTOM = "Interní norma (Custom)"
 
 
+def calculate_vda_code_level(particle_count, wetted_area):
+    if particle_count <= 0:
+        return 0
+    norm_count = particle_count * (1000.0 / wetted_area) if wetted_area > 0 else particle_count
+    
+    if norm_count <= 1:
+        return 1
+    elif norm_count <= 2:
+        return 2
+    elif norm_count <= 4:
+        return 3
+    elif norm_count <= 8:
+        return 4
+    elif norm_count <= 16:
+        return 5
+    elif norm_count <= 32:
+        return 6
+    elif norm_count <= 63:
+        return 7
+    elif norm_count <= 125:
+        return 8
+    elif norm_count <= 250:
+        return 9
+    elif norm_count <= 500:
+        return 10
+    elif norm_count <= 1000:
+        return 11
+    elif norm_count <= 2000:
+        return 12
+    elif norm_count <= 4000:
+        return 13
+    else:
+        return int(math.ceil(math.log2(norm_count))) + 1
+
+
 def calculate_measurement_uncertainty():
     u_microscope = 0.05
     u_recovery = 0.10
@@ -241,12 +276,12 @@ def generate_pdf_chart_image(report_df):
     x = np.arange(len(classes))
     width = 0.38
     
-    ax.bar(x - width/2, measured, width, label='Naměřená úroveň částic (Celkem)', color='#3b82f6')
+    ax.bar(x - width/2, measured, width, label='Vypočtená kódová úroveň CCC', color='#3b82f6')
     ax.bar(x + width/2, limits, width, label='Limit normy', color='#94a3b8', alpha=0.6)
     
-    ax.set_ylabel('Počet částic / Úroveň', fontsize=8)
+    ax.set_ylabel('Kódová úroveň', fontsize=8)
     ax.set_xlabel('Velikostní třída (VDA 19.1)', fontsize=8)
-    ax.set_title('Porovnání naměřených hodnot s limity normy', fontsize=9, fontweight='bold', pad=8)
+    ax.set_title('Porovnání kódových úrovní CCC s limity normy', fontsize=9, fontweight='bold', pad=8)
     ax.set_xticks(x)
     ax.set_xticklabels(classes, fontsize=7)
     ax.tick_params(axis='y', labelsize=7)
@@ -279,12 +314,6 @@ def create_pdf_report(
             pdfmetrics.registerFont(TTFont('DejaVu-Bold', dejavu_bold))
             font_name = "DejaVu"
             font_name_bold = "DejaVu-Bold"
-        elif os.path.exists("cmr10.ttf"):
-            pdfmetrics.registerFont(TTFont('ComputerModern', 'cmr10.ttf'))
-            if os.path.exists('cmbx10.ttf'):
-                pdfmetrics.registerFont(TTFont('ComputerModern-Bold', 'cmbx10.ttf'))
-            font_name = "ComputerModern"
-            font_name_bold = "ComputerModern-Bold"
     except Exception:
         pass
 
@@ -336,7 +365,7 @@ def create_pdf_report(
     elements.append(Spacer(1, 4))
 
     ccc_string = meta_info.get('ccc_string', 'CCC neuveden')
-    ccc_table = Table([[Paragraph(f"<b>CCC kód:</b> &nbsp;&nbsp; {ccc_string}", ccc_style)]], colWidths=[554], rowHeights=[20])
+    ccc_table = Table([[Paragraph(f"<b>CCC kód (Component Cleanliness Code):</b> &nbsp;&nbsp; {ccc_string}", ccc_style)]], colWidths=[554], rowHeights=[20])
     ccc_table.setStyle(
         TableStyle([
             ("BACKGROUND", (0, 0), (-1, -1), colors.HexColor("#eff6ff")),
@@ -397,14 +426,14 @@ def create_pdf_report(
     elements.append(grav_table)
     elements.append(Spacer(1, 4))
 
-    # Matice optické analýzy (Velikostní třída | Rozsah | Kovové | Nekovové | Vlákna | Limit | Stav)
     table_data = [[
         Paragraph("<b>Třída</b>", cell_header),
         Paragraph("<b>Rozsah</b>", cell_header),
         Paragraph("<b>Kovové</b>", cell_header),
         Paragraph("<b>Nekovové</b>", cell_header),
         Paragraph("<b>Vlákna</b>", cell_header),
-        Paragraph("<b>Limit</b>", cell_header),
+        Paragraph("<b>Limit CCC</b>", cell_header),
+        Paragraph("<b>Naměřený CCC kód</b>", cell_header),
         Paragraph("<b>Stav</b>", cell_header),
     ]]
 
@@ -433,10 +462,11 @@ def create_pdf_report(
                 Paragraph(str(row["Nekovové"]), cell_style),
                 Paragraph(str(row["Vlákna"]), cell_style),
                 Paragraph(str(row["Povolený limit"]), cell_style),
+                Paragraph(str(row["Naměřená úroveň"]), cell_style),
                 Paragraph(status_html, cell_style),
             ])
 
-        t = Table(table_data, colWidths=[50, 114, 80, 80, 80, 75, 75])
+        t = Table(table_data, colWidths=[40, 104, 65, 65, 65, 75, 75, 65])
         t.setStyle(
             TableStyle([
                 ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#1e293b")),
@@ -451,7 +481,7 @@ def create_pdf_report(
 
         try:
             chart_img_buf = generate_pdf_chart_image(report_df)
-            elements.append(Paragraph("<b>Grafické porovnání celkové distribuce částic:</b>", cell_bold))
+            elements.append(Paragraph("<b>Grafické porovnání kódových úrovní CCC:</b>", cell_bold))
             elements.append(Spacer(1, 2))
             elements.append(RLImage(chart_img_buf, width=500, height=180))
             elements.append(Spacer(1, 4))
@@ -549,18 +579,21 @@ def show_standards_management(conn):
             with col2:
                 norm_name = st.text_input("Název podnikové/zákaznické normy", value="testovacifirmaA")
 
-            st.markdown("**Gravimetrický limit**")
-            gravimetry_limit_input = st.number_input("Max. povolená zbytková hmotnost (mg)", min_value=0.0, value=0.50, step=0.1)
+            col_s1, col_s2 = st.columns(2)
+            with col_s1:
+                limit_basis = st.selectbox("Základ limitu", ["Vztaženo na plochu (1000 cm²)", "Vztaženo na celý díl"], key="add_limit_basis")
+            with col_s2:
+                gravimetry_limit_input = st.number_input("Max. povolená zbytková hmotnost (mg)", min_value=0.0, value=0.50, step=0.1)
 
             st.markdown("---")
-            st.markdown("### Nastavení limitů pro velikostní frakce (CCC kódové úrovně)")
-            st.caption("Do políček níže zadejte povolený **limit** (max. úroveň) pro každou velikostní třídu:")
+            st.markdown("### Nastavení limitů kódových úrovní pro velikostní frakce (Matice B až N)")
+            st.caption("Zadejte maximální povolenou **kódovou úroveň** (např. 2, 3, 5) pro každou velikostní třídu:")
             
-            default_test_limits = {"B": "15", "C": "12", "D": "10", "E": "8", "F": "5", "G": "3", "H": "2", "I": "1", "J": "0", "K": "0", "L": "0", "M": "0", "N": "0"}
+            default_test_limits = {"B": "5", "C": "4", "D": "3", "E": "2", "F": "1", "G": "0", "H": "0", "I": "0", "J": "0", "K": "0", "L": "0", "M": "0", "N": "0"}
             
             limit_inputs = {}
             for s_class in vda_classes:
-                col_c1, col_c2, col_c3 = st.columns([1, 3, 3])
+                col_c1, col_c2, col_c3 = st.columns([1, 4, 3])
                 with col_c1:
                     st.markdown(f"**Třída {s_class}**")
                 with col_c2:
@@ -571,10 +604,10 @@ def show_standards_management(conn):
                         value=default_test_limits.get(s_class, ""),
                         key=f"add_{s_class}",
                         label_visibility="collapsed",
-                        placeholder="Zadejte limit..."
+                        placeholder="Zadejte kódovou úroveň..."
                     )
 
-            std_note = st.text_area("Poznámka k normě", value="Testovací norma A s výchozími limity")
+            std_note = st.text_area("Poznámka k normě", value="Testovací norma A s výchozími limity kódových úrovní")
             submit_new_std = st.form_submit_button("Vytvořit a uložit normu", type="primary")
 
             if submit_new_std:
@@ -585,12 +618,14 @@ def show_standards_management(conn):
                         cur = conn.cursor()
                         inserted_any = False
                         
+                        full_note = f"[ZÁKLAD: {limit_basis}] {std_note}"
+                        
                         for s_class, limit_val in limit_inputs.items():
                             if limit_val.strip() and limit_val.strip() != "-":
                                 new_row_id = str(uuid.uuid4())
                                 cur.execute(
                                     "INSERT INTO customer_standards (id, component_id, norm_name, size_class, max_allowed_level, note, gravimetry_limit_mg) VALUES (%s, %s, %s, %s, %s, %s, %s)",
-                                    (new_row_id, selected_comp_id, norm_name, s_class, float(limit_val), std_note, gravimetry_limit_input if gravimetry_limit_input > 0 else None)
+                                    (new_row_id, selected_comp_id, norm_name, s_class, float(limit_val), full_note, gravimetry_limit_input if gravimetry_limit_input > 0 else None)
                                 )
                                 inserted_any = True
                                 
@@ -624,7 +659,18 @@ def show_standards_management(conn):
             if edit_std_id:
                 existing_limits_df = pd.read_sql(f"SELECT size_class, max_allowed_level, note, gravimetry_limit_mg, component_id, norm_name FROM customer_standards WHERE id = '{edit_std_id}'", conn)
                 
-                curr_note = existing_limits_df['note'].iloc[0] if not existing_limits_df.empty and existing_limits_df['note'].notna().any() else ""
+                curr_note_raw = existing_limits_df['note'].iloc[0] if not existing_limits_df.empty and existing_limits_df['note'].notna().any() else ""
+                
+                # Načtení základu limitu z poznámky (pokud existuje tag [ZÁKLAD: ...])
+                curr_basis = "Vztaženo na plochu (1000 cm²)"
+                curr_clean_note = curr_note_raw
+                if "[ZÁKLAD: Vztaženo na celý díl]" in curr_note_raw:
+                    curr_basis = "Vztaženo na celý díl"
+                    curr_clean_note = curr_note_raw.replace("[ZÁKLAD: Vztaženo na celý díl]", "").strip()
+                elif "[ZÁKLAD: Vztaženo na plochu (1000 cm²)]" in curr_note_raw:
+                    curr_basis = "Vztaženo na plochu (1000 cm²)"
+                    curr_clean_note = curr_note_raw.replace("[ZÁKLAD: Vztaženo na plochu (1000 cm²)]", "").strip()
+
                 curr_grav = existing_limits_df['gravimetry_limit_mg'].iloc[0] if not existing_limits_df.empty and existing_limits_df['gravimetry_limit_mg'].notna().any() else 0.0
                 curr_norm_name = existing_limits_df['norm_name'].iloc[0]
                 curr_comp_id = existing_limits_df['component_id'].iloc[0]
@@ -638,15 +684,23 @@ def show_standards_management(conn):
                 with st.form("edit_standard_form"):
                     edit_norm_name = st.text_input("Název normy", value=curr_norm_name)
                     
-                    st.markdown("**Gravimetrický limit**")
-                    edit_gravimetry = st.number_input("Max. povolená hmotnost gravimetrie (mg)", min_value=0.0, value=float(curr_grav), step=0.1)
+                    col_e1, col_e2 = st.columns(2)
+                    with col_e1:
+                        edit_basis = st.selectbox(
+                            "Základ limitu",
+                            ["Vztaženo na plochu (1000 cm²)", "Vztaženo na celý díl"],
+                            index=0 if curr_basis == "Vztaženo na plochu (1000 cm²)" else 1,
+                            key="edit_limit_basis"
+                        )
+                    with col_e2:
+                        edit_gravimetry = st.number_input("Max. povolená hmotnost gravimetrie (mg)", min_value=0.0, value=float(curr_grav), step=0.1)
                     
                     st.markdown("---")
-                    st.markdown("### Úprava limitů pro velikostní frakce")
+                    st.markdown("### Úprava limitů kódových úrovní pro velikostní frakce (Matice B až N)")
 
                     edit_inputs = {}
                     for s_class in vda_classes:
-                        col_c1, col_c2, col_c3 = st.columns([1, 3, 3])
+                        col_c1, col_c2, col_c3 = st.columns([1, 4, 3])
                         with col_c1:
                             st.markdown(f"**Třída {s_class}**")
                         with col_c2:
@@ -657,10 +711,10 @@ def show_standards_management(conn):
                                 value=current_class_limits.get(s_class, ""),
                                 key=f"edit_{s_class}",
                                 label_visibility="collapsed",
-                                placeholder="Zadejte limit..."
+                                placeholder="Zadejte kódovou úroveň..."
                             )
 
-                    edit_note = st.text_area("Poznámka", value=curr_note)
+                    edit_note = st.text_area("Poznámka", value=curr_clean_note)
                     
                     col_save, col_del = st.columns([1, 4])
                     with col_save:
@@ -673,12 +727,14 @@ def show_standards_management(conn):
                             cur = conn.cursor()
                             cur.execute(f"DELETE FROM customer_standards WHERE norm_name = '{curr_norm_name}'")
                             
+                            full_edit_note = f"[ZÁKLAD: {edit_basis}] {edit_note}"
+                            
                             for s_class, limit_val in edit_inputs.items():
                                 if limit_val.strip() and limit_val.strip() != "-":
                                     new_row_id = str(uuid.uuid4())
                                     cur.execute(
                                         "INSERT INTO customer_standards (id, component_id, norm_name, size_class, max_allowed_level, note, gravimetry_limit_mg) VALUES (%s, %s, %s, %s, %s, %s, %s)",
-                                        (new_row_id, curr_comp_id, edit_norm_name, s_class, float(limit_val), edit_note, edit_gravimetry if edit_gravimetry > 0 else None)
+                                        (new_row_id, curr_comp_id, edit_norm_name, s_class, float(limit_val), full_edit_note, edit_gravimetry if edit_gravimetry > 0 else None)
                                     )
                             conn.commit()
                             st.success("Změny byly úspěšně uloženy.")
@@ -705,7 +761,7 @@ def show_evaluation_form(conn):
 
     if st.session_state.eval_success:
         st.subheader(t["res_title"])
-        st.info(f"**CCC kód:** {st.session_state.generated_ccc}")
+        st.info(f"**CCC kód (Component Cleanliness Code):** {st.session_state.generated_ccc}")
         if st.session_state.eval_failed:
             st.error(f"Posouzení: **{st.session_state.eval_message.upper()}**")
         else:
@@ -714,7 +770,7 @@ def show_evaluation_form(conn):
         if not st.session_state.eval_report_df.empty:
             st.dataframe(st.session_state.eval_report_df, use_container_width=True)
             
-            st.markdown("#### 📈 Grafické porovnání naměřených hodnot s limity normy")
+            st.markdown("#### 📈 Grafické porovnání kódových úrovní CCC s limity normy")
             chart_df = st.session_state.eval_report_df.copy()
             chart_df["Povolený limit"] = pd.to_numeric(chart_df["Povolený limit"], errors="coerce").fillna(0)
             chart_df["Naměřená úroveň"] = pd.to_numeric(chart_df["Naměřená úroveň"], errors="coerce").fillna(0)
@@ -723,7 +779,7 @@ def show_evaluation_form(conn):
             fig.add_trace(go.Bar(
                 x=chart_df["Velikostní třída"],
                 y=chart_df["Naměřená úroveň"],
-                name="Naměřená úroveň částic (Celkem)",
+                name="Vypočtená kódová úroveň CCC",
                 marker_color=["#ef4444" if row["Stav"] in ["specifikace nesplněna", "NOK"] else "#3b82f6" for _, row in chart_df.iterrows()]
             ))
             fig.add_trace(go.Scatter(
@@ -735,7 +791,7 @@ def show_evaluation_form(conn):
             ))
             fig.update_layout(
                 xaxis_title="Velikostní třída (VDA 19.1)",
-                yaxis_title="Počet částic / Úroveň",
+                yaxis_title="Kódová úroveň",
                 legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
                 margin=dict(l=20, r=20, t=30, b=20),
                 height=350
@@ -806,7 +862,7 @@ def show_evaluation_form(conn):
             except Exception as e:
                 pass
 
-        fallback_test_limits = {"B": 15, "C": 12, "D": 10, "E": 8, "F": 5, "G": 3, "H": 2, "I": 1, "J": 0, "K": 0, "L": 0, "M": 0, "N": 0}
+        fallback_test_limits = {"B": 5, "C": 4, "D": 3, "E": 2, "F": 1, "G": 0, "H": 0, "I": 0, "J": 0, "K": 0, "L": 0, "M": 0, "N": 0}
         for k, v in fallback_test_limits.items():
             if k not in db_limits_dict:
                 db_limits_dict[k] = v
@@ -883,7 +939,7 @@ def show_evaluation_form(conn):
             brightness_thresh = st.number_input("Prahová hodnota jasu (Brightness threshold)", min_value=0, max_value=255, value=128)
 
         st.markdown("<br>", unsafe_allow_html=True)
-        st.markdown("**Matice počtů částic podle velikostních tříd a typů:**")
+        st.markdown("**Matice počtů částic podle velikostních tříd a typů (zadáte počty, systém automaticky spočte kódové úrovně CCC):**")
         
         vda_classes = ["B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N"]
         size_ranges_desc = {
@@ -896,7 +952,6 @@ def show_evaluation_form(conn):
         
         matrix_inputs = {}
         
-        # Hlavička matice s opravenými sloupci Kovové / Nekovové / Vlákna
         h_c1, h_c2, h_c3, h_c4, h_c5 = st.columns([1, 2, 2, 2, 2])
         h_c1.markdown("**Třída**")
         h_c2.markdown("**Rozsah**")
@@ -910,7 +965,7 @@ def show_evaluation_form(conn):
             with c1:
                 st.markdown(f"**{s_class}**")
             with c2:
-                st.caption(f"{size_ranges_desc.get(s_class, '')} (Limit: {limit_val})")
+                st.caption(f"{size_ranges_desc.get(s_class, '')} (Limit kód: {limit_val})")
             with c3:
                 met_val = st.text_input(f"Kov {s_class}", value="", placeholder="0", key=f"mat_kov_{s_class}", label_visibility="collapsed")
             with c4:
@@ -949,7 +1004,7 @@ def show_evaluation_form(conn):
             recovery_rate_val = st.number_input(t["recovery_rate"], min_value=0.0, max_value=100.0, value=92.5, step=0.5)
         with col_ad3:
             specific_surface_val = st.number_input(t["specific_surface"], min_value=0.0, value=round(residual_mass / (wetted_area / 10000.0) if wetted_area > 0 else 0.0, 2), step=0.1)
-            cleanliness_class_code = st.text_input("CCC Code string", value="CCC A(B 00/C 12/D15/E3/G34)")
+            cleanliness_class_code = st.text_input("Vlastní CCC kód (při prázdném poli se vygeneruje automaticky)", value="")
 
         st.markdown("---")
         col_x1, col_x2 = st.columns(2)
@@ -1017,20 +1072,25 @@ def show_evaluation_form(conn):
                         nekov_count = parse_int(vals["non_metallic"])
                         fib_count = parse_int(vals["fibers"])
                         
-                        total_class_val = kov_count + nekov_count + fib_count
-                        valid_matrix_totals[s_class] = total_class_val
+                        total_particles = kov_count + nekov_count + fib_count
                         
-                        if total_class_val > 0:
-                            ccc_parts.append(f"{s_class} {total_class_val}")
+                        calc_code_level = calculate_vda_code_level(total_particles, wetted_area)
+                        
+                        valid_matrix_totals[s_class] = calc_code_level
+                        
+                        if calc_code_level > 0:
+                            ccc_parts.append(f"{s_class} {calc_code_level:02d}")
+                        else:
+                            ccc_parts.append(f"{s_class} 00")
 
                         max_alw = int(db_limits_dict.get(s_class, 0))
                         
                         if profile_type == ProfileType.VDA_19_1:
-                            status = "specifikace nesplněna" if total_class_val > max_alw else "specifikace splněna"
+                            status = "specifikace nesplněna" if calc_code_level > max_alw else "specifikace splněna"
                             if status == "specifikace nesplněna":
                                 failed = True
                             else:
-                                if max_alw > 0 and total_class_val >= max_alw * 0.8:
+                                if max_alw > 0 and calc_code_level >= max_alw:
                                     status = "VAROVÁNÍ"
                                     warning_triggered = True
                                 else:
@@ -1042,11 +1102,11 @@ def show_evaluation_form(conn):
                             "Nekovové": nekov_count,
                             "Vlákna": fib_count,
                             "Povolený limit": str(max_alw),
-                            "Naměřená úroveň": total_class_val,
+                            "Kódová úroveň (Naměřeno)": calc_code_level,
                             "Stav": status,
                         })
 
-                    generated_ccc_string = cleanliness_class_code if cleanliness_class_code else (f"CCC {ref_unit_char}({' / '.join(ccc_parts)})" if ccc_parts else "CCC neuveden")
+                    generated_ccc_string = cleanliness_class_code if cleanliness_class_code.strip() else (f"CCC {ref_unit_char}({' / '.join(ccc_parts)})" if ccc_parts else "CCC neuveden")
 
                     hard_stop_failed = False
                     if profile_type == ProfileType.INTERNAL_CUSTOM:
@@ -1060,6 +1120,7 @@ def show_evaluation_form(conn):
                             st.error("Detekovány zakázané částice V3 (>1000 HV).")
 
                     report_df = pd.DataFrame(report)
+                    report_df = report_df.rename(columns={"Kódová úroveň (Naměřeno)": "Naměřená úroveň"})
 
                     if profile_type == ProfileType.VDA_19_1:
                         conformity_text = "specifikace nesplněna" if failed else "specifikace splněna"
@@ -1077,11 +1138,11 @@ def show_evaluation_form(conn):
                         (c_id, std_id if std_id else None, insp_name, filt_no, filt_lot, generated_ccc_string, conformity_text, note),
                     )
                     ins_id = cur.fetchone()[0]
-                    for s_class, total_val in valid_matrix_totals.items():
-                        if total_val > 0:
+                    for s_class, code_lvl in valid_matrix_totals.items():
+                        if code_lvl > 0:
                             cur.execute(
                                 "INSERT INTO inspection_details (inspection_id, size_class, cleanliness_level) VALUES (%s, %s, %s);",
-                                (ins_id, s_class, total_val),
+                                (ins_id, s_class, code_lvl),
                             )
                     conn.commit()
                     cur.close()
