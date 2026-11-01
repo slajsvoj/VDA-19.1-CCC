@@ -3,6 +3,7 @@ import io
 import math
 import os
 import uuid
+import urllib.request
 from enum import Enum
 import pandas as pd
 import plotly.express as px
@@ -219,38 +220,16 @@ class ProfileType(str, Enum):
 
 # --- OFICIÁLNÍ TABULKA KÓDOVÝCH ÚROVNÍ VDA 19.1 (Tabulka 9-21) ---
 VDA_CONTAMINATION_LEVELS = {
-    '00': 0,
-    '0': 1,
-    '1': 2,
-    '2': 4,
-    '3': 8,
-    '4': 16,
-    '5': 32,
-    '6': 64,
-    '7': 130,
-    '8': 250,
-    '9': 500,
-    '10': 1000,
-    '11': 2000,
-    '12': 4000,
-    '13': 8000,
-    '14': 16000,
-    '15': 32000,
-    '16': 64000,
-    '17': 130000,
-    '18': 250000,
-    '19': 500000,
-    '20': 1000000
+    '00': 0, '0': 1, '1': 2, '2': 4, '3': 8, '4': 16, '5': 32, '6': 64, '7': 130,
+    '8': 250, '9': 500, '10': 1000, '11': 2000, '12': 4000, '13': 8000,
+    '14': 16000, '15': 32000, '16': 64000, '17': 130000, '18': 250000,
+    '19': 500000, '20': 1000000
 }
 
 def calculate_vda_code_level(particle_count, wetted_area):
-    """Převede počet částic na kódovou úroveň dle oficiální tabulky 9-21 normy VDA 19.1."""
     if particle_count <= 0:
         return '00'
-    
-    # Normalizace na 1000 cm² (standardní referenční plocha)
     norm_count = particle_count * (1000.0 / wetted_area) if wetted_area > 0 else particle_count
-    
     sorted_levels = sorted(VDA_CONTAMINATION_LEVELS.items(), key=lambda x: x[1])
     for code, limit in sorted_levels:
         if norm_count <= limit:
@@ -258,10 +237,6 @@ def calculate_vda_code_level(particle_count, wetted_area):
     return '20'
 
 def generate_ccc_string(code_dict, ref_unit="A"):
-    """
-    Vygeneruje CCC kód včetně zkracování (seskupování) sousedních tříd 
-    se stejnou kódovou úrovní (např. CD16, LM0) dle VDA 19.1 (kapitola 9.9.4).
-    """
     classes = ["B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N"]
     mapped_codes = []
     for cls in classes:
@@ -285,7 +260,6 @@ def generate_ccc_string(code_dict, ref_unit="A"):
     inner_str = "/".join(grouped_parts)
     return f"{ref_unit}({inner_str})"
 
-
 def calculate_measurement_uncertainty():
     u_microscope = 0.05
     u_recovery = 0.10
@@ -299,10 +273,8 @@ def calculate_measurement_uncertainty():
         "expanded_pct": round(U_expanded * 100, 2),
     }
 
-
 def generate_pdf_chart_image(report_df):
     fig, ax = plt.subplots(figsize=(7, 2.8))
-    
     classes = report_df["Velikostní třída"].tolist()
     measured = pd.to_numeric(report_df["Naměřená úroveň"], errors="coerce").fillna(0).tolist()
     limits = pd.to_numeric(report_df["Povolený limit"], errors="coerce").fillna(0).tolist()
@@ -329,30 +301,36 @@ def generate_pdf_chart_image(report_df):
     img_buffer.seek(0)
     return img_buffer
 
+def ensure_pdf_fonts():
+    """Stáhne a zaregistruje TTF fonty Roboto pro podporu české diakritiky v PDF."""
+    font_dir = "fonts"
+    os.makedirs(font_dir, exist_ok=True)
+    
+    reg_path = os.path.join(font_dir, "Roboto-Regular.ttf")
+    bold_path = os.path.join(font_dir, "Roboto-Bold.ttf")
+    
+    if not os.path.exists(reg_path):
+        urllib.request.urlretrieve("https://github.com/googlefonts/roboto/raw/main/src/hinted/Roboto-Regular.ttf", reg_path)
+    if not os.path.exists(bold_path):
+        urllib.request.urlretrieve("https://github.com/googlefonts/roboto/raw/main/src/hinted/Roboto-Bold.ttf", bold_path)
+        
+    try:
+        pdfmetrics.registerFont(TTFont('Roboto', reg_path))
+        pdfmetrics.registerFont(TTFont('Roboto-Bold', bold_path))
+        return "Roboto", "Roboto-Bold"
+    except Exception:
+        return "Helvetica", "Helvetica-Bold"
 
-def create_pdf_report(
-    meta_info, report_df, conformity_text, failed, note, grav_data, uncertainty_info=None, advanced_data=None, optical_meta=None
-):
+def create_pdf_report(meta_info, report_df, conformity_text, failed, note, grav_data, uncertainty_info=None, advanced_data=None, optical_meta=None):
     buffer = io.BytesIO()
     doc = SimpleDocTemplate(
         buffer, pagesize=A4, rightMargin=30, leftMargin=30, topMargin=30, bottomMargin=30
     )
 
-    font_name = "Helvetica"
-    font_name_bold = "Helvetica-Bold"
-    try:
-        dejavu_regular = "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"
-        dejavu_bold = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
-        if os.path.exists(dejavu_regular) and os.path.exists(dejavu_bold):
-            pdfmetrics.registerFont(TTFont('DejaVu', dejavu_regular))
-            pdfmetrics.registerFont(TTFont('DejaVu-Bold', dejavu_bold))
-            font_name = "DejaVu"
-            font_name_bold = "DejaVu-Bold"
-    except Exception:
-        pass
+    # Řešení české diakritiky pro PDF
+    font_name, font_name_bold = ensure_pdf_fonts()
 
     styles = getSampleStyleSheet()
-
     title_style = ParagraphStyle("DocTitle", fontName=font_name_bold, fontSize=11, leading=14, textColor=colors.HexColor("#111827"), alignment=1, spaceAfter=2)
     subtitle_style = ParagraphStyle("DocSubtitle", fontName=font_name, fontSize=7.5, leading=9, textColor=colors.HexColor("#4b5563"), alignment=1, spaceAfter=6)
     cell_style = ParagraphStyle("TableCell", fontName=font_name, fontSize=7, leading=9, textColor=colors.HexColor("#1f2937"))
@@ -460,14 +438,16 @@ def create_pdf_report(
     elements.append(grav_table)
     elements.append(Spacer(1, 4))
 
+    # Tabulka částic (přidán sloupec pro Počet částic)
     table_data = [[
         Paragraph("<b>Třída</b>", cell_header),
         Paragraph("<b>Rozsah</b>", cell_header),
-        Paragraph("<b>Kovové</b>", cell_header),
-        Paragraph("<b>Nekovové</b>", cell_header),
+        Paragraph("<b>Kov</b>", cell_header),
+        Paragraph("<b>Nekov</b>", cell_header),
         Paragraph("<b>Vlákna</b>", cell_header),
+        Paragraph("<b>Celkem (ks)</b>", cell_header),
         Paragraph("<b>Limit CCC</b>", cell_header),
-        Paragraph("<b>Naměřený CCC kód</b>", cell_header),
+        Paragraph("<b>Naměř. CCC</b>", cell_header),
         Paragraph("<b>Stav</b>", cell_header),
     ]]
 
@@ -495,12 +475,13 @@ def create_pdf_report(
                 Paragraph(str(row["Kovové"]), cell_style),
                 Paragraph(str(row["Nekovové"]), cell_style),
                 Paragraph(str(row["Vlákna"]), cell_style),
+                Paragraph(str(row["Počet částic"]), cell_style), # Celkový počet
                 Paragraph(str(row["Povolený limit"]), cell_style),
                 Paragraph(str(row["Naměřená úroveň"]), cell_style),
                 Paragraph(status_html, cell_style),
             ])
 
-        t = Table(table_data, colWidths=[40, 104, 65, 65, 65, 75, 75, 65])
+        t = Table(table_data, colWidths=[35, 95, 45, 45, 45, 55, 65, 65, 50])
         t.setStyle(
             TableStyle([
                 ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#1e293b")),
@@ -525,10 +506,10 @@ def create_pdf_report(
     if advanced_data:
         adv_data = [
             [Paragraph("<b>Doplňkové a pokročilé parametry</b>", cell_header), Paragraph("<b>Hodnota</b>", cell_header)],
-            [Paragraph("Max. rozměr částice (L_max / Feret Max)", cell_style), Paragraph(f"{advanced_data.get('l_max', 0)} µm")],
-            [Paragraph("Poměr stran (b/L threshold)", cell_style), Paragraph(str(advanced_data.get('aspect_ratio', '-')))],
-            [Paragraph("Plošná hustota kontaminace (Specific Surface)", cell_style), Paragraph(f"{advanced_data.get('specific_surface', 0)} mg/m²")],
-            [Paragraph("Účinnost extrakce z protokolu (Recovery rate)", cell_style), Paragraph(f"{advanced_data.get('recovery_rate', 0)} %")],
+            [Paragraph("Max. rozměr částice (L_max / Feret Max)", cell_style), Paragraph(f"{advanced_data.get('l_max', 0)} µm", cell_style)],
+            [Paragraph("Poměr stran (b/L threshold)", cell_style), Paragraph(str(advanced_data.get('aspect_ratio', '-')), cell_style)],
+            [Paragraph("Plošná hustota kontaminace (Specific Surface)", cell_style), Paragraph(f"{advanced_data.get('specific_surface', 0)} mg/m²", cell_style)],
+            [Paragraph("Účinnost extrakce z protokolu (Recovery rate)", cell_style), Paragraph(f"{advanced_data.get('recovery_rate', 0)} %", cell_style)],
         ]
         adv_table = Table(adv_data, colWidths=[354, 200])
         adv_table.setStyle(
@@ -1152,7 +1133,6 @@ def show_evaluation_form(conn):
                         max_alw = int(db_limits_dict.get(s_class, db_limits_dict.get(f"{s_class}_kov", fallback_test_limits.get(s_class, 0))))
                         
                         if profile_type == ProfileType.VDA_19_1:
-                            # Porovnání číselných kódových úrovní
                             num_calc = int(calc_code_level) if calc_code_level != '00' else 0
                             status = "specifikace nesplněna" if num_calc > max_alw else "specifikace splněna"
                             if status == "specifikace nesplněna":
@@ -1169,12 +1149,12 @@ def show_evaluation_form(conn):
                             "Kovové": kov_count,
                             "Nekovové": nekov_count,
                             "Vlákna": fib_count,
+                            "Počet částic": total_particles,
                             "Povolený limit": str(max_alw),
                             "Kódová úroveň (Naměřeno)": calc_code_level,
                             "Stav": status,
                         })
 
-                    # Automatické generování CCC řetězce s kompresí sousedních shodných tříd (např. LM0, CD16)
                     auto_ccc = generate_ccc_string(codes_for_ccc, ref_unit_char)
                     generated_ccc_string = cleanliness_class_code if cleanliness_class_code.strip() else auto_ccc
 
