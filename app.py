@@ -89,6 +89,7 @@ hr {{ border: none; border-top: 1px solid {BORDER}; margin: 1.5rem 0; }}
     border: 1px solid {BORDER} !important;
     background: {CARD} !important;
     transition: border-color .15s, box-shadow .15s;
+    color: {NAVY} !important;
 }}
 .stTextInput input:focus, .stNumberInput input:focus, .stTextArea textarea:focus {{
     border-color: {ACCENT} !important;
@@ -102,15 +103,23 @@ label, [data-testid="stWidgetLabel"] p {{
 .stButton > button, .stDownloadButton > button, [data-testid="stFormSubmitButton"] > button {{
     border-radius: 10px; font-weight: 600; padding: .55rem 1.1rem;
     border: 1px solid {BORDER}; transition: all .15s ease;
+    color: {NAVY} !important; /* OPRAVA BÍLÉHO TEXTU NA BÍLÉM POZADÍ */
+    background-color: {CARD} !important;
 }}
 .stButton > button:hover, .stDownloadButton > button:hover {{
-    border-color: {ACCENT}; color: {ACCENT}; transform: translateY(-1px);
+    border-color: {ACCENT}; color: {ACCENT} !important; transform: translateY(-1px);
     box-shadow: 0 4px 12px rgba(15,23,42,.08);
 }}
+/* Primární tlačítka (modrá) */
 .stButton > button[kind="primary"], [data-testid="stFormSubmitButton"] > button[kind="primary"] {{
-    background: linear-gradient(135deg, {ACCENT}, #1d4ed8); color: #fff; border: none;
+    background: linear-gradient(135deg, {ACCENT}, #1d4ed8) !important; 
+    color: #ffffff !important; 
+    border: none;
 }}
-.stButton > button[kind="primary"]:hover {{ color: #fff; box-shadow: 0 6px 16px rgba(37,99,235,.35); }}
+.stButton > button[kind="primary"]:hover {{ 
+    color: #ffffff !important; 
+    box-shadow: 0 6px 16px rgba(37,99,235,.35); 
+}}
 
 /* ---------- Karty a Expandery ---------- */
 [data-testid="stForm"], [data-testid="stVerticalBlockBorderWrapper"] {{
@@ -213,6 +222,24 @@ translations = {
         "sec_qual": "Validační brány",
         "sec_adv": "Pokročilé metriky a nastavení",
         "sec_hard": "Hard-Stop parametry",
+        "download_pdf": "Stáhnout protokol (PDF)",
+        "new_insp": "Nové vyhodnocení",
+        "order_no": "Order no. (Číslo zakázky)",
+        "rep_no": "Report no. (Číslo protokolu)",
+        "insp_name": "Jméno technika / Inspector",
+        "filt_no": "Číslo filtru / Filter number",
+        "filt_lot": "Šarže filtru / Batch number",
+        "control_area": "Control area Ac [cm²]",
+        "wetted_vol": "Wetted volume Vc [cm³]",
+        "ext_method": "Extraction method (Metoda)",
+        "dissolving_fluid": "Dissolving fluid (Médium)",
+        "resid_mass": "Zbytková hmotnost M z vah [mg]",
+        "scale_readable": "Scale readable to (Přesnost vah)",
+        "blank_val": "Slepá hodnota [%]",
+        "decl_test": "Klesající zkouška [%]",
+        "filt_occ": "Pokrytí filtru [%]",
+        "pixel_res": "Pixelové rozlišení splněno (min 5 px)",
+        "submit_eval": "Uložit a vygenerovat protokol",
     },
     "en": {
         "title": "Cleanliness Evaluation System (VDA 19.1)",
@@ -229,6 +256,24 @@ translations = {
         "sec_qual": "Validation Gates",
         "sec_adv": "Advanced Metrics",
         "sec_hard": "Hard-Stop Parameters",
+        "download_pdf": "Download Report (PDF)",
+        "new_insp": "New Inspection",
+        "order_no": "Order no.",
+        "rep_no": "Report no.",
+        "insp_name": "Inspector Name",
+        "filt_no": "Filter number",
+        "filt_lot": "Batch number",
+        "control_area": "Control area Ac [cm²]",
+        "wetted_vol": "Wetted volume Vc [cm³]",
+        "ext_method": "Extraction method",
+        "dissolving_fluid": "Dissolving fluid",
+        "resid_mass": "Residual mass [mg]",
+        "scale_readable": "Scale readable to",
+        "blank_val": "Blank value [%]",
+        "decl_test": "Declining test [%]",
+        "filt_occ": "Filter occupancy [%]",
+        "pixel_res": "Pixel resolution satisfied",
+        "submit_eval": "Save and generate report",
     }
 }
 
@@ -289,27 +334,6 @@ def generate_ccc_string(code_dict, ref_unit="A"):
 def calculate_measurement_uncertainty():
     u_combined = math.sqrt(0.05**2 + 0.10**2 + 0.10**2 + 0.10**2)
     return {"combined_pct": round(u_combined * 100, 2), "expanded_pct": round(2.0 * u_combined * 100, 2)}
-
-def generate_pdf_chart_image(report_df):
-    fig, ax = plt.subplots(figsize=(7, 2.8))
-    classes = report_df["Velikostní třída"].tolist()
-    measured = pd.to_numeric(report_df["Naměřená úroveň"], errors="coerce").fillna(0).tolist()
-    limits = pd.to_numeric(report_df["Povolený limit"], errors="coerce").fillna(0).tolist()
-    x = np.arange(len(classes))
-    width = 0.38
-    ax.bar(x - width/2, measured, width, label='CCC', color='#3b82f6')
-    ax.bar(x + width/2, limits, width, label='Limit', color='#94a3b8', alpha=0.6)
-    ax.set_ylabel('Kódová úroveň', fontsize=8)
-    ax.set_xlabel('Velikostní třída', fontsize=8)
-    ax.set_xticks(x)
-    ax.set_xticklabels(classes, fontsize=7)
-    ax.legend(fontsize=7)
-    plt.tight_layout()
-    img_buffer = io.BytesIO()
-    plt.savefig(img_buffer, format='png', dpi=200)
-    plt.close(fig)
-    img_buffer.seek(0)
-    return img_buffer
 
 def ensure_pdf_fonts():
     font_dir = "fonts"
@@ -401,7 +425,7 @@ def show_evaluation_form(conn):
         with btn_col1:
             st.download_button(t["download_pdf"], st.session_state.generated_pdf, file_name=f"protokol_{st.session_state.filt_no_for_pdf}.pdf", mime="application/pdf")
         with btn_col2:
-            if st.button("Nové vyhodnocení"):
+            if st.button(t["new_insp"]):
                 st.session_state.eval_success = False
                 st.rerun()
         return
@@ -465,7 +489,7 @@ def show_evaluation_form(conn):
             with col_g1: residual_mass = st.number_input(t["resid_mass"], min_value=0.0, value=0.4200, format="%.4f")
             with col_g2: scale_readable_choice = st.selectbox(t["scale_readable"], ["±0.01 mg", "±0.1 mg"])
 
-        with st.expander("Optická analýza částic a pokročilé parametry", expanded=False):
+        with st.expander("Optická analýza částic a validační brány", expanded=False):
             st.caption("Detaily optického skeneru a validační brány (Slepá hodnota, Pokrytí filtru)")
             col_q1, col_q2, col_q3 = st.columns(3)
             with col_q1: blank_value_pct = st.number_input(t["blank_val"], value=2.0)
