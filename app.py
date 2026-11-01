@@ -217,39 +217,73 @@ class ProfileType(str, Enum):
     INTERNAL_CUSTOM = "Interní norma (Custom)"
 
 
+# --- OFICIÁLNÍ TABULKA KÓDOVÝCH ÚROVNÍ VDA 19.1 (Tabulka 9-21) ---
+VDA_CONTAMINATION_LEVELS = {
+    '00': 0,
+    '0': 1,
+    '1': 2,
+    '2': 4,
+    '3': 8,
+    '4': 16,
+    '5': 32,
+    '6': 64,
+    '7': 130,
+    '8': 250,
+    '9': 500,
+    '10': 1000,
+    '11': 2000,
+    '12': 4000,
+    '13': 8000,
+    '14': 16000,
+    '15': 32000,
+    '16': 64000,
+    '17': 130000,
+    '18': 250000,
+    '19': 500000,
+    '20': 1000000
+}
+
 def calculate_vda_code_level(particle_count, wetted_area):
+    """Převede počet částic na kódovou úroveň dle oficiální tabulky 9-21 normy VDA 19.1."""
     if particle_count <= 0:
-        return 0
+        return '00'
+    
+    # Normalizace na 1000 cm² (standardní referenční plocha)
     norm_count = particle_count * (1000.0 / wetted_area) if wetted_area > 0 else particle_count
     
-    if norm_count <= 1:
-        return 1
-    elif norm_count <= 2:
-        return 2
-    elif norm_count <= 4:
-        return 3
-    elif norm_count <= 8:
-        return 4
-    elif norm_count <= 16:
-        return 5
-    elif norm_count <= 32:
-        return 6
-    elif norm_count <= 63:
-        return 7
-    elif norm_count <= 125:
-        return 8
-    elif norm_count <= 250:
-        return 9
-    elif norm_count <= 500:
-        return 10
-    elif norm_count <= 1000:
-        return 11
-    elif norm_count <= 2000:
-        return 12
-    elif norm_count <= 4000:
-        return 13
-    else:
-        return int(math.ceil(math.log2(norm_count))) + 1
+    sorted_levels = sorted(VDA_CONTAMINATION_LEVELS.items(), key=lambda x: x[1])
+    for code, limit in sorted_levels:
+        if norm_count <= limit:
+            return code
+    return '20'
+
+def generate_ccc_string(code_dict, ref_unit="A"):
+    """
+    Vygeneruje CCC kód včetně zkracování (seskupování) sousedních tříd 
+    se stejnou kódovou úrovní (např. CD16, LM0) dle VDA 19.1 (kapitola 9.9.4).
+    """
+    classes = ["B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N"]
+    mapped_codes = []
+    for cls in classes:
+        lvl = code_dict.get(cls, '00')
+        mapped_codes.append((cls, str(lvl).zfill(2) if len(str(lvl)) == 1 and str(lvl) != '00' else str(lvl)))
+        
+    i = 0
+    grouped_parts = []
+    while i < len(mapped_codes):
+        cls_group = mapped_codes[i][0]
+        lvl_group = mapped_codes[i][1]
+        
+        j = i + 1
+        while j < len(mapped_codes) and mapped_codes[j][1] == lvl_group:
+            cls_group += mapped_codes[j][0]
+            j += 1
+            
+        grouped_parts.append(f"{cls_group}{lvl_group}")
+        i = j
+        
+    inner_str = "/".join(grouped_parts)
+    return f"{ref_unit}({inner_str})"
 
 
 def calculate_measurement_uncertainty():
@@ -987,7 +1021,7 @@ def show_evaluation_form(conn):
         h_c5.markdown("**Vlákna**")
         
         for s_class in vda_classes:
-            limit_val = db_limits_dict.get(s_class, fallback_test_limits.get(s_class, 0))
+            limit_val = db_limits_dict.get(s_class, db_limits_dict.get(f"{s_class}_kov", fallback_test_limits.get(s_class, 0)))
             c1, c2, c3, c4, c5 = st.columns([1, 2, 2, 2, 2])
             with c1:
                 st.markdown(f"**{s_class}**")
@@ -1031,7 +1065,7 @@ def show_evaluation_form(conn):
             recovery_rate_val = st.number_input(t["recovery_rate"], min_value=0.0, max_value=100.0, value=92.5, step=0.5)
         with col_ad3:
             specific_surface_val = st.number_input(t["specific_surface"], min_value=0.0, value=round(residual_mass / (wetted_area / 10000.0) if wetted_area > 0 else 0.0, 2), step=0.1)
-            cleanliness_class_code = st.text_input("Vlastní CCC kód (při prázdném poli se vygeneruje automaticky, např. A(B 02/C 01))", value="")
+            cleanliness_class_code = st.text_input("Vlastní CCC kód (při prázdném poli se vygeneruje automaticky, např. A(B20/CD16))", value="")
 
         st.markdown("---")
         col_x1, col_x2 = st.columns(2)
@@ -1076,17 +1110,16 @@ def show_evaluation_form(conn):
                     for err in gating_errors:
                         st.error(f"- {err}")
                 else:
-                    # Zjištění referenční jednotky (A = Area, V = Volume, N = Number) z názvu či základu normy
                     ref_unit_char = "A"
                     if std_id:
                         try:
                             note_check = pd.read_sql(f"SELECT note FROM customer_standards WHERE id = '{std_id}' LIMIT 1", conn)
-                            if not note_check.empty and note_check.iloc[0]['note'] and "celý díl" in str(note_check.iloc[0]['note']):
+                            if not note_check.empty and note_check.iloc[0]['note'] and "celý díl" in str(note_check.iloc[0]['note'] ):
                                 ref_unit_char = "N"
                         except:
                             pass
 
-                    ccc_parts, report = [], []
+                    report = []
                     failed = False
                     warning_triggered = False
 
@@ -1095,6 +1128,8 @@ def show_evaluation_form(conn):
                         st.error(f"Gravimetrie překročena: Naměřená zbytková hmotnost {residual_mass:.4f} mg (Limit normy: {gravimetry_limit_db} mg)")
 
                     valid_matrix_totals = {}
+                    codes_for_ccc = {}
+                    
                     for s_class in vda_classes:
                         vals = matrix_inputs[s_class]
                         
@@ -1111,21 +1146,19 @@ def show_evaluation_form(conn):
                         total_particles = kov_count + nekov_count + fib_count
                         calc_code_level = calculate_vda_code_level(total_particles, wetted_area)
                         
-                        valid_matrix_totals[s_class] = calc_code_level
-                        
-                        if calc_code_level > 0:
-                            ccc_parts.append(f"{s_class} {calc_code_level:02d}")
-                        else:
-                            ccc_parts.append(f"{s_class} 00")
+                        valid_matrix_totals[s_class] = int(calc_code_level)
+                        codes_for_ccc[s_class] = calc_code_level
 
                         max_alw = int(db_limits_dict.get(s_class, db_limits_dict.get(f"{s_class}_kov", fallback_test_limits.get(s_class, 0))))
                         
                         if profile_type == ProfileType.VDA_19_1:
-                            status = "specifikace nesplněna" if calc_code_level > max_alw else "specifikace splněna"
+                            # Porovnání číselných kódových úrovní
+                            num_calc = int(calc_code_level) if calc_code_level != '00' else 0
+                            status = "specifikace nesplněna" if num_calc > max_alw else "specifikace splněna"
                             if status == "specifikace nesplněna":
                                 failed = True
                             else:
-                                if max_alw > 0 and calc_code_level >= max_alw:
+                                if max_alw > 0 and num_calc >= max_alw:
                                     status = "VAROVÁNÍ"
                                     warning_triggered = True
                                 else:
@@ -1141,7 +1174,9 @@ def show_evaluation_form(conn):
                             "Stav": status,
                         })
 
-                    generated_ccc_string = cleanliness_class_code if cleanliness_class_code.strip() else (f"CCC {ref_unit_char}({' / '.join(ccc_parts)})" if ccc_parts else "CCC neuveden")
+                    # Automatické generování CCC řetězce s kompresí sousedních shodných tříd (např. LM0, CD16)
+                    auto_ccc = generate_ccc_string(codes_for_ccc, ref_unit_char)
+                    generated_ccc_string = cleanliness_class_code if cleanliness_class_code.strip() else auto_ccc
 
                     hard_stop_failed = False
                     if profile_type == ProfileType.INTERNAL_CUSTOM:
@@ -1174,11 +1209,10 @@ def show_evaluation_form(conn):
                     )
                     ins_id = cur.fetchone()[0]
                     for s_class, code_lvl in valid_matrix_totals.items():
-                        if code_lvl > 0:
-                            cur.execute(
-                                "INSERT INTO inspection_details (inspection_id, size_class, cleanliness_level) VALUES (%s, %s, %s);",
-                                (ins_id, s_class, code_lvl),
-                            )
+                        cur.execute(
+                            "INSERT INTO inspection_details (inspection_id, size_class, cleanliness_level) VALUES (%s, %s, %s);",
+                            (ins_id, s_class, code_lvl),
+                        )
                     conn.commit()
                     cur.close()
 
