@@ -80,7 +80,7 @@ translations = {
         "db_pass": "Heslo k databázi",
         "db_connected": "Připojeno k Supabase",
         "db_error": "Chyba připojení k databázi:",
-        "nav": ["Zápis a vyhodnocení z reportu", "Správa norem (Limity)", "Přehled historie měření"],
+        "nav": ["Zápis a vyhodnocení z reportu", "Správa norem (Limity)", "Přehled historie měření", "Manažerský Dashboard"],
         "sec_ident": "Obecné informace a identifikace dílu",
         "sec_prep": "Parametry extrakce a filtrace",
         "sec_grav": "Gravimetrická analýza (Zbytková hmotnost)",
@@ -135,7 +135,7 @@ translations = {
         "db_pass": "Database Password",
         "db_connected": "Connected to Supabase",
         "db_error": "Database connection error:",
-        "nav": ["Report Evaluation & Entry", "Standards & Limits Management", "Inspection History"],
+        "nav": ["Report Evaluation & Entry", "Standards & Limits Management", "Inspection History", "Management Dashboard"],
         "sec_ident": "General Information & Inspected Object",
         "sec_prep": "Extraction & Filtration Parameters",
         "sec_grav": "Gravimetric Analysis",
@@ -211,6 +211,22 @@ def get_db_connection():
     except Exception as e:
         st.sidebar.error(f"{t['db_error']} {e}")
         return None
+
+
+# --- CACHED DATA FUNCTIONS (Optimalizace rychlosti) ---
+@st.cache_data(ttl=300)
+def cached_fetch_components(pwd):
+    try:
+        conn = psycopg2.connect(
+            host="aws-0-eu-west-1.pooler.supabase.com", database="postgres",
+            user="postgres.ywyicopmesmwtkjewbfk", password=pwd, port="6543",
+            sslmode="require", connect_timeout=10,
+        )
+        df = pd.read_sql("SELECT id, part_number, name FROM components", conn)
+        conn.close()
+        return df
+    except:
+        return pd.DataFrame()
 
 
 class ProfileType(str, Enum):
@@ -302,7 +318,6 @@ def generate_pdf_chart_image(report_df):
     return img_buffer
 
 def ensure_pdf_fonts():
-    """Stáhne a zaregistruje TTF fonty Roboto pro podporu české diakritiky v PDF."""
     font_dir = "fonts"
     os.makedirs(font_dir, exist_ok=True)
     
@@ -327,7 +342,6 @@ def create_pdf_report(meta_info, report_df, conformity_text, failed, note, grav_
         buffer, pagesize=A4, rightMargin=30, leftMargin=30, topMargin=30, bottomMargin=30
     )
 
-    # Řešení české diakritiky pro PDF
     font_name, font_name_bold = ensure_pdf_fonts()
 
     styles = getSampleStyleSheet()
@@ -438,7 +452,6 @@ def create_pdf_report(meta_info, report_df, conformity_text, failed, note, grav_
     elements.append(grav_table)
     elements.append(Spacer(1, 4))
 
-    # Tabulka částic (přidán sloupec pro Počet částic)
     table_data = [[
         Paragraph("<b>Třída</b>", cell_header),
         Paragraph("<b>Rozsah</b>", cell_header),
@@ -475,7 +488,7 @@ def create_pdf_report(meta_info, report_df, conformity_text, failed, note, grav_
                 Paragraph(str(row["Kovové"]), cell_style),
                 Paragraph(str(row["Nekovové"]), cell_style),
                 Paragraph(str(row["Vlákna"]), cell_style),
-                Paragraph(str(row["Počet částic"]), cell_style), # Celkový počet
+                Paragraph(str(row["Počet částic"]), cell_style),
                 Paragraph(str(row["Povolený limit"]), cell_style),
                 Paragraph(str(row["Naměřená úroveň"]), cell_style),
                 Paragraph(status_html, cell_style),
@@ -539,27 +552,34 @@ def show_home_screen():
     st.write("Vítejte v systému vyhodnocení technické čistoty dle VDA 19.1. Vyberte požadovanou sekci:")
     st.markdown("<br>", unsafe_allow_html=True)
     
-    col1, col2, col3 = st.columns(3)
+    col1, col2, col3, col4 = st.columns(4)
     
     with col1:
-        st.markdown("### <span class='material-symbols-rounded'>description</span> Zápis z reportu", unsafe_allow_html=True)
-        st.markdown("<div style='min-height: 75px;'>Zadání dat z reportu, porovnání s normou a generování PDF protokolu.</div>", unsafe_allow_html=True)
-        if st.button("Přejít na vyhodnocení", use_container_width=True, type="primary"):
+        st.markdown("### <span class='material-symbols-rounded'>description</span> Zápis", unsafe_allow_html=True)
+        st.markdown("<div style='min-height: 60px;'>Zadání dat z reportu a generování PDF.</div>", unsafe_allow_html=True)
+        if st.button("Vyhodnocení", use_container_width=True, type="primary"):
             st.session_state.active_tab = t["nav"][0]
             st.rerun()
             
     with col2:
-        st.markdown("### <span class='material-symbols-rounded'>tune</span> Správa norem", unsafe_allow_html=True)
-        st.markdown("<div style='min-height: 75px;'>Nastavení a úprava podnikových a zákaznických limitů pro jednotlivé díly.</div>", unsafe_allow_html=True)
-        if st.button("Přejít na normy", use_container_width=True):
+        st.markdown("### <span class='material-symbols-rounded'>tune</span> Normy", unsafe_allow_html=True)
+        st.markdown("<div style='min-height: 60px;'>Nastavení podnikových limitů.</div>", unsafe_allow_html=True)
+        if st.button("Správa norem", use_container_width=True):
             st.session_state.active_tab = t["nav"][1]
             st.rerun()
             
     with col3:
-        st.markdown("### <span class='material-symbols-rounded'>history</span> Historie měření", unsafe_allow_html=True)
-        st.markdown("<div style='min-height: 75px;'>Přehled všech uložených vyhodnocení a protokolů z databáze.</div>", unsafe_allow_html=True)
-        if st.button("Přejít na historii", use_container_width=True):
+        st.markdown("### <span class='material-symbols-rounded'>history</span> Historie", unsafe_allow_html=True)
+        st.markdown("<div style='min-height: 60px;'>Přehled uložených protokolů.</div>", unsafe_allow_html=True)
+        if st.button("Zobrazit historii", use_container_width=True):
             st.session_state.active_tab = t["nav"][2]
+            st.rerun()
+
+    with col4:
+        st.markdown("### <span class='material-symbols-rounded'>analytics</span> Dashboard", unsafe_allow_html=True)
+        st.markdown("<div style='min-height: 60px;'>Manažerské trendy a analýzy.</div>", unsafe_allow_html=True)
+        if st.button("Otevřít dashboard", use_container_width=True):
+            st.session_state.active_tab = t["nav"][3]
             st.rerun()
 
 
@@ -577,11 +597,13 @@ def show_standards_management(conn):
     }
     
     with tab1:
-        try:
-            components_df = pd.read_sql("SELECT id, part_number, name FROM components", conn)
-        except Exception as e:
-            st.error("Chyba při načítání dílů.")
-            return
+        components_df = cached_fetch_components(DB_PASSWORD)
+        if components_df.empty:
+            try:
+                components_df = pd.read_sql("SELECT id, part_number, name FROM components", conn)
+            except Exception:
+                st.error("Chyba při načítání dílů.")
+                return
 
         with st.form("add_standard_form"):
             col1, col2 = st.columns(2)
@@ -602,7 +624,6 @@ def show_standards_management(conn):
 
             st.markdown("---")
             st.markdown("### Nastavení limitů kódových úrovní pro velikostní frakce a druhy částic")
-            st.caption("Zadejte maximální povolenou **kódovou úroveň** pro Kovové, Nekovové a Vlákna v každé třídě:")
             
             default_test_limits = {"B": "5", "C": "4", "D": "3", "E": "2", "F": "1", "G": "0", "H": "0", "I": "0", "J": "0", "K": "0", "L": "0", "M": "0", "N": "0"}
             
@@ -856,11 +877,13 @@ def show_evaluation_form(conn):
                 st.rerun()
         return
 
-    try:
-        components_df = pd.read_sql("SELECT id, part_number, name FROM components", conn)
-    except Exception as err:
-        components_df = pd.DataFrame()
-        st.error(f"Chyba při načítání dílů: {err}")
+    components_df = cached_fetch_components(DB_PASSWORD)
+    if components_df.empty:
+        try:
+            components_df = pd.read_sql("SELECT id, part_number, name FROM components", conn)
+        except Exception as err:
+            components_df = pd.DataFrame()
+            st.error(f"Chyba při načítání dílů: {err}")
 
     if not components_df.empty:
         col1, col2 = st.columns(2)
@@ -911,7 +934,6 @@ def show_evaluation_form(conn):
 
         st.markdown("---")
 
-        # --- SEKCE: Obecné informace ---
         st.subheader(t["sec_ident"])
         col_a, col_b, col_c = st.columns(3)
         with col_a:
@@ -932,7 +954,6 @@ def show_evaluation_form(conn):
 
         st.markdown("---")
         
-        # --- SEKCE: Parametry extrakce a filtrace ---
         st.subheader(t["sec_prep"])
         col_d, col_e, col_f = st.columns(3)
         with col_d:
@@ -953,7 +974,6 @@ def show_evaluation_form(conn):
 
         st.markdown("---")
 
-        # --- SEKCE: Gravimetrická analýza ---
         st.subheader(t["sec_grav"])
         if gravimetry_limit_db:
             st.info(f"Očekávaný limit normy pro gravimetrii: **{gravimetry_limit_db} mg**")
@@ -966,7 +986,6 @@ def show_evaluation_form(conn):
 
         st.markdown("---")
 
-        # --- SEKCE: Optická analýza ---
         st.subheader(t["sec_opt"])
         
         col_m1, col_m2, col_m3 = st.columns(3)
@@ -1023,7 +1042,6 @@ def show_evaluation_form(conn):
 
         st.markdown("---")
 
-        # --- SEKCE: Validační brány ---
         st.subheader(t["sec_qual"])
         col_q1, col_q2, col_q3 = st.columns(3)
         with col_q1:
@@ -1035,7 +1053,6 @@ def show_evaluation_form(conn):
 
         st.markdown("---")
 
-        # --- SEKCE: Pokročilé metriky ---
         st.subheader(t["sec_adv"])
         col_ad1, col_ad2, col_ad3 = st.columns(3)
         with col_ad1:
@@ -1261,6 +1278,68 @@ def show_history(conn):
         st.error(f"Chyba načítání historie: {err}")
 
 
+def show_dashboard(conn):
+    st.markdown(f"### <span class='material-symbols-rounded'>analytics</span> Manažerský Dashboard & Trendy", unsafe_allow_html=True)
+    try:
+        df = pd.read_sql(
+            '''
+            SELECT 
+                i.inspection_date, 
+                c.part_number, 
+                c.name AS comp_name,
+                i.inspector_name, 
+                i.evaluation_result
+            FROM inspections i 
+            JOIN components c ON i.component_id = c.id
+            ''',
+            conn
+        )
+        if df.empty:
+            st.info("Zatím nejsou k dispozici žádná data pro analýzu. Proveďte nejprve nějaká měření.")
+            return
+
+        total_insp = len(df)
+        ok_count = len(df[df['evaluation_result'].str.lower().str.contains("splněna")])
+        nok_count = len(df[df['evaluation_result'].str.lower().str.contains("nesplněna")])
+        warn_count = len(df[df['evaluation_result'].str.lower().str.contains("varování")])
+        success_rate = (ok_count / total_insp * 100) if total_insp > 0 else 0
+
+        col1, col2, col3, col4 = st.columns(4)
+        col1.metric("Celkem měření", total_insp)
+        col2.metric("Úspěšná (OK)", ok_count, f"{success_rate:.1f}%")
+        col3.metric("Neúspěšná (NOK)", nok_count)
+        col4.metric("Varování", warn_count)
+
+        st.markdown("---")
+
+        c1, c2 = st.columns(2)
+        with c1:
+            st.markdown("#### Výsledky posouzení (Podíl)")
+            res_counts = df['evaluation_result'].value_counts().reset_index()
+            res_counts.columns = ['Výsledek', 'Počet']
+            fig_pie = px.pie(res_counts, names='Výsledek', values='Počet', hole=0.4, color_discrete_sequence=px.colors.qualitative.Set2)
+            fig_pie.update_layout(margin=dict(l=20, r=20, t=30, b=20), height=300)
+            st.plotly_chart(fig_pie, use_container_width=True)
+
+        with c2:
+            st.markdown("#### Počet měření podle dílů")
+            part_counts = df['part_number'].value_counts().reset_index()
+            part_counts.columns = ['Díl', 'Počet měření']
+            fig_bar = px.bar(part_counts, x='Díl', y='Počet měření', color='Díl', color_discrete_sequence=px.colors.qualitative.Pastel)
+            fig_bar.update_layout(margin=dict(l=20, r=20, t=30, b=20), height=300, showlegend=False)
+            st.plotly_chart(fig_bar, use_container_width=True)
+
+        st.markdown("#### Vývoj počtu měření v čase")
+        df['date_only'] = pd.to_datetime(df['inspection_date']).dt.date
+        time_counts = df.groupby('date_only').size().reset_index(name='Počet')
+        fig_time = px.line(time_counts, x='date_only', y='Počet', markers=True, line_shape='spline', color_discrete_sequence=['#2563eb'])
+        fig_time.update_layout(xaxis_title="Datum", yaxis_title="Počet měření", margin=dict(l=20, r=20, t=30, b=20), height=320)
+        st.plotly_chart(fig_time, use_container_width=True)
+
+    except Exception as e:
+        st.error(f"Chyba při načítání dat pro dashboard: {e}")
+
+
 if DB_PASSWORD:
     conn = get_db_connection()
     if conn:
@@ -1289,6 +1368,8 @@ if DB_PASSWORD:
             show_standards_management(conn)
         elif st.session_state.active_tab == t["nav"][2]:
             show_history(conn)
+        elif st.session_state.active_tab == t["nav"][3]:
+            show_dashboard(conn)
 
         conn.close()
 else:
