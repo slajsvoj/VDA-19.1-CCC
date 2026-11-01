@@ -80,14 +80,13 @@ translations = {
         "db_connected": "Připojeno k Supabase",
         "db_error": "Chyba připojení k databázi:",
         "nav": ["Zápis a vyhodnocení z reportu", "Správa norem (Limity)", "Přehled historie měření"],
-        "sec_ident": "1. General Information & Inspected Object (VDA 19.1)",
-        "sec_prep": "2. Preparatory steps & Extraction",
-        "sec_filt": "3. Filtration & Drying",
-        "sec_grav": "4. Gravimetrická analýza – Zbytková hmotnost M",
-        "sec_opt": "5. Light-optical analysis & Particle size distribution (B až N)",
-        "sec_qual": "6. Kvalitativní charakteristiky a Validační brány",
-        "sec_adv": "7. Pokročilé vyhodnotitelné parametry",
-        "sec_hard": "8. Hard-Stop parametry (Interní norma)",
+        "sec_ident": "Obecné informace a identifikace dílu",
+        "sec_prep": "Parametry extrakce a filtrace",
+        "sec_grav": "Gravimetrická analýza (Zbytková hmotnost)",
+        "sec_opt": "Optická analýza částic (Matice B až N)",
+        "sec_qual": "Validační brány a doplňkové parametry",
+        "sec_adv": "Pokročilé metriky",
+        "sec_hard": "Hard-Stop parametry a poznámka",
         "order_no": "Order no. (Číslo zakázky)",
         "rep_no": "Report no. (Číslo protokolu)",
         "cust": "Customer (Zákazník)",
@@ -100,30 +99,18 @@ translations = {
         "designation": "Designation (Označení dílu)",
         "part_no": "Part number (Číslo dílu)",
         "batch_no": "Batch number (Šarže)",
-        "date_removed": "Date removed (Datum odběru)",
-        "time_removed": "Time removed (Čas odběru)",
-        "removed_from": "Removed from (Odebráno z)",
         "cond_delivery": "Condition on delivery (Stav při dodání)",
         "lot_size": "Inspection lot size (Velikost dávky)",
         "control_area": "Control area Ac [cm²]",
         "wetted_vol": "Wetted volume Vc [cm³]",
-        "prep_steps": "Preparatory steps (Přípravné kroky)",
-        "ext_scope": "Scope of extraction (Rozsah extrakce)",
-        "test_env": "Test environment (Zkušební prostředí)",
         "ext_method": "Extraction method (Metoda extrakce)",
         "dissolving_fluid": "Dissolving fluid (Rozpouštěcí médium)",
-        "filt_manuf": "Filter Manufacturer",
-        "filt_type": "Filter Type",
         "filt_mat": "Filter material (Materiál filtru)",
         "filt_pore": "Pore size (Velikost pórů µm)",
-        "drying_params": "Drying Manufacturer / Model / Temp",
         "resid_mass": "Zbytková hmotnost M z protokolu vah [mg]",
         "scale_readable": "Scale readable to (Přesnost vah)",
-        "fibers": "Vlákna (Fibers)",
         "blank_val": "Slepá hodnota [% z limitu]",
-        "met_ref": "Kovové lesklé částice",
         "decl_test": "Klesající zkouška / Recovery [%]",
-        "met_nonref": "Kovové nelesklé částice",
         "filt_occ": "Pokrytí filtru [%]",
         "pixel_res": "Pixelové rozlišení splněno (min 5-10 px)",
         "inc_unc": "Započítat modul nejistoty měření v protokolu",
@@ -148,14 +135,13 @@ translations = {
         "db_connected": "Connected to Supabase",
         "db_error": "Database connection error:",
         "nav": ["Report Evaluation & Entry", "Standards & Limits Management", "Inspection History"],
-        "sec_ident": "1. General Information & Inspected Object (VDA 19.1)",
-        "sec_prep": "2. Preparatory steps & Extraction",
-        "sec_filt": "3. Filtration & Drying",
-        "sec_grav": "4. Gravimetric Analysis – Residual Mass M",
-        "sec_opt": "5. Light-optical analysis & Particle size distribution (B to N)",
-        "sec_qual": "6. Qualitative Characteristics & Validation Gates",
-        "sec_adv": "7. Advanced Evaluation Parameters",
-        "sec_hard": "8. Hard-Stop Parameters (Internal Standard)",
+        "sec_ident": "General Information & Inspected Object",
+        "sec_prep": "Extraction & Filtration Parameters",
+        "sec_grav": "Gravimetric Analysis",
+        "sec_opt": "Optical Particle Analysis (Matrix B to N)",
+        "sec_qual": "Validation Gates & Additional Parameters",
+        "sec_adv": "Advanced Evaluation Parameters",
+        "sec_hard": "Hard-Stop Parameters",
         "order_no": "Order no.",
         "rep_no": "Report no.",
         "cust": "Customer",
@@ -168,30 +154,18 @@ translations = {
         "designation": "Designation",
         "part_no": "Part number",
         "batch_no": "Batch number",
-        "date_removed": "Date removed",
-        "time_removed": "Time removed",
-        "removed_from": "Removed from",
         "cond_delivery": "Condition on delivery",
         "lot_size": "Inspection lot size",
         "control_area": "Control area Ac [cm²]",
         "wetted_vol": "Wetted volume Vc [cm³]",
-        "prep_steps": "Preparatory steps",
-        "ext_scope": "Scope of extraction",
-        "test_env": "Test environment",
         "ext_method": "Extraction method",
         "dissolving_fluid": "Dissolving fluid",
-        "filt_manuf": "Filter Manufacturer",
-        "filt_type": "Filter Type",
         "filt_mat": "Filter material",
         "filt_pore": "Pore size [µm]",
-        "drying_params": "Drying Manufacturer / Model / Temp",
         "resid_mass": "Residual Mass M from Scale [mg]",
         "scale_readable": "Scale readable to",
-        "fibers": "Fibers",
         "blank_val": "Blank Value [% of limit]",
-        "met_ref": "Metallic Reflective Particles",
         "decl_test": "Declining Test / Recovery [%]",
-        "met_nonref": "Metallic Non-Reflective / Other Particles",
         "filt_occ": "Filter Occupancy [%]",
         "pixel_res": "Pixel Resolution Satisfied (min 5-10 px)",
         "inc_unc": "Include Measurement Uncertainty Module in Report",
@@ -267,7 +241,7 @@ def generate_pdf_chart_image(report_df):
     x = np.arange(len(classes))
     width = 0.38
     
-    ax.bar(x - width/2, measured, width, label='Naměřená úroveň částic', color='#3b82f6')
+    ax.bar(x - width/2, measured, width, label='Naměřená úroveň částic (Celkem)', color='#3b82f6')
     ax.bar(x + width/2, limits, width, label='Limit normy', color='#94a3b8', alpha=0.6)
     
     ax.set_ylabel('Počet částic / Úroveň', fontsize=8)
@@ -288,9 +262,7 @@ def generate_pdf_chart_image(report_df):
 
 
 def create_pdf_report(
-    meta_info, report_df, conformity_text, failed, note, fibers_count,
-    metallic_ref_count, metallic_nonref_count, grav_data, uncertainty_info=None,
-    advanced_data=None
+    meta_info, report_df, conformity_text, failed, note, grav_data, uncertainty_info=None, advanced_data=None, optical_meta=None
 ):
     buffer = io.BytesIO()
     doc = SimpleDocTemplate(
@@ -342,6 +314,10 @@ def create_pdf_report(
         [Paragraph("<b>Filter material / pore:</b>", cell_style), Paragraph(f"{meta_info.get('filt_mat', '-')}, {meta_info.get('filt_pore', '-')} µm", cell_style), Paragraph("<b>Dissolving fluid:</b>", cell_style), Paragraph(meta_info.get('dissolving_fluid', '-'), cell_style)],
         [Paragraph("<b>Datum vyhodnocení:</b>", cell_style), Paragraph(current_date, cell_style), Paragraph("", cell_style), Paragraph("", cell_style)],
     ]
+
+    if optical_meta:
+        meta_data.append([Paragraph("<b>Optické zařízení:</b>", cell_style), Paragraph(f"{optical_meta.get('manufacturer', '-')}, {optical_meta.get('model', '-')}", cell_style), Paragraph("<b>Zvětšení / Průměr:</b>", cell_style), Paragraph(f"{optical_meta.get('scale', '-')} | {optical_meta.get('eval_diameter', '-')} mm", cell_style)])
+        meta_data.append([Paragraph("<b>Typ analýzy / Jas:</b>", cell_style), Paragraph(f"{optical_meta.get('scan_type', '-')} | Prah: {optical_meta.get('brightness_thresh', '-')}", cell_style), Paragraph("", cell_style), Paragraph("", cell_style)])
 
     meta_table = Table(meta_data, colWidths=[110, 165, 100, 179])
     meta_table.setStyle(
@@ -421,12 +397,15 @@ def create_pdf_report(
     elements.append(grav_table)
     elements.append(Spacer(1, 4))
 
+    # Matice optické analýzy (Velikostní třída | Rozsah | Metalické | Nemetalické | Vlákna | Limit | Stav)
     table_data = [[
-        Paragraph("<b>Velikostní třída</b>", cell_header),
-        Paragraph("<b>Rozsah velikosti</b>", cell_header),
-        Paragraph("<b>Max. povolený limit</b>", cell_header),
-        Paragraph("<b>Naměřeno z reportu</b>", cell_header),
-        Paragraph("<b>Stav / Status</b>", cell_header),
+        Paragraph("<b>Třída</b>", cell_header),
+        Paragraph("<b>Rozsah</b>", cell_header),
+        Paragraph("<b>Metalické</b>", cell_header),
+        Paragraph("<b>Nemetalické</b>", cell_header),
+        Paragraph("<b>Vlákna</b>", cell_header),
+        Paragraph("<b>Limit</b>", cell_header),
+        Paragraph("<b>Stav</b>", cell_header),
     ]]
 
     size_ranges = {
@@ -443,17 +422,21 @@ def create_pdf_report(
             s_range = size_ranges.get(s_class, "-")
             status = str(row["Stav"])
             status_html = (
-                '<font color="#065f46"><b>specifikace splněna</b></font>' if status in ["specifikace splněna", "OK"] else
-                ('<font color="#991b1b"><b>specifikace nesplněna</b></font>' if status in ["specifikace nesplněna", "NOK"] else '<font color="#b45309"><b>VAROVÁNÍ</b></font>')
+                '<font color="#065f46"><b>OK</b></font>' if status in ["specifikace splněna", "OK"] else
+                ('<font color="#991b1b"><b>NOK</b></font>' if status in ["specifikace nesplněna", "NOK"] else '<font color="#b45309"><b>VAR</b></font>')
             )
 
             table_data.append([
-                Paragraph(s_class, cell_bold), Paragraph(s_range, cell_style),
-                Paragraph(str(row["Povolený limit"]), cell_style), Paragraph(str(row["Naměřená úroveň"]), cell_style),
+                Paragraph(s_class, cell_bold), 
+                Paragraph(s_range, cell_style),
+                Paragraph(str(row["Metalické"]), cell_style),
+                Paragraph(str(row["Nemetalické"]), cell_style),
+                Paragraph(str(row["Vlákna"]), cell_style),
+                Paragraph(str(row["Povolený limit"]), cell_style),
                 Paragraph(status_html, cell_style),
             ])
 
-        t = Table(table_data, colWidths=[90, 134, 130, 100, 100])
+        t = Table(table_data, colWidths=[50, 114, 80, 80, 80, 75, 75])
         t.setStyle(
             TableStyle([
                 ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#1e293b")),
@@ -468,36 +451,31 @@ def create_pdf_report(
 
         try:
             chart_img_buf = generate_pdf_chart_image(report_df)
-            elements.append(Paragraph("<b>Grafické porovnání distribuce částic:</b>", cell_bold))
+            elements.append(Paragraph("<b>Grafické porovnání celkové distribuce částic:</b>", cell_bold))
             elements.append(Spacer(1, 2))
-            elements.append(RLImage(chart_img_buf, width=500, height=200))
+            elements.append(RLImage(chart_img_buf, width=500, height=180))
             elements.append(Spacer(1, 4))
         except Exception:
             pass
 
-    qual_data = [
-        [Paragraph("<b>Kvalitativní charakteristiky z reportu (VDA 19.1)</b>", cell_header), Paragraph("<b>Zjištěná hodnota</b>", cell_header)],
-        [Paragraph("Vlákna (Fibers)", cell_style), Paragraph(str(fibers_count), cell_style)],
-        [Paragraph("Kovové lesklé částice (Metallic reflective)", cell_style), Paragraph(str(metallic_ref_count), cell_style)],
-        [Paragraph("Kovové nelesklé / ostatní částice (Non-reflective)", cell_style), Paragraph(str(metallic_nonref_count), cell_style)],
-    ]
-
     if advanced_data:
-        qual_data.append([Paragraph("Max. rozměr částice z reportu (L_max / Feret Max)", cell_style), Paragraph(f"{advanced_data.get('l_max', 0)} µm")])
-        qual_data.append([Paragraph("Poměr stran (b/L threshold)", cell_style), Paragraph(str(advanced_data.get('aspect_ratio', '-')))])
-        qual_data.append([Paragraph("Plošná hustota kontaminace (Specific Surface)", cell_style), Paragraph(f"{advanced_data.get('specific_surface', 0)} mg/m²")])
-        qual_data.append([Paragraph("Účinnost extrakce z protokolu (Recovery rate)", cell_style), Paragraph(f"{advanced_data.get('recovery_rate', 0)} %")])
-
-    qual_table = Table(qual_data, colWidths=[354, 200])
-    qual_table.setStyle(
-        TableStyle([
-            ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#334155")),
-            ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#cbd5e1")),
-            ("TOPPADDING", (0, 0), (-1, -1), 2),
-            ("BOTTOMPADDING", (0, 0), (-1, -1), 2),
-        ])
-    )
-    elements.append(qual_table)
+        adv_data = [
+            [Paragraph("<b>Doplňkové a pokročilé parametry</b>", cell_header), Paragraph("<b>Hodnota</b>", cell_header)],
+            [Paragraph("Max. rozměr částice (L_max / Feret Max)", cell_style), Paragraph(f"{advanced_data.get('l_max', 0)} µm")],
+            [Paragraph("Poměr stran (b/L threshold)", cell_style), Paragraph(str(advanced_data.get('aspect_ratio', '-')))],
+            [Paragraph("Plošná hustota kontaminace (Specific Surface)", cell_style), Paragraph(f"{advanced_data.get('specific_surface', 0)} mg/m²")],
+            [Paragraph("Účinnost extrakce z protokolu (Recovery rate)", cell_style), Paragraph(f"{advanced_data.get('recovery_rate', 0)} %")],
+        ]
+        adv_table = Table(adv_data, colWidths=[354, 200])
+        adv_table.setStyle(
+            TableStyle([
+                ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#334155")),
+                ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#cbd5e1")),
+                ("TOPPADDING", (0, 0), (-1, -1), 2),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 2),
+            ])
+        )
+        elements.append(adv_table)
 
     if note:
         elements.append(Spacer(1, 4))
@@ -575,35 +553,7 @@ def show_standards_management(conn):
             gravimetry_limit_input = st.number_input("Max. povolená zbytková hmotnost (mg)", min_value=0.0, value=0.50, step=0.1)
 
             st.markdown("---")
-            st.markdown("### 2. Nastavení kvalitativních a pokročilých limitů (nepovinné)")
-            st.caption("Zadejte maximální povolené limity pro jednotlivé parametry:")
-
-            adv_limit_definitions = [
-                ("FIBERS", "Max. počet vláken (Fibers)", ""),
-                ("METALLIC", "Max. kovových částic (Metallic)", ""),
-                ("L_MAX", "Max. rozměr částice L_max [µm]", ""),
-                ("B_L_RATIO", "Limitní poměr b/L", ""),
-                ("SPEC_SURFACE", "Max. plošná hustota kontaminace [mg/m²]", "")
-            ]
-
-            adv_limit_inputs = {}
-            for key, label_text, default_val in adv_limit_definitions:
-                col_a1, col_a2, col_a3 = st.columns([1, 3, 3])
-                with col_a1:
-                    st.markdown(f"**{key}**")
-                with col_a2:
-                    st.caption(label_text)
-                with col_a3:
-                    adv_limit_inputs[key] = st.text_input(
-                        f"Limit {key}",
-                        value=default_val,
-                        key=f"add_adv_{key}",
-                        label_visibility="collapsed",
-                        placeholder="Zadejte limit..."
-                    )
-
-            st.markdown("---")
-            st.markdown("### 3. Nastavení limitů pro velikostní frakce (CCC kódové úrovně)")
+            st.markdown("### 2. Nastavení limitů pro velikostní frakce (CCC kódové úrovně)")
             st.caption("Do políček níže zadejte povolený **limit** (max. úroveň) pro každou velikostní třídu:")
             
             default_test_limits = {"B": "15", "C": "12", "D": "10", "E": "8", "F": "5", "G": "3", "H": "2", "I": "1", "J": "0", "K": "0", "L": "0", "M": "0", "N": "0"}
@@ -635,12 +585,7 @@ def show_standards_management(conn):
                         cur = conn.cursor()
                         inserted_any = False
                         
-                        all_limits_to_save = limit_inputs.copy()
-                        for k, val_str in adv_limit_inputs.items():
-                            if val_str.strip():
-                                all_limits_to_save[k] = val_str
-
-                        for s_class, limit_val in all_limits_to_save.items():
+                        for s_class, limit_val in limit_inputs.items():
                             if limit_val.strip() and limit_val.strip() != "-":
                                 new_row_id = str(uuid.uuid4())
                                 cur.execute(
@@ -697,36 +642,7 @@ def show_standards_management(conn):
                     edit_gravimetry = st.number_input("Max. povolená hmotnost gravimetrie (mg)", min_value=0.0, value=float(curr_grav), step=0.1)
                     
                     st.markdown("---")
-                    st.markdown("### 2. Úprava kvalitativních a pokročilých limitů (nepovinné)")
-                    st.caption("Upravte maximální povolené limity pro jednotlivé parametry:")
-
-                    adv_limit_definitions = [
-                        ("FIBERS", "Max. počet vláken (Fibers)", ""),
-                        ("METALLIC", "Max. kovových částic (Metallic)", ""),
-                        ("L_MAX", "Max. rozměr částice L_max [µm]", ""),
-                        ("B_L_RATIO", "Limitní poměr b/L", ""),
-                        ("SPEC_SURFACE", "Max. plošná hustota kontaminace [mg/m²]", "")
-                    ]
-
-                    edit_adv_inputs = {}
-                    for key, label_text, _ in adv_limit_definitions:
-                        col_e1, col_e2, col_e3 = st.columns([1, 3, 3])
-                        with col_e1:
-                            st.markdown(f"**{key}**")
-                        with col_e2:
-                            st.caption(label_text)
-                        with col_e3:
-                            edit_adv_inputs[key] = st.text_input(
-                                f"Edit Limit {key}",
-                                value=current_class_limits.get(key, ""),
-                                key=f"edit_adv_{key}",
-                                label_visibility="collapsed",
-                                placeholder="Zadejte limit..."
-                            )
-
-                    st.markdown("---")
-                    st.markdown("### 3. Úprava limitů pro velikostní frakce (CCC kódové úrovně)")
-                    st.caption("Do políček níže zadejte povolený **limit** (max. úroveň) pro každou velikostní třídu:")
+                    st.markdown("### 2. Úprava limitů pro velikostní frakce")
 
                     edit_inputs = {}
                     for s_class in vda_classes:
@@ -757,12 +673,7 @@ def show_standards_management(conn):
                             cur = conn.cursor()
                             cur.execute(f"DELETE FROM customer_standards WHERE norm_name = '{curr_norm_name}'")
                             
-                            all_edit_limits = edit_inputs.copy()
-                            for k, val_str in edit_adv_inputs.items():
-                                if val_str.strip():
-                                    all_edit_limits[k] = val_str
-
-                            for s_class, limit_val in all_edit_limits.items():
+                            for s_class, limit_val in edit_inputs.items():
                                 if limit_val.strip() and limit_val.strip() != "-":
                                     new_row_id = str(uuid.uuid4())
                                     cur.execute(
@@ -812,7 +723,7 @@ def show_evaluation_form(conn):
             fig.add_trace(go.Bar(
                 x=chart_df["Velikostní třída"],
                 y=chart_df["Naměřená úroveň"],
-                name="Naměřená úroveň částic",
+                name="Naměřená úroveň částic (Celkem)",
                 marker_color=["#ef4444" if row["Stav"] in ["specifikace nesplněna", "NOK"] else "#3b82f6" for _, row in chart_df.iterrows()]
             ))
             fig.add_trace(go.Scatter(
@@ -891,18 +802,9 @@ def show_evaluation_form(conn):
                 lim_fetch = pd.read_sql(f"SELECT size_class, max_allowed_level FROM customer_standards WHERE id = '{std_id}' OR norm_name = '{std_name}'", conn)
                 for _, row in lim_fetch.iterrows():
                     val = row['max_allowed_level']
-                    if str(row['size_class']).strip() in ["FIBERS", "METALLIC", "L_MAX", "B_L_RATIO", "SPEC_SURFACE"]:
-                        db_limits_dict[str(row['size_class']).strip()] = float(val)
-                    else:
-                        db_limits_dict[str(row['size_class']).strip()] = int(val)
+                    db_limits_dict[str(row['size_class']).strip()] = int(val)
             except Exception as e:
                 pass
-
-        limit_fibers = db_limits_dict.get('FIBERS', None)
-        limit_metallic = db_limits_dict.get('METALLIC', None)
-        limit_lmax = db_limits_dict.get('L_MAX', None)
-        limit_bl = db_limits_dict.get('B_L_RATIO', None)
-        limit_surface = db_limits_dict.get('SPEC_SURFACE', None)
 
         fallback_test_limits = {"B": 15, "C": 12, "D": 10, "E": 8, "F": 5, "G": 3, "H": 2, "I": 1, "J": 0, "K": 0, "L": 0, "M": 0, "N": 0}
         for k, v in fallback_test_limits.items():
@@ -911,8 +813,8 @@ def show_evaluation_form(conn):
 
         st.markdown("---")
 
-        # --- SEKCE 1: General Information ---
-        st.subheader(t["sec_ident"])
+        # --- SEKCE 1: Obecné informace ---
+        st.subheader(f"1. {t['sec_ident']}")
         col_a, col_b, col_c = st.columns(3)
         with col_a:
             order_number = st.text_input(t["order_no"], value="ORD-2026-001")
@@ -932,66 +834,57 @@ def show_evaluation_form(conn):
 
         st.markdown("---")
         
-        # --- SEKCE 2 & 3: Preparatory steps & Extraction (s výběrovými okenky) ---
-        col_h1, col_h2 = st.columns([5, 1])
-        with col_h1:
-            st.subheader(t["sec_prep"])
-        with col_h2:
-            enable_part_ext = st.toggle("Aktivní sekce", value=True, key="chk_p2")
-
+        # --- SEKCE 2: Parametry extrakce a filtrace ---
+        st.subheader(f"2. {t['sec_prep']}")
         col_d, col_e, col_f = st.columns(3)
         with col_d:
-            wetted_area = st.number_input(t["control_area"], min_value=0.0, value=1000.0, disabled=not enable_part_ext)
-            extraction_method = st.selectbox(t["ext_method"], ["Pressure-rinsing", "Ultrasonics", "Internal rinsing", "Agitation"], disabled=not enable_part_ext)
+            wetted_area = st.number_input(t["control_area"], min_value=0.0, value=1000.0)
+            extraction_method = st.selectbox(t["ext_method"], ["Pressure-rinsing", "Ultrasonics", "Internal rinsing", "Agitation"])
         with col_e:
-            wetted_volume = st.number_input(t["wetted_vol"], min_value=0.0, value=0.0, disabled=not enable_part_ext)
-            # Rozpouštěcí médium jako výběrové okénko dle vzorového protokolu
+            wetted_volume = st.number_input(t["wetted_vol"], min_value=0.0, value=0.0)
             extraction_medium = st.selectbox(
                 t["dissolving_fluid"],
-                ["Testovací benzín (Petroether)", "Izopropanol (IPA)", "Aceton", "Demineralizovaná voda", "Ethanol"],
-                disabled=not enable_part_ext
+                ["Testovací benzín (Petroether)", "Izopropanol (IPA)", "Aceton", "Demineralizovaná voda", "Ethanol"]
             )
         with col_f:
-            # Materiál filtru jako výběrové okénko dle vzorového protokolu
             filter_material = st.selectbox(
                 t["filt_mat"],
-                ["PET (polyester)", "PTFE (polytetrafluorethylen)", "Cellulose nitrate", "Nylon / PA", "Glass fiber"],
-                disabled=not enable_part_ext
+                ["PET (polyester)", "PTFE (polytetrafluorethylen)", "Cellulose nitrate", "Nylon / PA", "Glass fiber"]
             )
-            filter_pore_size = st.number_input(t["filt_pore"], min_value=0.1, value=5.0, disabled=not enable_part_ext)
+            filter_pore_size = st.number_input(t["filt_pore"], min_value=0.1, value=5.0)
 
         st.markdown("---")
 
-        # --- SEKCE 4: Gravimetrická analýza (s výběrem Scale readable to) ---
-        col_h3, col_h4 = st.columns([5, 1])
-        with col_h3:
-            st.subheader(t["sec_grav"])
-        with col_h4:
-            enable_grav = st.toggle("Aktivní sekce", value=True, key="chk_p3")
-
-        if gravimetry_limit_db and enable_grav:
+        # --- SEKCE 3: Gravimetrická analýza ---
+        st.subheader(f"3. {t['sec_grav']}")
+        if gravimetry_limit_db:
             st.info(f"Očekávaný limit normy pro gravimetrii: **{gravimetry_limit_db} mg**")
         
         col_g1, col_g2 = st.columns(2)
         with col_g1:
-            residual_mass = st.number_input(t["resid_mass"], min_value=0.0, value=0.4200, format="%.4f", step=0.1, disabled=not enable_grav)
+            residual_mass = st.number_input(t["resid_mass"], min_value=0.0, value=0.4200, format="%.4f", step=0.1)
         with col_g2:
-            scale_readable_choice = st.selectbox(
-                t["scale_readable"],
-                ["±0.01 mg", "±0.1 mg", "0.001 mg"],
-                index=0,
-                disabled=not enable_grav
-            )
+            scale_readable_choice = st.selectbox(t["scale_readable"], ["±0.01 mg", "±0.1 mg", "0.001 mg"], index=0)
 
         st.markdown("---")
 
-        # --- SEKCE 5: Optická analýza (B až N pod sebou) ---
-        col_h5, col_h6 = st.columns([5, 1])
-        with col_h5:
-            st.subheader(t["sec_opt"])
-        with col_h6:
-            enable_opt = st.toggle("Aktivní sekce", value=True, key="chk_p4")
+        # --- SEKCE 4: Optická analýza (Matice B až N s detaily mikroskopu) ---
+        st.subheader(f"4. {t['sec_opt']}")
+        
+        col_m1, col_m2, col_m3 = st.columns(3)
+        with col_m1:
+            micro_manuf = st.text_input("Výrobce mikroskopu (Manufacturer)", value="Leica Microsystems")
+            eval_diameter = st.number_input("Vyhodnocovací průměr [mm] (Evaluation diameter)", min_value=0.0, value=50.0, step=1.0)
+        with col_m2:
+            micro_model = st.text_input("Model (Model)", value="DM6 M Cleanliness")
+            scan_type = st.selectbox("Typ analýzy (Scan type)", ["Standard", "Free"])
+        with col_m3:
+            micro_scale = st.text_input("Zvětšení / Měřítko (Scale / Magnification)", value="5.0x")
+            brightness_thresh = st.number_input("Prahová hodnota jasu (Brightness threshold)", min_value=0, max_value=255, value=128)
 
+        st.markdown("<br>", unsafe_allow_html=True)
+        st.markdown("**Matice počtů částic podle velikostních tříd a typů:**")
+        
         vda_classes = ["B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N"]
         size_ranges_desc = {
             "B": "5 µm - 15 µm", "C": "15 µm - 25 µm", "D": "25 µm - 50 µm",
@@ -1000,69 +893,63 @@ def show_evaluation_form(conn):
             "K": "1000 µm - 1500 µm", "L": "1500 µm - 2000 µm", "M": "2000 µm - 3000 µm",
             "N": "> 3000 µm",
         }
-        entered_levels = {}
-
+        
+        matrix_inputs = {}
+        
+        # Hlavička matice
+        h_c1, h_c2, h_c3, h_c4, h_c5 = st.columns([1, 2, 2, 2, 2])
+        h_c1.markdown("**Třída**")
+        h_c2.markdown("**Rozsah**")
+        h_c3.markdown("**Metalické**")
+        h_c4.markdown("**Nemetalické**")
+        h_c5.markdown("**Vlákna**")
+        
         for s_class in vda_classes:
             limit_val = db_limits_dict.get(s_class, 0)
-            col_c1, col_c2, col_c3 = st.columns([1, 3, 3])
-            with col_c1:
-                st.markdown(f"**Třída {s_class}**")
-            with col_c2:
-                st.caption(f"Rozsah: {size_ranges_desc.get(s_class, '')} | Limit: {limit_val}")
-            with col_c3:
-                raw_input = st.text_input(f"Úroveň {s_class}", value="", placeholder="-", key=f"cls_{s_class}", label_visibility="collapsed", disabled=not enable_opt)
-                entered_levels[s_class] = raw_input
-            
-            if enable_opt and raw_input.strip() and raw_input.strip() != "-":
-                try:
-                    val_num = int(raw_input.strip())
-                    if val_num > limit_val:
-                        st.markdown(f"<p style='color:red; font-size:11px; margin-top:-10px;'>Limit překročen! (Max: {limit_val})</p>", unsafe_allow_html=True)
-                    else:
-                        st.markdown(f"<p style='color:green; font-size:11px; margin-top:-10px;'>V toleranci (Max: {limit_val})</p>", unsafe_allow_html=True)
-                except ValueError:
-                    pass
+            c1, c2, c3, c4, c5 = st.columns([1, 2, 2, 2, 2])
+            with c1:
+                st.markdown(f"**{s_class}**")
+            with c2:
+                st.caption(f"{size_ranges_desc.get(s_class, '')} (Limit: {limit_val})")
+            with c3:
+                met_val = st.text_input(f"Met {s_class}", value="", placeholder="0", key=f"mat_met_{s_class}", label_visibility="collapsed")
+            with c4:
+                nonmet_val = st.text_input(f"NonMet {s_class}", value="", placeholder="0", key=f"mat_nonmet_{s_class}", label_visibility="collapsed")
+            with c5:
+                fib_val = st.text_input(f"Fib {s_class}", value="", placeholder="0", key=f"mat_fib_{s_class}", label_visibility="collapsed")
+                
+            matrix_inputs[s_class] = {
+                "metallic": met_val,
+                "non_metallic": nonmet_val,
+                "fibers": fib_val
+            }
 
         st.markdown("---")
 
-        # --- SEKCE 6: Kvalitativní charakteristiky a Validační brány ---
-        col_hq1, col_hq2 = st.columns([5, 1])
-        with col_hq1:
-            st.subheader(t["sec_qual"])
-        with col_hq2:
-            enable_qual = st.toggle("Aktivní sekce", value=True, key="chk_p5")
-
+        # --- SEKCE 5: Validační brány a doplňkové parametry ---
+        st.subheader(f"5. {t['sec_qual']}")
         col_q1, col_q2, col_q3 = st.columns(3)
         with col_q1:
-            fibers_count = st.number_input(t["fibers"], min_value=0, value=9, step=1, disabled=not enable_qual, help=f"Limit z normy: {limit_fibers}" if limit_fibers is not None else None)
-            blank_value_pct = st.number_input(t["blank_val"], min_value=0.0, value=2.0, step=0.1, disabled=not enable_qual)
+            blank_value_pct = st.number_input(t["blank_val"], min_value=0.0, value=2.0, step=0.1)
         with col_q2:
-            metallic_ref_count = st.number_input(t["met_ref"], min_value=0, value=19, step=1, disabled=not enable_qual, help=f"Limit z normy: {limit_metallic}" if limit_metallic is not None else None)
-            declining_test_pct = st.number_input(t["decl_test"], min_value=0.0, value=5.0, step=0.5, disabled=not enable_qual)
+            declining_test_pct = st.number_input(t["decl_test"], min_value=0.0, value=5.0, step=0.5)
         with col_q3:
-            metallic_nonref_count = st.number_input(t["met_nonref"], min_value=0, value=24, step=1, disabled=not enable_qual)
-            filter_occupancy_pct = st.number_input(t["filt_occ"], min_value=0.0, value=3.0, step=0.5, disabled=not enable_qual)
+            filter_occupancy_pct = st.number_input(t["filt_occ"], min_value=0.0, value=3.0, step=0.5)
 
         st.markdown("---")
 
-        # --- SEKCE 7: Pokročilé metriky ---
-        col_h7, col_h8 = st.columns([5, 1])
-        with col_h7:
-            st.subheader(t["sec_adv"])
-        with col_h8:
-            enable_adv = st.toggle("Aktivní sekce", value=True, key="chk_p6")
-        
-        l_max_val, aspect_ratio_val, metallic_percentage, recovery_rate_val, specific_surface_val, cleanliness_class_code = 450.0, 0.1, 2.5, 92.5, 0.0, ""
+        # --- SEKCE 6: Pokročilé metriky ---
+        st.subheader(f"6. {t['sec_adv']}")
         col_ad1, col_ad2, col_ad3 = st.columns(3)
         with col_ad1:
-            l_max_val = st.number_input(t["l_max"], min_value=0.0, value=450.0, step=10.0, disabled=not enable_adv, help=f"Limit z normy: {limit_lmax} µm" if limit_lmax is not None else None)
-            aspect_ratio_val = st.number_input(t["aspect_ratio"], min_value=0.0, max_value=10.0, value=0.1, step=0.01, disabled=not enable_adv, help=f"Limit z normy: {limit_bl}" if limit_bl is not None else None)
+            l_max_val = st.number_input(t["l_max"], min_value=0.0, value=450.0, step=10.0)
+            aspect_ratio_val = st.number_input(t["aspect_ratio"], min_value=0.0, max_value=10.0, value=0.1, step=0.01)
         with col_ad2:
-            metallic_percentage = st.number_input(t["metallic_ratio"], min_value=0.0, max_value=100.0, value=2.5, step=0.1, disabled=not enable_adv)
-            recovery_rate_val = st.number_input(t["recovery_rate"], min_value=0.0, max_value=100.0, value=92.5, step=0.5, disabled=not enable_adv)
+            metallic_percentage = st.number_input(t["metallic_ratio"], min_value=0.0, max_value=100.0, value=2.5, step=0.1)
+            recovery_rate_val = st.number_input(t["recovery_rate"], min_value=0.0, max_value=100.0, value=92.5, step=0.5)
         with col_ad3:
-            specific_surface_val = st.number_input(t["specific_surface"], min_value=0.0, value=round(residual_mass / (wetted_area / 10000.0) if wetted_area > 0 else 0.0, 2), step=0.1, disabled=not enable_adv, help=f"Limit z normy: {limit_surface} mg/m²" if limit_surface is not None else None)
-            cleanliness_class_code = st.text_input("CCC Code string", value="CCC A(B 00/C 12/D15/E3/G34)", disabled=not enable_adv)
+            specific_surface_val = st.number_input(t["specific_surface"], min_value=0.0, value=round(residual_mass / (wetted_area / 10000.0) if wetted_area > 0 else 0.0, 2), step=0.1)
+            cleanliness_class_code = st.text_input("CCC Code string", value="CCC A(B 00/C 12/D15/E3/G34)")
 
         st.markdown("---")
         col_x1, col_x2 = st.columns(2)
@@ -1076,7 +963,7 @@ def show_evaluation_form(conn):
         max_feret_measured = 0.0
         if profile_type == ProfileType.INTERNAL_CUSTOM:
             st.markdown("---")
-            st.subheader(t["sec_hard"])
+            st.subheader(f"7. {t['sec_hard']}")
             col_h1, col_h2 = st.columns(2)
             with col_h1:
                 hard_stop_feret_max = st.number_input("Max. povolený Feret_max [µm] (Hard-stop)", min_value=0.0, value=1500.0)
@@ -1093,13 +980,12 @@ def show_evaluation_form(conn):
                 st.error("Vyplňte číslo filtru.")
             else:
                 gating_errors = []
-                if enable_qual:
-                    if blank_value_pct > 10.0:
-                        gating_errors.append(f"Slepá hodnota ({blank_value_pct}%) překračuje max. povolenou (10%).")
-                    if filter_occupancy_pct > 10.0:
-                        gating_errors.append(f"Pokrytí filtru ({filter_occupancy_pct}%) překračuje max. povolené (10%).")
-                    if declining_test_pct > 10.0:
-                        gating_errors.append(f"Klesající zkouška ({declining_test_pct}%) překračuje limit (10%).")
+                if blank_value_pct > 10.0:
+                    gating_errors.append(f"Slepá hodnota ({blank_value_pct}%) překračuje max. povolenou (10%).")
+                if filter_occupancy_pct > 10.0:
+                    gating_errors.append(f"Pokrytí filtru ({filter_occupancy_pct}%) překračuje max. povolené (10%).")
+                if declining_test_pct > 10.0:
+                    gating_errors.append(f"Klesající zkouška ({declining_test_pct}%) překračuje limit (10%).")
                 if not pixel_resolution_ok:
                     gating_errors.append("Pixelové rozlišení neodpovídá požadavkům.")
 
@@ -1109,68 +995,58 @@ def show_evaluation_form(conn):
                         st.error(f"- {err}")
                 else:
                     ref_unit_char = "A"
-                    ccc_parts, valid_levels = [], {}
-                    if enable_opt:
-                        for s_class in vda_classes:
-                            a_level_str = str(entered_levels.get(s_class, "")).strip()
-                            if a_level_str and a_level_str != "-":
-                                val_int = int(a_level_str)
-                                ccc_parts.append(f"{s_class} {a_level_str}")
-                                valid_levels[s_class] = val_int
-
-                    generated_ccc_string = cleanliness_class_code if cleanliness_class_code else (f"CCC {ref_unit_char}({' / '.join(ccc_parts)})" if valid_levels else "CCC neuveden")
-
-                    failed, report = False, []
+                    ccc_parts, report = [], []
+                    failed = False
                     warning_triggered = False
-                    
-                    if enable_grav and gravimetry_limit_db and residual_mass > gravimetry_limit_db:
+
+                    if gravimetry_limit_db and residual_mass > gravimetry_limit_db:
                         failed = True
                         st.error(f"Gravimetrie překročena: Naměřená zbytková hmotnost {residual_mass:.4f} mg (Limit normy: {gravimetry_limit_db} mg)")
 
-                    if enable_qual:
-                        if limit_fibers is not None and fibers_count > limit_fibers:
-                            failed = True
-                            st.error(f"Překročen limit pro Vlákna: naměřeno {fibers_count} (Limit normy: {limit_fibers})")
-                            
-                        if limit_metallic is not None and metallic_ref_count > limit_metallic:
-                            failed = True
-                            st.error(f"Překročen limit pro Kovové částice: naměřeno {metallic_ref_count} (Limit normy: {limit_metallic})")
+                    valid_matrix_totals = {}
+                    for s_class in vda_classes:
+                        vals = matrix_inputs[s_class]
                         
-                    if enable_adv:
-                        if limit_lmax is not None and l_max_val > limit_lmax:
-                            failed = True
-                            st.error(f"Překročen limit pro L_max: naměřeno {l_max_val} µm (Limit normy: {limit_lmax} µm)")
-                        
-                        if limit_bl is not None and aspect_ratio_val > limit_bl:
-                            failed = True
-                            st.error(f"Překročen limit pro poměr b/L: naměřeno {aspect_ratio_val} (Limit normy: {limit_bl})")
-                            
-                        if limit_surface is not None and specific_surface_val > limit_surface:
-                            failed = True
-                            st.error(f"Překročen limit pro plošnou hustotu kontaminace: naměřeno {specific_surface_val} mg/m² (Limit normy: {limit_surface} mg/m²)")
+                        def parse_int(v):
+                            try:
+                                return int(v.strip()) if v.strip() and v.strip() != "-" else 0
+                            except:
+                                return 0
 
-                    if enable_opt:
-                        for s_class in vda_classes:
-                            actual_val = valid_levels.get(s_class, 0)
-                            max_alw = int(db_limits_dict.get(s_class, 0))
-                            
-                            if profile_type == ProfileType.VDA_19_1:
-                                status = "specifikace nesplněna" if actual_val > max_alw else "specifikace splněna"
-                                if status == "specifikace nesplněna":
-                                    failed = True
+                        met_count = parse_int(vals["metallic"])
+                        nonmet_count = parse_int(vals["non_metallic"])
+                        fib_count = parse_int(vals["fibers"])
+                        
+                        total_class_val = met_count + nonmet_count + fib_count
+                        valid_matrix_totals[s_class] = total_class_val
+                        
+                        if total_class_val > 0:
+                            ccc_parts.append(f"{s_class} {total_class_val}")
+
+                        max_alw = int(db_limits_dict.get(s_class, 0))
+                        
+                        if profile_type == ProfileType.VDA_19_1:
+                            status = "specifikace nesplněna" if total_class_val > max_alw else "specifikace splněna"
+                            if status == "specifikace nesplněna":
+                                failed = True
+                            else:
+                                if max_alw > 0 and total_class_val >= max_alw * 0.8:
+                                    status = "VAROVÁNÍ"
+                                    warning_triggered = True
                                 else:
-                                    if max_alw > 0 and actual_val >= max_alw * 0.8:
-                                        status = "VAROVÁNÍ"
-                                        warning_triggered = True
-                                    else:
-                                        status = "specifikace splněna"
+                                    status = "specifikace splněna"
 
-                            report.append({
-                                "Velikostní třída": s_class,
-                                "Povolený limit": str(max_alw),
-                                "Naměřená úroveň": actual_val,
-                                "Stav": status,
-                            })
+                        report.append({
+                            "Velikostní třída": s_class,
+                            "Metalické": met_count,
+                            "Nemetalické": nonmet_count,
+                            "Vlákna": fib_count,
+                            "Povolený limit": str(max_alw),
+                            "Naměřená úroveň": total_class_val,
+                            "Stav": status,
+                        })
+
+                    generated_ccc_string = cleanliness_class_code if cleanliness_class_code else (f"CCC {ref_unit_char}({' / '.join(ccc_parts)})" if ccc_parts else "CCC neuveden")
 
                     hard_stop_failed = False
                     if profile_type == ProfileType.INTERNAL_CUSTOM:
@@ -1201,11 +1077,11 @@ def show_evaluation_form(conn):
                         (c_id, std_id if std_id else None, insp_name, filt_no, filt_lot, generated_ccc_string, conformity_text, note),
                     )
                     ins_id = cur.fetchone()[0]
-                    if enable_opt:
-                        for s_class, a_level in valid_levels.items():
+                    for s_class, total_val in valid_matrix_totals.items():
+                        if total_val > 0:
                             cur.execute(
                                 "INSERT INTO inspection_details (inspection_id, size_class, cleanliness_level) VALUES (%s, %s, %s);",
-                                (ins_id, s_class, a_level),
+                                (ins_id, s_class, total_val),
                             )
                     conn.commit()
                     cur.close()
@@ -1217,17 +1093,20 @@ def show_evaluation_form(conn):
                         "wetted_area": wetted_area, "ext_method": extraction_method, "dissolving_fluid": extraction_medium,
                         "filt_mat": filter_material, "filt_pore": filter_pore_size, "inspector_name": insp_name, "ccc_string": generated_ccc_string
                     }
-                    grav_data_dict = {"residual_mass": residual_mass, "gravimetry_limit": gravimetry_limit_db, "scale_readable": scale_readable_choice} if enable_grav else {"residual_mass": 0, "gravimetry_limit": None, "scale_readable": scale_readable_choice}
+                    grav_data_dict = {"residual_mass": residual_mass, "gravimetry_limit": gravimetry_limit_db, "scale_readable": scale_readable_choice}
                     uncertainty_dict = calculate_measurement_uncertainty() if include_uncertainty else None
                     advanced_dict = {
                         "l_max": l_max_val, "aspect_ratio": aspect_ratio_val, "metallic_percentage": metallic_percentage,
                         "specific_surface": specific_surface_val, "recovery_rate": recovery_rate_val
-                    } if enable_adv else None
+                    }
+                    optical_meta_dict = {
+                        "manufacturer": micro_manuf, "model": micro_model, "scale": micro_scale,
+                        "eval_diameter": eval_diameter, "scan_type": scan_type, "brightness_thresh": brightness_thresh
+                    }
 
                     pdf_data = create_pdf_report(
                         meta_info_dict, report_df, conformity_text, failed, note,
-                        fibers_count if enable_qual else 0, metallic_ref_count if enable_qual else 0, metallic_nonref_count if enable_qual else 0,
-                        grav_data_dict, uncertainty_dict, advanced_dict
+                        grav_data_dict, uncertainty_dict, advanced_dict, optical_meta_dict
                     )
                     
                     st.session_state.eval_success = True
