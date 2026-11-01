@@ -581,33 +581,40 @@ def show_standards_management(conn):
 
             col_s1, col_s2 = st.columns(2)
             with col_s1:
-                limit_basis = st.selectbox("Základ limitu", ["Vztaženo na plochu (1000 cm²)", "Vztaženo na celý díl"], key="add_limit_basis")
+                limit_basis = st.selectbox("Základ limitu (Vztaženo na)", ["Vztaženo na plochu (1000 cm²)", "Vztaženo na celý díl"], key="add_limit_basis")
             with col_s2:
                 gravimetry_limit_input = st.number_input("Max. povolená zbytková hmotnost (mg)", min_value=0.0, value=0.50, step=0.1)
 
             st.markdown("---")
-            st.markdown("### Nastavení limitů kódových úrovní pro velikostní frakce (Matice B až N)")
-            st.caption("Zadejte maximální povolenou **kódovou úroveň** (např. 2, 3, 5) pro každou velikostní třídu:")
+            st.markdown("### Nastavení limitů kódových úrovní pro velikostní frakce a druhy částic")
+            st.caption("Zadejte maximální povolenou **kódovou úroveň** pro Kovové, Nekovové a Vlákna v každé třídě:")
             
             default_test_limits = {"B": "5", "C": "4", "D": "3", "E": "2", "F": "1", "G": "0", "H": "0", "I": "0", "J": "0", "K": "0", "L": "0", "M": "0", "N": "0"}
             
-            limit_inputs = {}
-            for s_class in vda_classes:
-                col_c1, col_c2, col_c3 = st.columns([1, 4, 3])
-                with col_c1:
-                    st.markdown(f"**Třída {s_class}**")
-                with col_c2:
-                    st.caption(f"Rozsah: {size_ranges_desc.get(s_class, '')}")
-                with col_c3:
-                    limit_inputs[s_class] = st.text_input(
-                        f"Limit {s_class}",
-                        value=default_test_limits.get(s_class, ""),
-                        key=f"add_{s_class}",
-                        label_visibility="collapsed",
-                        placeholder="Zadejte kódovou úroveň..."
-                    )
+            add_inputs = {}
+            h_c1, h_c2, h_c3, h_c4, h_c5 = st.columns([1, 2, 2, 2, 2])
+            h_c1.markdown("**Třída**")
+            h_c2.markdown("**Rozsah**")
+            h_c3.markdown("**Kovové**")
+            h_c4.markdown("**Nekovové**")
+            h_c5.markdown("**Vlákna**")
 
-            std_note = st.text_area("Poznámka k normě", value="Testovací norma A s výchozími limity kódových úrovní")
+            for s_class in vda_classes:
+                c1, c2, c3, c4, c5 = st.columns([1, 2, 2, 2, 2])
+                with c1:
+                    st.markdown(f"**{s_class}**")
+                with c2:
+                    st.caption(size_ranges_desc.get(s_class, ''))
+                with c3:
+                    kov_v = st.text_input(f"Kov {s_class}", value=default_test_limits.get(s_class, "0"), key=f"add_kov_{s_class}", label_visibility="collapsed")
+                with c4:
+                    nekov_v = st.text_input(f"Nekov {s_class}", value="", placeholder="0", key=f"add_nekov_{s_class}", label_visibility="collapsed")
+                with c5:
+                    fib_v = st.text_input(f"Fib {s_class}", value="", placeholder="0", key=f"add_fib_{s_class}", label_visibility="collapsed")
+                
+                add_inputs[s_class] = {"kov": kov_v, "nekov": nekov_v, "fib": fib_v}
+
+            std_note = st.text_area("Poznámka k normě", value="Testovací norma A s limity kódových úrovní")
             submit_new_std = st.form_submit_button("Vytvořit a uložit normu", type="primary")
 
             if submit_new_std:
@@ -617,18 +624,19 @@ def show_standards_management(conn):
                     try:
                         cur = conn.cursor()
                         inserted_any = False
-                        
                         full_note = f"[ZÁKLAD: {limit_basis}] {std_note}"
                         
-                        for s_class, limit_val in limit_inputs.items():
-                            if limit_val.strip() and limit_val.strip() != "-":
-                                new_row_id = str(uuid.uuid4())
-                                cur.execute(
-                                    "INSERT INTO customer_standards (id, component_id, norm_name, size_class, max_allowed_level, note, gravimetry_limit_mg) VALUES (%s, %s, %s, %s, %s, %s, %s)",
-                                    (new_row_id, selected_comp_id, norm_name, s_class, float(limit_val), full_note, gravimetry_limit_input if gravimetry_limit_input > 0 else None)
-                                )
-                                inserted_any = True
-                                
+                        for s_class, vals in add_inputs.items():
+                            for p_type, val_str in [("kov", vals["kov"]), ("nekov", vals["nekov"]), ("fib", vals["fib"])]:
+                                if val_str.strip() and val_str.strip() != "-":
+                                    new_row_id = str(uuid.uuid4())
+                                    db_class_key = f"{s_class}_{p_type}"
+                                    cur.execute(
+                                        "INSERT INTO customer_standards (id, component_id, norm_name, size_class, max_allowed_level, note, gravimetry_limit_mg) VALUES (%s, %s, %s, %s, %s, %s, %s)",
+                                        (new_row_id, selected_comp_id, norm_name, db_class_key, float(val_str), full_note, gravimetry_limit_input if gravimetry_limit_input > 0 else None)
+                                    )
+                                    inserted_any = True
+                                    
                         if inserted_any:
                             conn.commit()
                             st.success(f"Norma '{norm_name}' byla úspěšně uložena.")
@@ -661,7 +669,6 @@ def show_standards_management(conn):
                 
                 curr_note_raw = existing_limits_df['note'].iloc[0] if not existing_limits_df.empty and existing_limits_df['note'].notna().any() else ""
                 
-                # Načtení základu limitu z poznámky (pokud existuje tag [ZÁKLAD: ...])
                 curr_basis = "Vztaženo na plochu (1000 cm²)"
                 curr_clean_note = curr_note_raw
                 if "[ZÁKLAD: Vztaženo na celý díl]" in curr_note_raw:
@@ -677,8 +684,21 @@ def show_standards_management(conn):
 
                 current_class_limits = {}
                 for _, row in existing_limits_df.iterrows():
+                    sc = str(row['size_class']).strip()
                     val = row['max_allowed_level']
-                    current_class_limits[row['size_class']] = str(int(val)) if val.is_integer() else str(val)
+                    val_str = str(int(val)) if val.is_integer() else str(val)
+                    
+                    if sc.endswith("_kov"):
+                        base = sc[:-4]
+                        current_class_limits.setdefault(base, {})['kov'] = val_str
+                    elif sc.endswith("_nekov"):
+                        base = sc[:-6]
+                        current_class_limits.setdefault(base, {})['nekov'] = val_str
+                    elif sc.endswith("_fib"):
+                        base = sc[:-4]
+                        current_class_limits.setdefault(base, {})['fib'] = val_str
+                    else:
+                        current_class_limits.setdefault(sc, {})['kov'] = val_str
 
                 st.markdown(f"**Upravit parametry normy**")
                 with st.form("edit_standard_form"):
@@ -687,7 +707,7 @@ def show_standards_management(conn):
                     col_e1, col_e2 = st.columns(2)
                     with col_e1:
                         edit_basis = st.selectbox(
-                            "Základ limitu",
+                            "Základ limitu (Vztaženo na)",
                             ["Vztaženo na plochu (1000 cm²)", "Vztaženo na celý díl"],
                             index=0 if curr_basis == "Vztaženo na plochu (1000 cm²)" else 1,
                             key="edit_limit_basis"
@@ -696,23 +716,31 @@ def show_standards_management(conn):
                         edit_gravimetry = st.number_input("Max. povolená hmotnost gravimetrie (mg)", min_value=0.0, value=float(curr_grav), step=0.1)
                     
                     st.markdown("---")
-                    st.markdown("### Úprava limitů kódových úrovní pro velikostní frakce (Matice B až N)")
+                    st.markdown("### Úprava limitů kódových úrovní pro velikostní frakce a druhy částic")
 
                     edit_inputs = {}
+                    h_e1, h_e2, h_e3, h_e4, h_e5 = st.columns([1, 2, 2, 2, 2])
+                    h_e1.markdown("**Třída**")
+                    h_e2.markdown("**Rozsah**")
+                    h_e3.markdown("**Kovové**")
+                    h_e4.markdown("**Nekovové**")
+                    h_e5.markdown("**Vlákna**")
+
                     for s_class in vda_classes:
-                        col_c1, col_c2, col_c3 = st.columns([1, 4, 3])
-                        with col_c1:
-                            st.markdown(f"**Třída {s_class}**")
-                        with col_c2:
-                            st.caption(f"Rozsah: {size_ranges_desc.get(s_class, '')}")
-                        with col_c3:
-                            edit_inputs[s_class] = st.text_input(
-                                f"Edit Limit {s_class}",
-                                value=current_class_limits.get(s_class, ""),
-                                key=f"edit_{s_class}",
-                                label_visibility="collapsed",
-                                placeholder="Zadejte kódovou úroveň..."
-                            )
+                        cls_data = current_class_limits.get(s_class, {})
+                        c1, c2, c3, c4, c5 = st.columns([1, 2, 2, 2, 2])
+                        with c1:
+                            st.markdown(f"**{s_class}**")
+                        with c2:
+                            st.caption(size_ranges_desc.get(s_class, ''))
+                        with c3:
+                            kov_v = st.text_input(f"Edit Kov {s_class}", value=cls_data.get('kov', ''), key=f"edit_kov_{s_class}", label_visibility="collapsed")
+                        with c4:
+                            nekov_v = st.text_input(f"Edit Nekov {s_class}", value=cls_data.get('nekov', ''), key=f"edit_nekov_{s_class}", label_visibility="collapsed")
+                        with c5:
+                            fib_v = st.text_input(f"Edit Fib {s_class}", value=cls_data.get('fib', ''), key=f"edit_fib_{s_class}", label_visibility="collapsed")
+                        
+                        edit_inputs[s_class] = {"kov": kov_v, "nekov": nekov_v, "fib": fib_v}
 
                     edit_note = st.text_area("Poznámka", value=curr_clean_note)
                     
@@ -726,16 +754,17 @@ def show_standards_management(conn):
                         try:
                             cur = conn.cursor()
                             cur.execute(f"DELETE FROM customer_standards WHERE norm_name = '{curr_norm_name}'")
-                            
                             full_edit_note = f"[ZÁKLAD: {edit_basis}] {edit_note}"
                             
-                            for s_class, limit_val in edit_inputs.items():
-                                if limit_val.strip() and limit_val.strip() != "-":
-                                    new_row_id = str(uuid.uuid4())
-                                    cur.execute(
-                                        "INSERT INTO customer_standards (id, component_id, norm_name, size_class, max_allowed_level, note, gravimetry_limit_mg) VALUES (%s, %s, %s, %s, %s, %s, %s)",
-                                        (new_row_id, curr_comp_id, edit_norm_name, s_class, float(limit_val), full_edit_note, edit_gravimetry if edit_gravimetry > 0 else None)
-                                    )
+                            for s_class, vals in edit_inputs.items():
+                                for p_type, val_str in [("kov", vals["kov"]), ("nekov", vals["nekov"]), ("fib", vals["fib"])]:
+                                    if val_str.strip() and val_str.strip() != "-":
+                                        new_row_id = str(uuid.uuid4())
+                                        db_class_key = f"{s_class}_{p_type}"
+                                        cur.execute(
+                                            "INSERT INTO customer_standards (id, component_id, norm_name, size_class, max_allowed_level, note, gravimetry_limit_mg) VALUES (%s, %s, %s, %s, %s, %s, %s)",
+                                            (new_row_id, curr_comp_id, edit_norm_name, db_class_key, float(val_str), full_edit_note, edit_gravimetry if edit_gravimetry > 0 else None)
+                                        )
                             conn.commit()
                             st.success("Změny byly úspěšně uloženy.")
                         except Exception as e:
@@ -857,15 +886,13 @@ def show_evaluation_form(conn):
             try:
                 lim_fetch = pd.read_sql(f"SELECT size_class, max_allowed_level FROM customer_standards WHERE id = '{std_id}' OR norm_name = '{std_name}'", conn)
                 for _, row in lim_fetch.iterrows():
+                    sc = str(row['size_class']).strip()
                     val = row['max_allowed_level']
-                    db_limits_dict[str(row['size_class']).strip()] = int(val)
+                    db_limits_dict[sc] = int(val)
             except Exception as e:
                 pass
 
         fallback_test_limits = {"B": 5, "C": 4, "D": 3, "E": 2, "F": 1, "G": 0, "H": 0, "I": 0, "J": 0, "K": 0, "L": 0, "M": 0, "N": 0}
-        for k, v in fallback_test_limits.items():
-            if k not in db_limits_dict:
-                db_limits_dict[k] = v
 
         st.markdown("---")
 
@@ -924,7 +951,7 @@ def show_evaluation_form(conn):
 
         st.markdown("---")
 
-        # --- SEKCE: Optická analýza (Matice B až N s detaily mikroskopu) ---
+        # --- SEKCE: Optická analýza ---
         st.subheader(t["sec_opt"])
         
         col_m1, col_m2, col_m3 = st.columns(3)
@@ -960,12 +987,12 @@ def show_evaluation_form(conn):
         h_c5.markdown("**Vlákna**")
         
         for s_class in vda_classes:
-            limit_val = db_limits_dict.get(s_class, 0)
+            limit_val = db_limits_dict.get(s_class, fallback_test_limits.get(s_class, 0))
             c1, c2, c3, c4, c5 = st.columns([1, 2, 2, 2, 2])
             with c1:
                 st.markdown(f"**{s_class}**")
             with c2:
-                st.caption(f"{size_ranges_desc.get(s_class, '')} (Limit kód: {limit_val})")
+                st.caption(f"{size_ranges_desc.get(s_class, '')} (Limit: {limit_val})")
             with c3:
                 met_val = st.text_input(f"Kov {s_class}", value="", placeholder="0", key=f"mat_kov_{s_class}", label_visibility="collapsed")
             with c4:
@@ -981,7 +1008,7 @@ def show_evaluation_form(conn):
 
         st.markdown("---")
 
-        # --- SEKCE: Validační brány a doplňkové parametry ---
+        # --- SEKCE: Validační brány ---
         st.subheader(t["sec_qual"])
         col_q1, col_q2, col_q3 = st.columns(3)
         with col_q1:
@@ -1004,7 +1031,7 @@ def show_evaluation_form(conn):
             recovery_rate_val = st.number_input(t["recovery_rate"], min_value=0.0, max_value=100.0, value=92.5, step=0.5)
         with col_ad3:
             specific_surface_val = st.number_input(t["specific_surface"], min_value=0.0, value=round(residual_mass / (wetted_area / 10000.0) if wetted_area > 0 else 0.0, 2), step=0.1)
-            cleanliness_class_code = st.text_input("Vlastní CCC kód (při prázdném poli se vygeneruje automaticky)", value="")
+            cleanliness_class_code = st.text_input("Vlastní CCC kód (při prázdném poli se vygeneruje automaticky, např. A(B 02/C 01))", value="")
 
         st.markdown("---")
         col_x1, col_x2 = st.columns(2)
@@ -1049,7 +1076,16 @@ def show_evaluation_form(conn):
                     for err in gating_errors:
                         st.error(f"- {err}")
                 else:
+                    # Zjištění referenční jednotky (A = Area, V = Volume, N = Number) z názvu či základu normy
                     ref_unit_char = "A"
+                    if std_id:
+                        try:
+                            note_check = pd.read_sql(f"SELECT note FROM customer_standards WHERE id = '{std_id}' LIMIT 1", conn)
+                            if not note_check.empty and note_check.iloc[0]['note'] and "celý díl" in str(note_check.iloc[0]['note']):
+                                ref_unit_char = "N"
+                        except:
+                            pass
+
                     ccc_parts, report = [], []
                     failed = False
                     warning_triggered = False
@@ -1073,7 +1109,6 @@ def show_evaluation_form(conn):
                         fib_count = parse_int(vals["fibers"])
                         
                         total_particles = kov_count + nekov_count + fib_count
-                        
                         calc_code_level = calculate_vda_code_level(total_particles, wetted_area)
                         
                         valid_matrix_totals[s_class] = calc_code_level
@@ -1083,7 +1118,7 @@ def show_evaluation_form(conn):
                         else:
                             ccc_parts.append(f"{s_class} 00")
 
-                        max_alw = int(db_limits_dict.get(s_class, 0))
+                        max_alw = int(db_limits_dict.get(s_class, db_limits_dict.get(f"{s_class}_kov", fallback_test_limits.get(s_class, 0))))
                         
                         if profile_type == ProfileType.VDA_19_1:
                             status = "specifikace nesplněna" if calc_code_level > max_alw else "specifikace splněna"
